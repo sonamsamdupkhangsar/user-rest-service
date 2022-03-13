@@ -1,0 +1,53 @@
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+
+  build:
+    name: Build, push, and deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Export project name
+        run: export PROJECT_NAME=$(echo ${{ github.repository }} | cut -d / -f2); echo $PROJECT_NAME
+
+      - name: Checkout main
+        uses: actions/checkout@v2
+
+      - name: Update SHA
+        run: echo $GITHUB_SHA > $GITHUB_WORKSPACE/shafile.txt
+
+      - name: Build container image
+        run: docker build -t ${{ secrets.IMAGEREGISTRY }}/$(echo ${{ github.repository }} | cut -d / -f2):1 .
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to my container registery
+        run: docker login ${{ secrets.IMAGEREGISTRY }} -u ${{ secrets.IMAGEREGISTRY_USERNAME }} -p ${{ secrets.IMAGEREGISTRY_PASSWORD }}
+
+      - name: Push image to my container registry
+        run:  docker push ${{ secrets.IMAGEREGISTRY }}/$(echo ${{ github.repository }} | cut -d / -f2):1
+
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8CLUSTER_NAME }}
+
+      - name: Deploy to k8 cluster
+        run: |
+          export PROJECT_NAME=$(echo ${{ github.repository }} | cut -d / -f2)
+          helm repo add sonam https://sonamsamdupkhangsar.github.io/sonam-helm-chart/
+          helm upgrade --install --timeout 5m0s \
+            --set "image.repository=${{ secrets.IMAGEREGISTRY }}/$PROJECT_NAME" \
+            --set "image.tag=1" \
+            --set "project=$PROJECT_NAME" \
+            --set "postgres.secretfile=${{ secrets.POSTGRES_SECRET_FILE }}" \
+            --set "postgres.service=${{ secrets.POSTGRES_SERVICE }}" \
+            --set "postgres.dbname=${{ secrets.POSTGRES_DBNAME }}" \
+             $PROJECT_NAME \
+            sonam/mychart -f values.yaml --version 0.1.12 --namespace=backend
+
+

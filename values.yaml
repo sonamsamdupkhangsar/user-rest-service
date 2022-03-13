@@ -1,0 +1,97 @@
+# Default values for mychart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: regcred
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext: {}
+# fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+# runAsUser: 1000
+
+service:
+  type: ClusterIP
+#  type: NodePort
+  port: 80
+  targetPort: 8080
+
+istio:
+  enabled: false
+
+ingress:
+  enabled: true
+  ingressClass: nginx
+  #annotations:
+    #cert-manager.io/issuer: letsencrypt-nginx
+
+  hosts:
+    - host: project-api.sonam.cloud
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: sonam.cloud
+      hosts:
+        - "*.sonam.cloud"
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+#   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+postgres:
+  port: "5432"
+# dbname and secret file containing username/password are passed via Helm chart installation see deploy.yml file
+
+envs:
+
+
+health:
+  liveness:
+    path: /api/health/liveness
+    port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 5
+    failureThreshold: 5
+  readiness:
+    path: /api/health/readiness
+    port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 5
+    failureThreshold: 5

@@ -1,0 +1,26 @@
+logging:
+  level:
+    root: error
+    me:
+      sonam: debug
+info:
+  app:
+    name: Springboot me.sonam.account.Application
+    description: This is a Springboot application
+    version: 1.0.0
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+server:
+  port: 8080
+
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://${POSTGRES_SERVICE}/${POSTGRES_DBNAME}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+    properties:
+      sslMode: REQUIRE
