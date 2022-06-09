@@ -38,7 +38,7 @@ public class UserSignupService implements UserService {
 
     @Override
     public Mono<String> signupUser(Mono<UserTransfer> userMono) {
-        LOG.info("signup user");
+        LOG.info("signup user, apiKey: {}", apiKey);
 
        return userMono
                 .filter(userTransfer -> {
