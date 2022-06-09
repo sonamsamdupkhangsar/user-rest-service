@@ -1,6 +1,8 @@
-# project-rest-service
-
-This is a template project for starting a Spring Webflux with R2DBC for Posgresql Maven based project.
+# user-rest-service
+This is user-rest-service for managing user data.
+This service exposes a user signup api.  This will save the user
+and create a Authentication account using the Authentication API.
+This service requires a API key.
 
 
 ## Run locally

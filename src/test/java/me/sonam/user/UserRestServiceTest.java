@@ -77,7 +77,7 @@ public class UserRestServiceTest {
         assertThat(result.getResponseBody()).isEqualTo("signup fail: user already exists with email");
     }
 
-    @Test
+   // @Test
     public void newUser() {
         LOG.info("make rest call to save user and create authentication record");
 
