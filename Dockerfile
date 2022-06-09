@@ -14,3 +14,4 @@ EXPOSE 8080
 
 ENTRYPOINT [ "java", "-jar", "/app/user-rest-service.jar"]
 
+LABEL org.opencontainers.image.source https://github.com/sonamsamdupkhangsar/user-rest-service
