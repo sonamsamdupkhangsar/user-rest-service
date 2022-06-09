@@ -11,11 +11,10 @@
     </parent>
 
     <groupId>me.sonam</groupId>
-    <artifactId>spring-flux-r2dbc-pgsql-template</artifactId>
+    <artifactId>user-rest-service</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>spring-flux-r2dbc-pgsql-template</name>
-    <description>A template
-    </description>
+    <name>user-rest-service</name>
+    <description>User rest service for managing user data</description>
 
     <dependencies>
         <dependency>
@@ -85,4 +84,12 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub OWNER Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/sonamsamdupkhangsar/user-rest-service</url>
+        </repository>
+    </distributionManagement>
 </project>

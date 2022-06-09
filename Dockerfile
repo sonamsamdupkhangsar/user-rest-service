@@ -7,10 +7,10 @@ COPY src ./src
 
 RUN ["mvn", "clean", "install"]
 
-FROM openjdk:16
+FROM openjdk:17
 WORKDIR /app
-COPY --from=build /app/target/project-rest-service-1.0-SNAPSHOT.jar /app/project-rest-service.jar
+COPY --from=build /app/target/user-rest-service-1.0-SNAPSHOT.jar /app/user-rest-service.jar
 EXPOSE 8080
 
-ENTRYPOINT [ "java", "-jar", "/app/project-rest-service.jar"]
+ENTRYPOINT [ "java", "-jar", "/app/user-rest-service.jar"]
 

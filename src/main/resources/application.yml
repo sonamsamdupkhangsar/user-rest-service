@@ -2,7 +2,7 @@ logging:
   level:
     root: error
     me:
-      sonam: debug
+      sonam: info
 info:
   app:
     name: Springboot me.sonam.account.Application
@@ -24,3 +24,5 @@ spring:
     password: ${POSTGRES_PASSWORD}
     properties:
       sslMode: REQUIRE
+
+authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authenticate

@@ -1,4 +1,4 @@
-package me.sonam.account;
+package me.sonam.user;
 
 import io.r2dbc.h2.H2ConnectionConfiguration;
 import io.r2dbc.h2.H2ConnectionFactory;

@@ -8,7 +8,7 @@ image:
   pullPolicy: Always
 
 imagePullSecrets:
-  - name: regcred
+  - name: github-regcred
 nameOverride: ""
 fullnameOverride: ""
 
@@ -48,7 +48,7 @@ ingress:
     #cert-manager.io/issuer: letsencrypt-nginx
 
   hosts:
-    - host: project-api.sonam.cloud
+    - host: user-rest-service.sonam.cloud
       paths:
         - path: /
           pathType: Prefix

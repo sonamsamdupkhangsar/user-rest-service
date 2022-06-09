@@ -28,3 +28,6 @@ POSTGRES_USERNAME: dusername
 POSTGRES_DBNAME: dbname
 POSTGRES_SERVICE: dservice
 POSTGRES_PASSWORD: dpassword
+
+authentication-rest-service: http://127.0.0.1:8001/authenticate
+apiKey: 123

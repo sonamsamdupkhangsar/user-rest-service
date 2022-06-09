@@ -1,4 +1,4 @@
-package me.sonam.account;
+package me.sonam.user;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,12 +16,12 @@ public class LivenessReadinessHandler {
     private static final Logger LOG = LoggerFactory.getLogger(LivenessReadinessHandler.class);
 
     public Mono<ServerResponse> liveness(ServerRequest serverRequest) {
-        LOG.info("liveness check");
+        LOG.debug("liveness check");
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).build();
     }
 
     public Mono<ServerResponse> readiness(ServerRequest serverRequest) {
-        LOG.info("readiness check");
+        LOG.debug("readiness check");
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).build();
     }
 

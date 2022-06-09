@@ -1,4 +1,4 @@
-package me.sonam.account;
+package me.sonam.user;
 
 import io.r2dbc.spi.ConnectionFactory;
 import org.slf4j.Logger;
