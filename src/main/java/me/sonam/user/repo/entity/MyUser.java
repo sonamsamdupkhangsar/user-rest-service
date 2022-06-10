@@ -11,7 +11,8 @@ import java.util.UUID;
 /**
  * represents a Account record in Account table.
  */
-public class User implements Persistable<UUID> {
+
+public class MyUser implements Persistable<UUID> {
     @Id
     private UUID id;
     // on user signup only firstname, lastname and email is required
@@ -26,10 +27,10 @@ public class User implements Persistable<UUID> {
     @Transient
     private boolean newAccount;
 
-    public User() {
+    public MyUser() {
     }
 
-    public User(String firstName, String lastName, String email) {
+    public MyUser(String firstName, String lastName, String email) {
         this.id = UUID.randomUUID();
         this.firstName = firstName;
         this.lastName = lastName;
@@ -102,7 +103,7 @@ public class User implements Persistable<UUID> {
         } else if (this.getClass() != obj.getClass()) {
             return false;
         } else {
-            User other = (User)obj;
+            MyUser other = (MyUser)obj;
             if (this.birthDate == null) {
                 if (other.birthDate != null) {
                     return false;

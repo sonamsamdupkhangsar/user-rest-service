@@ -23,8 +23,8 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
-public class UserMockRestServiceTest {
-    private static final Logger LOG = LoggerFactory.getLogger(UserMockRestServiceTest.class);
+public class MyUserMockRestServiceTest {
+    private static final Logger LOG = LoggerFactory.getLogger(MyUserMockRestServiceTest.class);
 
     private final ServerRequest mockServerRequest = mock(ServerRequest.class);
     private final ServerRequestWrapper mockServerRequestWrapper = new ServerRequestWrapper(

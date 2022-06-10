@@ -80,7 +80,8 @@ postgres:
 # dbname and secret file containing username/password are passed via Helm chart installation see deploy.yml file
 
 envs:
-
+  - name: DB_SSLMODE
+    value: REQUIRE
 
 health:
   liveness:

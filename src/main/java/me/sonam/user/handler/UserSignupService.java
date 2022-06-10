@@ -1,7 +1,7 @@
 package me.sonam.user.handler;
 
 import me.sonam.user.repo.UserRepository;
-import me.sonam.user.repo.entity.User;
+import me.sonam.user.repo.entity.MyUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +47,7 @@ public class UserSignupService implements UserService {
                     return userTransfer.getApiKey().equals(apiKey);
                 })
                 .switchIfEmpty(Mono.error(new RuntimeException("apikey check fail")))
-               .flatMap(userTransfer -> userRepository.findByEmail(userTransfer.getEmail()).switchIfEmpty(Mono.just(new User())).zipWith(Mono.just(userTransfer)))
+               .flatMap(userTransfer -> userRepository.findByEmail(userTransfer.getEmail()).switchIfEmpty(Mono.just(new MyUser())).zipWith(Mono.just(userTransfer)))
                .filter(objects -> {
                    LOG.info("objects.t1 {}, t2: {}", objects.getT1(), objects.getT2());
                    return objects.getT1().getId() == null;
@@ -55,11 +55,11 @@ public class UserSignupService implements UserService {
                .switchIfEmpty(Mono.error(new RuntimeException("user already exists with email")))
                .flatMap(objects -> {
                     LOG.info("save new user, t1: {}", objects.getT1());
-                    User user = new User(objects.getT2().getFirstName(), objects.getT2().getLastName(), objects.getT2().getEmail());
-                    return userRepository.save(user).zipWith(Mono.just(objects.getT2()));
+                    MyUser myUser = new MyUser(objects.getT2().getFirstName(), objects.getT2().getLastName(), objects.getT2().getEmail());
+                    return userRepository.save(myUser).zipWith(Mono.just(objects.getT2()));
                 })
                 .flatMap(objects -> {
-                    User user = objects.getT1();
+                    MyUser myUser = objects.getT1();
                     UserTransfer userTransfer = objects.getT2();
                     LOG.info("create authentication with rest call to endpoint {}", authenticationEp);
 
@@ -67,7 +67,7 @@ public class UserSignupService implements UserService {
 
                     return responseSpec.bodyToMono(String.class).map(authenticationId -> {
                         LOG.info("got back authenticationId from service call: {}", authenticationId);
-                        return "user created with id: " + user.getEmail() + " with authId: " + authenticationId;
+                        return "user created with id: " + myUser.getEmail() + " with authId: " + authenticationId;
                     }).onErrorResume(throwable -> Mono.just("Authentication api call failed with error: " + throwable.getMessage()));
                 }).onErrorResume(throwable -> Mono.just("signup fail: " + throwable.getMessage()));
     }

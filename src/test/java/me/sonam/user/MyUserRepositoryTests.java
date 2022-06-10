@@ -2,7 +2,7 @@ package me.sonam.user;
 
 
 import me.sonam.user.repo.UserRepository;
-import me.sonam.user.repo.entity.User;
+import me.sonam.user.repo.entity.MyUser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
 @DataR2dbcTest
-public class UserRepositoryTests {
-    private static final Logger LOG = LoggerFactory.getLogger(UserRestServiceTest.class);
+public class MyUserRepositoryTests {
+    private static final Logger LOG = LoggerFactory.getLogger(MyUserRestServiceTest.class);
 
     @Autowired
     private DatabaseClient databaseClient;
@@ -29,9 +29,9 @@ public class UserRepositoryTests {
 
     @Test
     public void saveAuthenticate() {
-        User user = new User("Dommy", "cat", "dommy@cat.email");
+        MyUser myUser = new MyUser("Dommy", "cat", "dommy@cat.email");
 
-        Mono<User> userMono = userRepository.save(user);
+        Mono<MyUser> userMono = userRepository.save(myUser);
 
         userMono.as(StepVerifier::create)
             .assertNext(actual -> {

@@ -23,6 +23,6 @@ spring:
     username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
     properties:
-      sslMode: REQUIRE
+      sslMode:  ${DB_SSLMODE}
 
 authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authenticate

@@ -3,7 +3,7 @@ package me.sonam.user;
 
 import me.sonam.user.handler.UserTransfer;
 import me.sonam.user.repo.UserRepository;
-import me.sonam.user.repo.entity.User;
+import me.sonam.user.repo.entity.MyUser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -25,8 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @EnableAutoConfiguration
 @ExtendWith(SpringExtension.class)
 @SpringBootTest( webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class UserRestServiceTest {
-    private static final Logger LOG = LoggerFactory.getLogger(UserRestServiceTest.class);
+public class MyUserRestServiceTest {
+    private static final Logger LOG = LoggerFactory.getLogger(MyUserRestServiceTest.class);
 
     @Autowired
     private WebTestClient client;
@@ -59,9 +59,9 @@ public class UserRestServiceTest {
 
     @Test
     public void existingUser() {
-        User user = new User("firstname", "lastname", "yakApiKey");
+        MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey");
 
-        Mono<User> userMono = userRepository.save(user);
+        Mono<MyUser> userMono = userRepository.save(myUser);
         userMono.subscribe(user1 -> LOG.info("save user first"));
 
         LOG.info("make rest call to save user and create authentication record");
