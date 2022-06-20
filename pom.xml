@@ -74,6 +74,30 @@
             <artifactId>springdoc-openapi-webflux-ui</artifactId>
             <version>1.4.3</version>
         </dependency>
+        <dependency>
+            <groupId>au.com.dius</groupId>
+            <artifactId>pact-jvm-consumer-junit5</artifactId>
+            <version>4.0.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>au.com.dius</groupId>
+            <artifactId>pact-jvm-provider-junit5</artifactId>
+            <version>4.0.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.0.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <version>4.0.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -81,6 +105,30 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>au.com.dius</groupId>
+                <artifactId>pact-jvm-provider-maven</artifactId>
+                <version>4.0.0</version>
+                <configuration>
+                    <pactDirectory>target/pacts</pactDirectory>
+                    <pactBrokerUrl>${pactbrokerurl}</pactBrokerUrl>
+                    <pactBrokerUsername>${pactbrokerusername}</pactBrokerUsername>
+                    <pactBrokerPassword>${pactbrokerpassword}</pactBrokerPassword>
+                    <projectVersion>v1</projectVersion>
+                    <serviceProviders>
+                        <serviceProvider>
+                            <name>jwt-rest-service</name>
+                            <pactBrokerUrl>${pactbrokerurl}</pactBrokerUrl>
+                        </serviceProvider>
+                    </serviceProviders>
+                    <tags>
+                        <tag>prod</tag>
+                    </tags>
+                    <configuration>
+                        <pact.verifier.publishResults>true</pact.verifier.publishResults>
+                    </configuration>
+                </configuration>
             </plugin>
         </plugins>
     </build>
