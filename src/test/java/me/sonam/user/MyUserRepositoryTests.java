@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(SpringExtension.class)
 @DataR2dbcTest
 public class MyUserRepositoryTests {
-    private static final Logger LOG = LoggerFactory.getLogger(MyUserRestServiceTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MyUserRepositoryTests.class);
 
     @Autowired
     private DatabaseClient databaseClient;

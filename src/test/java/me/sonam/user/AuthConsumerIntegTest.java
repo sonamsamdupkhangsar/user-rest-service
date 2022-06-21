@@ -68,7 +68,7 @@ public class AuthConsumerIntegTest {
                 .body(new PactDslJsonBody().stringType("authenticationId").stringType("password"))
                 .willRespondWith()
                 .matchHeader("Content-Type", "application/json")
-                .status(200)
+                .status(201)
                 .toPact();
     }
 
@@ -98,7 +98,7 @@ public class AuthConsumerIntegTest {
                 .returnResponse();
 
         LOG.info("asserting 200 for success from mock server response");
-        assertThat(httpResponse.getStatusLine().getStatusCode()).isEqualTo(200);
+        assertThat(httpResponse.getStatusLine().getStatusCode()).isEqualTo(201);
         LOG.info("assert json body contains valid");
         String gotBody = IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
         LOG.info("body: {}", gotBody);
