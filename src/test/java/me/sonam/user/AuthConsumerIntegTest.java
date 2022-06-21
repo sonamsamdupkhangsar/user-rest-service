@@ -54,18 +54,14 @@ public class AuthConsumerIntegTest {
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
 
-        pactDslJsonBody = new PactDslJsonBody()
-                .stringType("subject")
-                .stringType("audience")
-                .uuid("id")
-                .stringType("issuer", "sonam.cloud");
-
         return builder
                 .uponReceiving("create authentication")
                 .path("/create")
                 .method("POST")
                 .matchHeader("Content-Type", "application/json")
-                .body(new PactDslJsonBody().stringType("authenticationId").stringType("password"))
+                .body(new PactDslJsonBody().stringType("authenticationId")
+                        .stringType("password")
+                        .stringType("apiKey"))
                 .willRespondWith()
                 .matchHeader("Content-Type", "application/json")
                 .status(201)
@@ -87,7 +83,9 @@ public class AuthConsumerIntegTest {
         nameValuePairList.add(new BasicNameValuePair("authenticationId", "sonam"));
         nameValuePairList.add(new BasicNameValuePair("password", "hello12"));
 
-        final String jsonBody = "{\"authenticationId\": \"sonam\", \"password\": \"hello\" }";
+        final String jsonBody = "{\"authenticationId\": \"sonam\", " +
+                "\"password\": \"hello\"," +
+                "\"apiKey\": \"dummyApiKey\"}";
 
         StringEntity stringEntity = new StringEntity(jsonBody);
 
@@ -102,14 +100,5 @@ public class AuthConsumerIntegTest {
         LOG.info("assert json body contains valid");
         String gotBody = IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
         LOG.info("body: {}", gotBody);
-        LOG.info("pactDslJsonBody.body: {}", pactDslJsonBody.getBody().toString());
-
-       /* JsonParser jsonParser = new JacksonJsonParser();
-        Map<String, Object> map = jsonParser.parseMap(gotBody);
-
-        assertThat(map.get("subject")).isNotNull();
-        assertThat(map.get("audience")).isNotNull();
-        assertThat(map.get("id")).isNotNull();
-        assertThat(map.get("issuer")).isEqualTo("sonam.cloud");*/
     }
 }
