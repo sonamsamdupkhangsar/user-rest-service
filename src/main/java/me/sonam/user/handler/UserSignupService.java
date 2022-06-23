@@ -46,13 +46,13 @@ public class UserSignupService implements UserService {
                     LOG.info(" userTransfer.apiKey: {}, apiKey: {}, match: {}", userTransfer.getApiKey(), apiKey, userTransfer.getApiKey().equals(apiKey));
                     return userTransfer.getApiKey().equals(apiKey);
                 })
-                .switchIfEmpty(Mono.error(new RuntimeException("apikey check fail")))
+                .switchIfEmpty(Mono.error(new SignupException("apikey check fail")))
                .flatMap(userTransfer -> userRepository.findByEmail(userTransfer.getEmail()).switchIfEmpty(Mono.just(new MyUser())).zipWith(Mono.just(userTransfer)))
                .filter(objects -> {
                    LOG.info("objects.t1 {}, t2: {}", objects.getT1(), objects.getT2());
                    return objects.getT1().getId() == null;
                })
-               .switchIfEmpty(Mono.error(new RuntimeException("user already exists with email")))
+               .switchIfEmpty(Mono.error(new SignupException("user already exists with email")))
                .flatMap(objects -> {
                     LOG.info("save new user, t1: {}", objects.getT1());
                     MyUser myUser = new MyUser(objects.getT2().getFirstName(), objects.getT2().getLastName(), objects.getT2().getEmail());

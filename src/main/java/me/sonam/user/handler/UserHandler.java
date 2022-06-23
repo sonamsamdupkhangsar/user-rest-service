@@ -19,11 +19,10 @@ public class UserHandler {
 
     public Mono<ServerResponse> signupUser(ServerRequest serverRequest) {
         LOG.info("authenticate user");
-
-        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(userService.signupUser(serverRequest.bodyToMono(UserTransfer.class)),
-                        String.class)
-                .onErrorResume(e -> ServerResponse.badRequest().body(BodyInserters
-                        .fromValue(e.getMessage())));
+       return userService.signupUser(serverRequest.bodyToMono(UserTransfer.class))
+                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable ->
+                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(throwable.getMessage()));
     }
 }
