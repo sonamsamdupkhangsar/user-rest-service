@@ -59,6 +59,7 @@ ingressjwtrequired:
   ingressClass: nginx
   annotations:
     nginx.ingress.kubernetes.io/auth-url: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/validate
+    nginx.ingress.kubernetes.io/auth-response-headers: subject
   hosts:
     - host: user-rest-service.sonam.cloud
       paths:
