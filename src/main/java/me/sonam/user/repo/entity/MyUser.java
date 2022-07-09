@@ -19,9 +19,10 @@ public class MyUser implements Persistable<UUID> {
     private String firstName;
     private String lastName;
     private String email;
+    private String authenticationId;
     // these can be populated after login
     private LocalDate birthDate;
-    private String profilePhoto;
+    private String profilePhoto; //will contain the full url to the profilephoto
     private UUID genderId;
 
     @Transient
@@ -30,11 +31,12 @@ public class MyUser implements Persistable<UUID> {
     public MyUser() {
     }
 
-    public MyUser(String firstName, String lastName, String email) {
+    public MyUser(String firstName, String lastName, String email, String authenticationId) {
         this.id = UUID.randomUUID();
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+        this.authenticationId = authenticationId;
 
         this.newAccount = true;
     }
@@ -78,6 +80,10 @@ public class MyUser implements Persistable<UUID> {
 
     public void setNewAccount(boolean newAccount) {
         this.newAccount = newAccount;
+    }
+
+    public String getAuthenticationId() {
+        return this.authenticationId;
     }
 
     @Override

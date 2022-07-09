@@ -3,7 +3,7 @@ package me.sonam.user.handler;
 /**
  * this is for parsing the data from serverrequest body to this object
  */
-class AuthTransfer {
+public class AuthTransfer {
     private String authenticationId;
     private String password;
     private String apiKey;

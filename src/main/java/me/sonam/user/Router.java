@@ -38,7 +38,14 @@ public class Router {
     )
     public RouterFunction<ServerResponse> route(UserHandler handler) {
         LOG.info("building router function");
-        return RouterFunctions.route(POST("/signup").and(accept(MediaType.APPLICATION_JSON)),
-                handler::signupUser);
+        return RouterFunctions.route(POST("/jwtnotrequired/signup").and(accept(MediaType.APPLICATION_JSON)),
+                handler::signupUser)
+                .andRoute(PUT("/user").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::update)
+                .andRoute(GET("/names/{firstName}/{lastName}").and(accept(MediaType.APPLICATION_JSON)),
+                handler::findMatchingFirstNameAndLastName)
+                .andRoute(GET("/user/{id}").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::getUserById);
+
     }
 }

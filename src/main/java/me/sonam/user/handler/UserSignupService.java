@@ -6,11 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import java.util.UUID;
 
 /**
  * This will add a user entry and call authentication service to create
@@ -27,6 +30,9 @@ public class UserSignupService implements UserService {
 
     @Value("${authentication-rest-service}")
     private String authenticationEp;
+
+    @Value("${jwt-rest-service}")
+    private String jwtEp;
 
     @Value("${apiKey}")
     private String apiKey;
@@ -55,7 +61,8 @@ public class UserSignupService implements UserService {
                .switchIfEmpty(Mono.error(new SignupException("user already exists with email")))
                .flatMap(objects -> {
                     LOG.info("save new user, t1: {}", objects.getT1());
-                    MyUser myUser = new MyUser(objects.getT2().getFirstName(), objects.getT2().getLastName(), objects.getT2().getEmail());
+                    MyUser myUser = new MyUser(objects.getT2().getFirstName(), objects.getT2().getLastName(),
+                            objects.getT2().getEmail(), objects.getT2().getAuthenticationId());
                     return userRepository.save(myUser).zipWith(Mono.just(objects.getT2()));
                 })
                 .flatMap(objects -> {
@@ -71,4 +78,46 @@ public class UserSignupService implements UserService {
                     }).onErrorResume(throwable -> Mono.just("Authentication api call failed with error: " + throwable.getMessage()));
                 }).onErrorResume(throwable -> Mono.just("signup fail: " + throwable.getMessage()));
     }
+
+    @Override
+    public Mono<String> updateUser(String jwt, Mono<UserTransfer> userMono) {
+        LOG.info("update user fields, jwtEp: {}", jwtEp);
+
+         Mono<ResponseEntity<String>> responseEntity = webClient.get()
+                 .uri(jwtEp)
+                 .headers(httpHeaders -> httpHeaders.setBearerAuth(jwt))
+                 .retrieve().toEntity(String.class);
+         return responseEntity.filter(stringResponseEntity -> {
+             LOG.info("response: {}", stringResponseEntity.getStatusCode());
+                return stringResponseEntity.getStatusCode().is2xxSuccessful();
+                })
+                 .switchIfEmpty(Mono.error(new SignupException("invalid jwt")))
+                 .flatMap(stringResponseEntity -> userMono.flatMap(userTransfer -> {
+                     userRepository.updateFirstNameAndLastNameByAuthenticationId(userTransfer.getFirstName()
+                     , userTransfer.getLastName(), userTransfer.getAuthenticationId());
+                     return Mono.just("user firstName and lastname updated for authId: ");
+                 }));
+    }
+
+    @Override
+    public Mono<String> updateProfilePhoto(String profilePhotoUrl) {
+        LOG.info("update profile photo url");
+
+        return userRepository.updateProfilePhoto(profilePhotoUrl, "").then(Mono.just("photo updated"));
+    }
+
+    @Override
+    public Mono<MyUser> getUserByAuthenticationId(String authId) {
+        LOG.info("find user with id");
+
+        return userRepository.findByAuthenticationId(authId);
+    }
+
+    @Override
+    public Flux<MyUser> findMatchingName(String firstName, String lastName) {
+        LOG.info("find user with firstName and lastName: '{}' '{}'", firstName, lastName);
+        return userRepository.findByFirstNameContainingIgnoreCaseAndLastNameContainingIgnoreCase(firstName, lastName);
+    }
+
+
 }

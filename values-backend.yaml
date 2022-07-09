@@ -44,9 +44,21 @@ istio:
 ingress:
   enabled: true
   ingressClass: nginx
-  #annotations:
-    #cert-manager.io/issuer: letsencrypt-nginx
+  hosts:
+    - host: user-rest-service.sonam.cloud
+      paths:
+        - path: /jwtnotrequired
+          pathType: Prefix
+  tls:
+    - secretName: sonam.cloud
+      hosts:
+        - "*.sonam.cloud"
 
+ingressjwtrequired:
+  enabled: true
+  ingressClass: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/validate
   hosts:
     - host: user-rest-service.sonam.cloud
       paths:

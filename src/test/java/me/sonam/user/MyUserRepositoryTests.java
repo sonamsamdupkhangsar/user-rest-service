@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -29,7 +30,7 @@ public class MyUserRepositoryTests {
 
     @Test
     public void saveAuthenticate() {
-        MyUser myUser = new MyUser("Dommy", "cat", "dommy@cat.email");
+        MyUser myUser = new MyUser("Dommy", "cat", "dommy@cat.email", "dommy@cat.email");
 
         Mono<MyUser> userMono = userRepository.save(myUser);
 
@@ -51,5 +52,77 @@ public class MyUserRepositoryTests {
                     LOG.info("asserted findByEmail api");
                 })
                 .verifyComplete();
+
+        userRepository.deleteAll().subscribe();
+    }
+
+    @Test
+    public void updateUser() {
+        LOG.info("create a user");
+        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
+
+        userRepository.save(myUser).subscribe();
+
+        LOG.info("update that user now");
+        Mono<MyUser> mono = userRepository.updateFirstNameAndLastNameByAuthenticationId("John", "InTibet", "dommy@cat.email");
+
+        mono.as(StepVerifier::create)
+                .thenConsumeWhile(myUser1 -> {
+                    LOG.info("check John as firstName: {}", myUser1.getFirstName());
+                    return myUser1.getFirstName().equals("John");})
+                .thenConsumeWhile(myUser1 -> myUser1.getLastName().equals("inTibet"))
+                .verifyComplete();
+
+        LOG.info("findByAuthId");
+
+        userRepository.findByAuthenticationId("dommy@cat.email").as(StepVerifier::create)
+                .expectNextCount(1)
+                .thenConsumeWhile(myUser1 -> {
+                    LOG.info("check John as firstName: {}", myUser1.getFirstName());
+                    return myUser1.getFirstName().equals("John");})
+                .thenConsumeWhile(myUser1 -> myUser1.getLastName().equals("inTibet"))
+                .expectComplete()
+                .verify();
+
+        userRepository.deleteAll().subscribe();
+    }
+
+    @Test
+    public void findByFirstNameAndLastNameMatching() {
+        LOG.info("test find by firstName and lastName matching");
+        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
+
+        userRepository.save(myUser).subscribe();
+
+        myUser = new MyUser("Dommy", "thecatman", "dommythecatman@cat.email", "dommythecatman@cat.email");
+
+        userRepository.save(myUser).subscribe();
+
+        myUser = new MyUser("Dommy", "mac", "dommymacn@cat.email", "dommymacn@cat.email");
+
+        userRepository.save(myUser).subscribe();
+
+        LOG.info("find those two users that has matching begining first and lastName");
+        Flux<MyUser> myUserFlux = userRepository.findByFirstNameContainingIgnoreCaseAndLastNameContainingIgnoreCase("dommy", "thecat");
+
+        myUserFlux.as(StepVerifier::create)
+                .expectNextCount(2)
+                .expectComplete()
+                .verify();
+
+        userRepository.deleteAll().subscribe();
+    }
+
+    @Test
+    public void findByUserId() {
+        LOG.info("find by user id");
+
+        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
+        userRepository.save(myUser).subscribe();
+
+        Mono<MyUser> myUserMono = userRepository.findById(myUser.getId());
+
+        myUserMono.as(StepVerifier::create).expectNext(myUser).expectComplete().verify();
+        LOG.info("verify done");
     }
 }
