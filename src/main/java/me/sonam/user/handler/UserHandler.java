@@ -41,6 +41,7 @@ public class UserHandler {
 
     public Mono<ServerResponse> findMatchingFirstNameAndLastName(ServerRequest serverRequest) {
         LOG.info("authenticate user");
+        LOG.info("http headers: {}", serverRequest.headers());
         return userService.findMatchingName(serverRequest.pathVariable("firstName"), serverRequest.pathVariable("lastName"))
                 .collectList().flatMap(myUsers -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(myUsers))
                 .onErrorResume(throwable ->

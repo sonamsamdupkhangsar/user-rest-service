@@ -12,22 +12,21 @@ public class UserWithRemoteEndpoint {
 
     private WebClient webClient = WebClient.builder().build();
 
-    //@Test
-    public void updateUser() {
+    @Test
+    public void findByNames() {
         final String jwt = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJkdW1teTEyMzQiLCJpc3MiOiJzb25hbS5jbG91ZCIsImF1ZCI6InNvbmFtLmNsb3VkIiwiZXhwIjoxNjU3NDU2MjYzLCJqdGkiOiI0Y2Y4ZWYxZi1lZjM3LTRkMTctOGEzNC00YTRkNmNjNzVjZjcifQ.laKyiskryOrrFZfrwvc_F3-AnEcT5MO6s9j4iILdjBbOqbB7Evkxqqm00j3wu-MDVWkvWTI4NKFSHeF0R1I-Bw";
 
         UserTransfer userTransfer = new UserTransfer("Tashi", "Tsering", "",
                 "", "", "");
 
-        WebClient.ResponseSpec responseSpec = webClient.put().uri("http://localhost:8001/user")
+        WebClient.ResponseSpec responseSpec = webClient.get().uri("https://user-rest-service.sonam.cloud/names/dommy/thecat")
                 .headers(httpHeaders -> httpHeaders.setBearerAuth(jwt))
-                .bodyValue(userTransfer)
                 .retrieve();
 
         LOG.info("httpHeaders: {}", responseSpec.toBodilessEntity().block().getHeaders());
-        responseSpec.bodyToMono(String.class).subscribe(s -> LOG.info("jwt: {}", s));
-        responseSpec.toEntity(String.class).subscribe(stringResponseEntity -> LOG.info("string: {}", stringResponseEntity.getBody()));
+       // responseSpec.bodyToMono(String.class).subscribe(s -> LOG.info("jwt: {}", s));
+       // responseSpec.toEntity(String.class).subscribe(stringResponseEntity -> LOG.info("string: {}", stringResponseEntity.getBody()));
 
-        LOG.info("body: {}", responseSpec.bodyToMono(String.class).block());
+       // LOG.info("body: {}", responseSpec.bodyToMono(String.class).block());
     }
 }
