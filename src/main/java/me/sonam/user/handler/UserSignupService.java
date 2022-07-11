@@ -80,37 +80,29 @@ public class UserSignupService implements UserService {
     }
 
     @Override
-    public Mono<String> updateUser(String jwt, Mono<UserTransfer> userMono) {
+    public Mono<String> updateUser(String authenticationId, Mono<UserTransfer> userMono) {
         LOG.info("update user fields, jwtEp: {}", jwtEp);
 
-         Mono<ResponseEntity<String>> responseEntity = webClient.get()
-                 .uri(jwtEp)
-                 .headers(httpHeaders -> httpHeaders.setBearerAuth(jwt))
-                 .retrieve().toEntity(String.class);
-         return responseEntity.filter(stringResponseEntity -> {
-             LOG.info("response: {}", stringResponseEntity.getStatusCode());
-                return stringResponseEntity.getStatusCode().is2xxSuccessful();
-                })
-                 .switchIfEmpty(Mono.error(new SignupException("invalid jwt")))
-                 .flatMap(stringResponseEntity -> userMono.flatMap(userTransfer -> {
-                     userRepository.updateFirstNameAndLastNameByAuthenticationId(userTransfer.getFirstName()
-                     , userTransfer.getLastName(), userTransfer.getAuthenticationId());
-                     return Mono.just("user firstName and lastname updated for authId: ");
-                 }));
+        return userMono.flatMap(userTransfer -> {
+            userRepository.updateFirstNameAndLastNameByAuthenticationId(userTransfer.getFirstName()
+                    , userTransfer.getLastName(), authenticationId);
+            return Mono.just("user firstName and lastname updated for authId: ");
+        });
     }
 
     @Override
-    public Mono<String> updateProfilePhoto(String profilePhotoUrl) {
+    public Mono<String> updateProfilePhoto(String authenticationId, Mono<String> profilePhotoUrlMono) {
         LOG.info("update profile photo url");
-
-        return userRepository.updateProfilePhoto(profilePhotoUrl, "").then(Mono.just("photo updated"));
+        return profilePhotoUrlMono.flatMap(profilePhotoUrl ->
+             userRepository.updateProfilePhoto(profilePhotoUrl, authenticationId).then(Mono.just("photo updated"))
+        );
     }
 
     @Override
-    public Mono<MyUser> getUserByAuthenticationId(String authId) {
-        LOG.info("find user with id");
+    public Mono<MyUser> getUserByAuthenticationId(String authenticationId) {
+        LOG.info("find user with id: {}", authenticationId);
 
-        return userRepository.findByAuthenticationId(authId);
+        return userRepository.findByAuthenticationId(authenticationId);
     }
 
     @Override

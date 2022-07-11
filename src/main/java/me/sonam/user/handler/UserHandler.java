@@ -31,11 +31,21 @@ public class UserHandler {
 
     public Mono<ServerResponse> update(ServerRequest serverRequest) {
         LOG.info("authenticate user");
-        return userService.updateUser(serverRequest.headers().firstHeader("Authorization"), serverRequest.bodyToMono(UserTransfer.class))
+        return userService.updateUser(serverRequest.headers().firstHeader("authId"), serverRequest.bodyToMono(UserTransfer.class))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {LOG.info("got exception in update: {}", throwable.getMessage());
                        return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                                 .bodyValue(throwable.getMessage());
+                });
+    }
+    //updateProfilePhoto
+    public Mono<ServerResponse> updateProfilePhoto(ServerRequest serverRequest) {
+        LOG.info("update profile photo");
+        return userService.updateProfilePhoto(serverRequest.headers().firstHeader("authId"), serverRequest.bodyToMono(String.class))
+                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {LOG.info("got exception in updateProfilePhoto: {}", throwable.getMessage());
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
                 });
     }
 
