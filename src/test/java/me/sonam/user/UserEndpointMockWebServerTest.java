@@ -191,45 +191,13 @@ public class UserEndpointMockWebServerTest {
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
-        //now update the user with a jwt
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
         userTransfer.setFirstName("Josey");
         userTransfer.setLastName("Cat");
 
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200));
-
         LOG.info("update user fields with jwt in auth bearer token");
         webTestClient.put().uri("/user")
-                .headers(httpHeaders -> httpHeaders.setBearerAuth(jwt))
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
-
-        LOG.info("take request now to return 200 for jwt validation");
-        RecordedRequest request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("GET");
-
-        userRepository.deleteAll().subscribe();
-    }
-
-    @Test
-    public void invalidJwt() throws InterruptedException {
-        LOG.info("mock invalid jwt validation response of 400");
-        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "12yakApiKey",
-                "dummy124", "pass", apiKey);
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
-        mockWebServer.enqueue(new MockResponse().setResponseCode(400));
-        LOG.info("mock a 400 response from jwt validation call");
-        EntityExchangeResult<String> entityExchangeResult = webTestClient.put().uri("/user")
-                .headers(httpHeaders -> httpHeaders.setBearerAuth(jwt))
-                .bodyValue(userTransfer)
-                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
-
-        LOG.info("check we got a invalid jwt token response");
-        RecordedRequest request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("GET");
-
-        LOG.info("response: {}", entityExchangeResult.getResponseBody());
 
         userRepository.deleteAll().subscribe();
     }
