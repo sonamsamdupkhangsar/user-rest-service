@@ -9,6 +9,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.Before;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,15 +26,10 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.web.reactive.function.server.RequestPredicates;
-import org.springframework.web.reactive.function.server.RouterFunction;
-import org.springframework.web.reactive.function.server.RouterFunctions;
-import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import javax.swing.text.html.parser.Entity;
 import java.io.IOException;
 import java.time.Duration;
 
@@ -81,6 +77,10 @@ public class UserEndpointMockWebServerTest {
         this.webTestClient = WebTestClient.bindToRouterFunction(routerFunction).build();*/
     }
 
+    @AfterEach
+    public void deleteUserRepo() {
+        userRepository.deleteAll().subscribe();
+    }
 
     @BeforeAll
     static void setupMockWebServer() throws IOException {
@@ -121,10 +121,10 @@ public class UserEndpointMockWebServerTest {
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/signup")
                 .bodyValue(userTransfer)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("signup fail: apikey check fail");
+        assertThat(result.getResponseBody()).isEqualTo("apikey check fail");
     }
 
     @Test
@@ -141,10 +141,10 @@ public class UserEndpointMockWebServerTest {
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/signup")
                 .bodyValue(userTransfer)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("signup fail: user already exists with email");
+        assertThat(result.getResponseBody()).isEqualTo("user already exists with email");
     }
 
     @Test
@@ -198,8 +198,6 @@ public class UserEndpointMockWebServerTest {
         webTestClient.put().uri("/user")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
-
-        userRepository.deleteAll().subscribe();
     }
 
     @Test

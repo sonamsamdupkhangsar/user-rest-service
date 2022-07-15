@@ -75,8 +75,8 @@ public class UserSignupService implements UserService {
                     return responseSpec.bodyToMono(String.class).map(authenticationId -> {
                         LOG.info("got back authenticationId from service call: {}", authenticationId);
                         return "user created with id: " + myUser.getEmail() + " with authId: " + authenticationId;
-                    }).onErrorResume(throwable -> Mono.just("Authentication api call failed with error: " + throwable.getMessage()));
-                }).onErrorResume(throwable -> Mono.just("signup fail: " + throwable.getMessage()));
+                    }).onErrorResume(throwable -> Mono.error(new SignupException("Authentication api call failed with error: " + throwable.getMessage())));
+                });
     }
 
     @Override
