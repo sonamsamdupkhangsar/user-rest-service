@@ -70,11 +70,6 @@ public class UserEndpointMockWebServerTest {
     public void setUp() {
         LOG.info("setup mock");
         MockitoAnnotations.openMocks(this);
-      /*  RouterFunction<ServerResponse> routerFunction = RouterFunctions
-                .route(RequestPredicates.PUT("/jwtnotrequired/signup"),
-                        handler::signupUser);
-
-        this.webTestClient = WebTestClient.bindToRouterFunction(routerFunction).build();*/
     }
 
     @AfterEach
@@ -204,6 +199,10 @@ public class UserEndpointMockWebServerTest {
     public void getUserByAuthId() {
         LOG.info("make rest call to save user and create authentication record");
 
+        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
+
+        userRepository.save(myUser2).subscribe();
+
         //create the user first
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "12yakApiKey",
                 "dummy124", "pass", apiKey);
@@ -217,6 +216,17 @@ public class UserEndpointMockWebServerTest {
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("get user by auth id");
+
+        Flux<MyUser> myUserFlux = webTestClient.get().uri("/user/"+"dummy124").exchange().expectStatus().isOk()
+                .returnResult(MyUser.class).getResponseBody();
+
+        StepVerifier.create(myUserFlux)
+                .assertNext(myUser -> {
+                    LOG.info("asserting found user by authId");
+                            assertThat(myUser.getLastName()).isEqualTo("lastname");
+                            assertThat(myUser.getEmail()).isEqualTo("12yakApiKey");
+                        })
+                .verifyComplete();
     }
 
     @Test

@@ -59,17 +59,10 @@ public class UserHandler {
                                 .bodyValue(throwable.getMessage()));
     }
 
-    public Mono<ServerResponse> getUserById(ServerRequest serverRequest) {
+    public Mono<ServerResponse> getUserByAuthId(ServerRequest serverRequest) {
         LOG.info("authenticate user");
-        if (serverRequest.pathVariable("id") == null || serverRequest.pathVariable("id").isEmpty()) {
-            return Mono.error(new UserException("id is null"));
-        }
-        try {
-            UUID.fromString(serverRequest.pathVariable("id"));
-        }
-        catch (IllegalArgumentException illegalArgumentException) {
-            LOG.error("id is not a UUID type");
-            return Mono.error(new UserException("id is not a UUID"));
+        if (serverRequest.pathVariable("authId") == null || serverRequest.pathVariable("authId").isEmpty()) {
+            return Mono.error(new UserException("authenticationId is null"));
         }
 
         return userService.getUserByAuthenticationId(serverRequest.pathVariable("authId"))

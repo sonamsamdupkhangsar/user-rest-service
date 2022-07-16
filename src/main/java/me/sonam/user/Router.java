@@ -44,8 +44,8 @@ public class Router {
                         handler::update)
                 .andRoute(GET("/names/{firstName}/{lastName}").and(accept(MediaType.APPLICATION_JSON)),
                 handler::findMatchingFirstNameAndLastName)
-                .andRoute(GET("/user/{id}").and(accept(MediaType.APPLICATION_JSON)),
-                        handler::getUserById);
+                .andRoute(GET("/user/{authId}").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::getUserByAuthId);
 
     }
 }
