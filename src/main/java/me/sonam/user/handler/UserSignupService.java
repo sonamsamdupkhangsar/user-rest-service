@@ -94,7 +94,10 @@ public class UserSignupService implements UserService {
     public Mono<String> updateProfilePhoto(String authenticationId, Mono<String> profilePhotoUrlMono) {
         LOG.info("update profile photo url");
         return profilePhotoUrlMono.flatMap(profilePhotoUrl ->
-             userRepository.updateProfilePhoto(profilePhotoUrl, authenticationId).then(Mono.just("photo updated"))
+                {
+                    LOG.info("url: {}", profilePhotoUrl);
+                    return userRepository.updateProfilePhoto(profilePhotoUrl, authenticationId).then(Mono.just("photo updated"));
+                }
         );
     }
 

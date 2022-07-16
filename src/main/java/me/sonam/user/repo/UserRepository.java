@@ -18,7 +18,7 @@ public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
     Mono<MyUser> updateFirstNameAndLastNameByAuthenticationId(@Param("firstName")String firstName,
                                                               @Param("lastName") String lastName,
                                                               @Param("authenticationId") String authenticationId);
-    @Query("update My_User mu set mu.profile_photo= :profilePhoto where mu.authentication_id= : authenticationId")
+    @Query("update My_User mu set mu.profile_photo= :profilePhoto where mu.authentication_id= :authenticationId")
     Mono<MyUser> updateProfilePhoto(@Param("profilePhoto") String profielPhoto, @Param("authenticationId")
                                     String authenticationId);
 }

@@ -114,7 +114,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
                 "dummy123", "pass", "dummy");
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/user/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -134,7 +134,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
                 "dummy123", "pass", apiKey);
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/user/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -153,7 +153,7 @@ public class UserEndpointMockWebServerTest {
 
         webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/user/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
@@ -182,7 +182,7 @@ public class UserEndpointMockWebServerTest {
 
         webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/user/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
@@ -211,7 +211,7 @@ public class UserEndpointMockWebServerTest {
 
         webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
-       EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/signup")
+       EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/user/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
@@ -244,7 +244,7 @@ public class UserEndpointMockWebServerTest {
 
         userRepository.save(myUser).subscribe();
 
-        Flux<MyUser> myUserFlux = webTestClient.get().uri("/names/dommy/thecat")
+        Flux<MyUser> myUserFlux = webTestClient.get().uri("/user/names/dommy/thecat")
                 .exchange().expectStatus().isOk()
                 .returnResult(MyUser.class).getResponseBody();
 
@@ -253,5 +253,22 @@ public class UserEndpointMockWebServerTest {
                 .verifyComplete();
     }
 
+    @Test
+    public void updateProfilePhoto() {
+        LOG.info("test find by firstName and lastName matching");
+        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
+
+        userRepository.save(myUser).subscribe();
+
+        Flux<String> myUserFlux = webTestClient.put().uri("/user/profilephoto")
+                .bodyValue("http://spaces.sonam.us/myapp/app/someimage.png")
+                .headers(httpHeaders -> httpHeaders.set("authId", "dommy@cat.email"))
+                .exchange().expectStatus().isOk()
+                .returnResult(String.class).getResponseBody();
+
+        StepVerifier.create(myUserFlux)
+                .assertNext(s -> { LOG.info("string response is {}", s); assertThat(s).isEqualTo("photo updated"); })
+                .verifyComplete();
+    }
 
 }

@@ -43,7 +43,7 @@ public class MyUserMockRestServiceTest {
         LOG.info("setup mock");
         MockitoAnnotations.openMocks(this);
         RouterFunction<ServerResponse> routerFunction = RouterFunctions
-                .route(RequestPredicates.POST("/jwtnotrequired/signup"),
+                .route(RequestPredicates.POST("/jwtnotrequired/user/signup"),
                         handler::signupUser);
         this.webTestClient = WebTestClient.bindToRouterFunction(routerFunction).build();
     }
@@ -57,7 +57,7 @@ public class MyUserMockRestServiceTest {
         LOG.info("signup user");
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey", "authId", "pass", "yakApiKey");
 
-        webTestClient.post().uri("/jwtnotrequired/signup")
+        webTestClient.post().uri("/jwtnotrequired/user/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isOk()
                 .expectBody(String.class)

@@ -20,7 +20,7 @@ public class UserWithRemoteEndpoint {
     public void findByNames() {
         final String jwt = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJkdW1teTEyMzQiLCJpc3MiOiJzb25hbS5jbG91ZCIsImF1ZCI6InNvbmFtLmNsb3VkIiwiZXhwIjoxNjU3NjY5NDUxLCJqdGkiOiI2OGVmODYwMC02YjcyLTRhZjMtOTUwOS1jNDliYjc2ZDA0NTgifQ.Ku_5CHVXOZpbdaBl9P7tNEQqdbYq5qu87VjquimFzGWBlg7uvylwZ3eQMC8wq-r6EpSrsRaLDB9WxIB0o49G3Q";
 
-        WebClient.ResponseSpec responseSpec = webClient.get().uri("https://user-rest-service.sonam.cloud/names/dommy/thecat")
+        WebClient.ResponseSpec responseSpec = webClient.get().uri("https://user-rest-service.sonam.cloud/user/names/dommy/thecat")
                 .headers(httpHeaders -> httpHeaders.setBearerAuth(jwt))
                 .retrieve();
 
@@ -38,7 +38,7 @@ public class UserWithRemoteEndpoint {
                 "dummy15", "pass", apiKey);
 
 
-        webTestClient.post().uri("https://user-rest-service.sonam.cloud/jwtnotrequired/signup")
+        webTestClient.post().uri("https://user-rest-service.sonam.cloud/jwtnotrequired/user/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isOk().expectBody(String.class)
                 .consumeWith(stringEntityExchangeResult ->
