@@ -95,11 +95,13 @@ sequenceDiagram
     participant postgresqldb
     Client ->> userapi: update user profilephoto
     userapi ->> postgresqldb
+
+    userapi ->> Client: http status ok
+```
+
     Client ->> userapi: update user firstname and lastname
     userapi ->> postgresqldb
     Client ->> userapi: find matching firstname and lastname users
     userapi ->> postgresqldb: read operation
     Client ->> userapi: get user by authentication id
     userapi ->> postgresqldb: read operation
-    userapi ->> Client: http status ok
-```
