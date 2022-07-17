@@ -98,7 +98,10 @@ sequenceDiagram
     Client ->> userapi: update user profilephoto
     userapi ->> postgresqldb: write only
     userapi ->> Client: http status ok on success or bad request on failure
+```
 
+```
+mermaid 
 sequenceDiagram
     autonumber
     participant Client
@@ -107,7 +110,10 @@ sequenceDiagram
     Client ->> userapi: update user firstname and lastname
     userapi ->> postgresqldb: write only
     userapi ->> Client: http status ok on success or bad request on failure
+```
 
+```
+mermaid 
 sequenceDiagram
     autonumber
     participant Client
@@ -116,7 +122,10 @@ sequenceDiagram
     Client ->> userapi: find matching firstname and lastname users
     userapi ->> postgresqldb: read
     userapi ->> Client: http status ok on success or bad request on failure
+```
 
+```
+mermaid 
 sequenceDiagram
     autonumber
     participant Client
