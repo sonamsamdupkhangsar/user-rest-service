@@ -95,7 +95,6 @@ sequenceDiagram
     participant postgresqldb
     Client ->> userapi: update user profilephoto
     userapi ->> postgresqldb
-
     userapi ->> Client: http status ok
 ```
 
