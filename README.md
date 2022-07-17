@@ -90,17 +90,13 @@ sequenceDiagram
 The following are the User update api sequence diagram:
 ```mermaid 
 sequenceDiagram
-    participant Client
-    participant userapi as user-rest-service
-    participant postgresqldb
-    Client->>userapi: update user profilephoto
-
-    userapi ->> postgresqldb    
-```
-
+    Client ->> userapi: update user profilephoto
+    userapi ->> postgresqldb
     Client ->> userapi: update user firstname and lastname
     userapi ->> postgresqldb
     Client ->> userapi: find matching firstname and lastname users
     userapi ->> postgresqldb: read operation
     Client ->> userapi: get user by authentication id
     userapi ->> postgresqldb: read operation
+    userapi ->> Client: http status ok
+```
