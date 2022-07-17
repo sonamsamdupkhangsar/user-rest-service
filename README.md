@@ -92,14 +92,14 @@ The following are the User update api sequence diagram:
 sequenceDiagram
     participant Client
     participant userapi as user-rest-service
-    participant pgsql
+    participant postgresqldb
     Client ->> userapi: update user profilephoto
-    userapi ->> pgsql
+    userapi ->> postgresqldb: write/read
     Client ->> userapi: update user firstname and lastname
-    userapi ->> pgsql
+    userapi ->> postgresqldb: write/read
     Client ->> userapi: find matching firstname and lastname users
-    userapi ->> pgsql: read operation
+    userapi ->> postgresqldb: read operation
     Client ->> userapi: get user by authentication id
-    userapi ->> pgsql: read operation
+    userapi ->> postgresqldb: read operation
     userapi ->> Client: http status ok
 ```
