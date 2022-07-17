@@ -93,10 +93,10 @@ sequenceDiagram
 
 ```mermaid 
 sequenceDiagram
-    participant User
+    participant Client
     participant user-rest-service
     participant authentication-rest-service
-    User->>user-rest-service: user signup
+    Client->>user-rest-service: user signup
     loop Check unique user
         user-rest-service->>user-rest-service: Check email and authenticationId 
     end
