@@ -92,7 +92,7 @@ The following are the User update api sequence diagram:
 sequenceDiagram
     participant Client
     participant userapi as user-rest-service
-    participant postgresqldb    
+    participant postgresqldb
     Client ->> userapi: update user profilephoto
     userapi ->> postgresqldb
     Client ->> userapi: update user firstname and lastname
