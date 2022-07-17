@@ -102,7 +102,9 @@ sequenceDiagram
     end
     Note right of UserRestService: check user data for unique user signup
     UserRestService ->> AuthenticationRestService: register user authentication
-    AuthenticationRestService ->> UserRestService: htp status ok on creation
+    AuthenticationRestService ->> UserRestService: http status ok on creation
+    UserRestService ->> Client: http status ok on user creation success
+    UserRestService ->> dummy-rest-service: Hello man
 ```
 
 ### hello
