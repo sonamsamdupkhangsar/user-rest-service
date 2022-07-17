@@ -94,18 +94,18 @@ sequenceDiagram
 ```mermaid 
 sequenceDiagram
     participant Client
-    participant UserRestService
-    participant AuthenticationRestService
+    participant userapi as user-rest-service
+    participant authapi as authentication-rest-service
     participant a as yo-man-dog
-    Client->>UserRestService: user signup
+    Client->>userapi: user signup
     loop Check unique user
-        UserRestService->>UserRestService: Check email and authenticationId 
+        userapi->>userapi: Check email and authenticationId 
     end
-    Note right of UserRestService: check user data for unique user signup
-    UserRestService ->> AuthenticationRestService: register user authentication
-    AuthenticationRestService ->> UserRestService: http status ok on creation
-    UserRestService ->> Client: http status ok on user creation success
-    UserRestService ->> dummy-rest-service: Hello man
+    Note right of userapi: check user data for unique user signup
+    userapi ->> AuthenticationRestService: register user authentication
+    AuthenticationRestService ->> userapi: http status ok on creation
+    userapi ->> Client: http status ok on user creation success
+    userapi ->> dummy-rest-service: Hello man
 ```
 
 ### hello
