@@ -95,14 +95,14 @@ sequenceDiagram
 sequenceDiagram
     participant Client
     participant UserRestService
-    participant authentication-rest-service
+    participant AuthenticationRestService
     Client->>UserRestService: user signup
     loop Check unique user
         UserRestService->>UserRestService: Check email and authenticationId 
     end
     Note right of UserRestService: check user data for unique user signup
-    UserRestService ->> authentication-rest-service: register user authentication
-    authentication-service ->> UserRestService: htp status ok on creation
+    UserRestService ->> AuthenticationRestService: register user authentication
+    AuthenticationRestService ->> UserRestService: htp status ok on creation
 ```
 
 ### hello
