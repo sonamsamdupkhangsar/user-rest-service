@@ -74,6 +74,7 @@ The following is the user sign-up sequence diagram:
 
 ```mermaid 
 sequenceDiagram
+    autonumber
     participant Client
     participant userapi as user-rest-service
     participant authapi as authentication-rest-service
@@ -90,6 +91,7 @@ sequenceDiagram
 The following are the User update api sequence diagram:
 ```mermaid 
 sequenceDiagram
+    autonumber
     participant Client
     participant userapi as user-rest-service
     participant postgresqldb
