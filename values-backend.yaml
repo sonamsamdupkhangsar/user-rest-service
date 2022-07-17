@@ -44,12 +44,10 @@ istio:
 ingress:
   enabled: true
   ingressClass: nginx
-  annotations:
-    nginx.ingress.kubernetes.io/x-forwarded-prefix: "/jwtnotrequired"
   hosts:
     - host: user-rest-service.sonam.cloud
       paths:
-        - path: /jwtnotrequired/(.*)
+        - path: /jwtnotrequired
           pathType: Prefix
   tls:
     - secretName: sonam.cloud
