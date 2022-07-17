@@ -81,7 +81,7 @@ public class UserSignupService implements UserService {
 
     @Override
     public Mono<String> updateUser(String authenticationId, Mono<UserTransfer> userMono) {
-        LOG.info("update user fields, jwtEp: {}", jwtEp);
+        LOG.info("update user fields");
 
         return userMono.flatMap(userTransfer -> {
             userRepository.updateFirstNameAndLastNameByAuthenticationId(userTransfer.getFirstName()

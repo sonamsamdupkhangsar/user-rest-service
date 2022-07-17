@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * This will test the User signup endpoint
- * to test the '/signup' endpoint
+ * to test the '/jwtnotrequired/user/signup' endpoint
  * For '/authentication' callout from the {@link me.sonam.user.handler.UserSignupService}
  * it will test that service using a MockWebServer for
  * returning a mocked response.  See {@link Router} for endpoints.
@@ -169,106 +169,4 @@ public class UserEndpointMockWebServerTest {
         LOG.info("assert the path for authenticate was created using path '/create'");
         assertThat(request.getPath()).startsWith("/create");
     }
-
-    @Test
-    public void updateUser() throws InterruptedException, IOException {
-        LOG.info("make rest call to save user and create authentication record");
-
-        //create the user first
-        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "12yakApiKey",
-                "dummy124", "pass", apiKey);
-
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("dummy124"));
-
-        webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
-
-        EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/user/signup")
-                .bodyValue(userTransfer)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
-
-        userTransfer.setFirstName("Josey");
-        userTransfer.setLastName("Cat");
-
-        LOG.info("update user fields with jwt in auth bearer token");
-        webTestClient.put().uri("/user")
-                .bodyValue(userTransfer)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
-    }
-
-    @Test
-    public void getUserByAuthId() {
-        LOG.info("make rest call to save user and create authentication record");
-
-        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
-
-        userRepository.save(myUser2).subscribe();
-
-        //create the user first
-        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "12yakApiKey",
-                "dummy124", "pass", apiKey);
-
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("dummy124"));
-
-        webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
-
-       EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/user/signup")
-                .bodyValue(userTransfer)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
-
-        LOG.info("get user by auth id");
-
-        Flux<MyUser> myUserFlux = webTestClient.get().uri("/user/"+"dummy124").exchange().expectStatus().isOk()
-                .returnResult(MyUser.class).getResponseBody();
-
-        StepVerifier.create(myUserFlux)
-                .assertNext(myUser -> {
-                    LOG.info("asserting found user by authId");
-                            assertThat(myUser.getLastName()).isEqualTo("lastname");
-                            assertThat(myUser.getEmail()).isEqualTo("12yakApiKey");
-                        })
-                .verifyComplete();
-    }
-
-    @Test
-    public void findMatchingFirstNameAndLastName() {
-        LOG.info("test find by firstName and lastName matching");
-        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
-
-        userRepository.save(myUser).subscribe();
-
-        myUser = new MyUser("Dommy", "thecatman", "dommythecatman@cat.email", "dommythecatman@cat.email");
-
-        userRepository.save(myUser).subscribe();
-
-        myUser = new MyUser("Dommy", "mac", "dommymacn@cat.email", "dommymacn@cat.email");
-
-        userRepository.save(myUser).subscribe();
-
-        Flux<MyUser> myUserFlux = webTestClient.get().uri("/user/names/dommy/thecat")
-                .exchange().expectStatus().isOk()
-                .returnResult(MyUser.class).getResponseBody();
-
-        StepVerifier.create(myUserFlux)
-                .expectNextCount(2)
-                .verifyComplete();
-    }
-
-    @Test
-    public void updateProfilePhoto() {
-        LOG.info("test find by firstName and lastName matching");
-        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
-
-        userRepository.save(myUser).subscribe();
-
-        Flux<String> myUserFlux = webTestClient.put().uri("/user/profilephoto")
-                .bodyValue("http://spaces.sonam.us/myapp/app/someimage.png")
-                .headers(httpHeaders -> httpHeaders.set("authId", "dommy@cat.email"))
-                .exchange().expectStatus().isOk()
-                .returnResult(String.class).getResponseBody();
-
-        StepVerifier.create(myUserFlux)
-                .assertNext(s -> { LOG.info("string response is {}", s); assertThat(s).isEqualTo("photo updated"); })
-                .verifyComplete();
-    }
-
 }
