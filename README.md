@@ -93,9 +93,9 @@ sequenceDiagram
     participant Client
     participant userapi as user-rest-service
     participant postgresqldb
-    Client ->> userapi: update user profilephoto
-    userapi ->> postgresqldb
-    userapi ->> Client: http status ok
+    Client->>userapi: update user profilephoto
+    userapi->>postgresqldb
+    userapi->>Client: http status ok
 ```
 
     Client ->> userapi: update user firstname and lastname
