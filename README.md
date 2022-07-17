@@ -96,12 +96,19 @@ sequenceDiagram
     participant userapi as user-rest-service
     participant postgresqldb
     Client ->> userapi: update user profilephoto
-    userapi ->> postgresqldb: write/read
+    userapi ->> postgresqldb: write only
+    userapi ->> Client: http status ok on success
+    userapi ->> Client: http bad request on failure
     Client ->> userapi: update user firstname and lastname
-    userapi ->> postgresqldb: write/read
+    userapi ->> postgresqldb: write only
+    userapi ->> Client: http status ok on success
+    userapi ->> Client: http bad request on failure
     Client ->> userapi: find matching firstname and lastname users
-    userapi ->> postgresqldb: read operation
+    userapi ->> postgresqldb: read
+    userapi ->> Client: http status ok on success
+    userapi ->> Client: http bad request on failure
     Client ->> userapi: get user by authentication id
     userapi ->> postgresqldb: read operation
-    userapi ->> Client: http status ok
+    userapi ->> Client: http status ok on success
+    userapi ->> Client: http bad request on failure    
 ```
