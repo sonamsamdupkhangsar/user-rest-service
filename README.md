@@ -96,7 +96,7 @@ sequenceDiagram
     participant Client
     participant UserRestService
     participant AuthenticationRestService
-    participant: yo--man--dog
+    participant a as yo-man-dog
     Client->>UserRestService: user signup
     loop Check unique user
         UserRestService->>UserRestService: Check email and authenticationId 
