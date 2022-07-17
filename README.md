@@ -101,8 +101,8 @@ sequenceDiagram
         userapi->>userapi: Check email and authenticationId 
     end
     Note right of userapi: check user data for unique user signup
-    userapi ->> AuthenticationRestService: register user authentication
-    AuthenticationRestService ->> userapi: http status ok on creation
+    userapi ->> authapi: register user authentication
+    authapi ->> userapi: http status ok on creation
     userapi ->> Client: http status ok on user creation success
 ```
 
