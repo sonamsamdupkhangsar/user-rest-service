@@ -27,3 +27,8 @@ spring:
 
 authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/create
 jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/validate
+
+springdoc:
+  swagger-ui:
+    path: /jwtnotrequired/swaggerui
+    enabled: true

@@ -32,3 +32,11 @@ POSTGRES_PASSWORD: dpassword
 authentication-rest-service: http://localhost:{port}/create
 jwt-rest-service: http://localhost:{port}/validate
 apiKey: 123
+
+endpoint:
+  user:
+    signup: "/jwtnotrequired/user/signup"
+    update: "/user"
+    getbyauthId: "/user/{authid}"
+    matchingnames: "/user/names/{firstname}/{lastname}"
+    profilephoto: "/user/profilephoto"
