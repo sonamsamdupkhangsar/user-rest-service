@@ -96,7 +96,6 @@ sequenceDiagram
     participant Client
     participant userapi as user-rest-service
     participant authapi as authentication-rest-service
-    participant a as yo-man-dog
     Client->>userapi: user signup
     loop Check unique user
         userapi->>userapi: Check email and authenticationId 
@@ -105,7 +104,6 @@ sequenceDiagram
     userapi ->> AuthenticationRestService: register user authentication
     AuthenticationRestService ->> userapi: http status ok on creation
     userapi ->> Client: http status ok on user creation success
-    userapi ->> dummy-rest-service: Hello man
 ```
 
 ### hello
