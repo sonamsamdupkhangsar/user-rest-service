@@ -76,7 +76,7 @@ The following is the flowchart showing component dependency for user-rest-servic
 ```mermaid
 flowchart TD
     A[user-rest-service] -->|user signup| B[authentication-rest-service]
-    B -->|authenitcation create| C[(authentication postgresqldb)]    
+    B -->|authentication create| C[(authentication postgresqldb)]    
     A --> | save user data| D[(user postgresqldb)]
 ```
 
