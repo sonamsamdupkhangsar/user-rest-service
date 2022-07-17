@@ -94,7 +94,7 @@ sequenceDiagram
 ```mermaid 
 sequenceDiagram
     participant Client
-    participant user-rest-service
+    participant "user-rest-service"
     participant authentication-rest-service
     Client->>user-rest-service: user signup
     loop Check unique user
