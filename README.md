@@ -90,18 +90,19 @@ sequenceDiagram
     John->>Bob: How about you?
     Bob-->>John: Jolly good!
 ```
+
 ```mermaid 
 sequenceDiagram
-        participant User
-        participant user-rest-service
-        participant authentication-rest-service
-        User->>user-rest-service: user signup
-        loop Check unique user
-         user-rest-service->>user-rest-service: Check email and authenticationId 
-        end
-        Note right of user-rest-service: check user data for unique user signup
-        user-rest-service ->> authentication-rest-service: register user authentication
-        user-authentication-service ->> user-rest-service: htp status ok on creation
+    participant User
+    participant user-rest-service
+    participant authentication-rest-service
+    User->>user-rest-service: user signup
+    loop Check unique user
+        user-rest-service->>user-rest-service: Check email and authenticationId 
+    end
+    Note right of user-rest-service: check user data for unique user signup
+    user-rest-service ->> authentication-rest-service: register user authentication
+    user-authentication-service ->> user-rest-service: htp status ok on creation
 ```
 
 ### hello
