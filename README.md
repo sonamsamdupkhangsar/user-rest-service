@@ -75,9 +75,8 @@ The following is the user sign-up sequence diagram:
 ```mermaid
 flowchart TD
     A[user-rest-service] -->|user signup| B[authentication-rest-service]
-    B -->|authenitcation create| C[(postgresql database)]
-    B --> A
-    A --> | save user data| C
+    B -->|authenitcation create| C[(authentication postgresql database)]    
+    A --> | save user data| D[(user postgresql databse)]
 ```
 
 ```mermaid 
