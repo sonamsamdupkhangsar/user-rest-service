@@ -83,11 +83,37 @@ public class UserSignupService implements UserService {
     public Mono<String> updateUser(String authenticationId, Mono<UserTransfer> userMono) {
         LOG.info("update user fields");
 
-        return userMono.flatMap(userTransfer -> {
-            userRepository.updateFirstNameAndLastNameByAuthenticationId(userTransfer.getFirstName()
+        return userMono.flatMap(userTransfer ->
+                     userRepository.findByAuthenticationId(authenticationId).flatMap(myUser ->
+                            userRepository.existsByEmailAndIdNot(userTransfer.getEmail(), myUser.getId())
+                                    .filter(aBoolean -> {
+                                        LOG.info("boolean: {}", aBoolean);
+                                        if (aBoolean == true) {
+                                            return false;
+                                        } else {
+                                            return true;
+                                        }
+                                    })
+                                    .switchIfEmpty(Mono.error(new SignupException("email: email already used")))
+                                    .flatMap(aBoolean -> {
+                                        LOG.info("update name and email");
+                                        return userRepository.updateFirstNameAndLastNameAndEmailByAuthenticationId(
+                                                userTransfer.getFirstName(), userTransfer.getLastName(), userTransfer.getEmail()
+                                                , userTransfer.getAuthenticationId()
+                                        );
+
+                                    })
+                                    .thenReturn("user firstname, lastname and email updated")));
+                                    //.flatMap(rowsUpdated -> Mono.just("user firstname, lastname and email updated: "+ rowsUpdated))));
+
+
+
+
+
+/*            userRepository.updateFirstNameAndLastNameByAuthenticationId(userTransfer.getFirstName()
                     , userTransfer.getLastName(), authenticationId);
             return Mono.just("user firstName and lastname updated for authId: ");
-        });
+        });*/
     }
 
     @Override

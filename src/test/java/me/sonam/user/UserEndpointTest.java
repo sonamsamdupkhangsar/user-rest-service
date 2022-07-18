@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
@@ -60,12 +61,24 @@ public class UserEndpointTest {
 
         userTransfer.setFirstName("Josey");
         userTransfer.setLastName("Cat");
+        userTransfer.setEmail("josey.cat@@cat.emmail");
 
         LOG.info("update user fields with jwt in auth bearer token");
-        webTestClient.put().uri("/user")
+        EntityExchangeResult<String> result = webTestClient.put().uri("/user")
                 .bodyValue(userTransfer)
                 .headers(httpHeaders -> httpHeaders.set("authId", "dommy@cat.email"))
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+
+        LOG.info("result: {}", result.getResponseBody());
+
+        userRepository.findByAuthenticationId("dommy@cat.email").as(StepVerifier::create)
+                .expectNextMatches(myUser -> {
+                    LOG.info("do expectNextMatches");
+                   return myUser.getEmail().equals("josey.cat@@cat.emmail");
+                }
+                )
+                .expectComplete().verify();
+
     }
     
     @Test

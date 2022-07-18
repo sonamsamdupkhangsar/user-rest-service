@@ -63,17 +63,31 @@ public class MyUserRepositoryTests {
 
         userRepository.save(myUser).subscribe();
 
-        LOG.info("update that user now");
-        Mono<MyUser> mono = userRepository.updateFirstNameAndLastNameByAuthenticationId("John", "InTibet", "dommy@cat.email");
+        MyUser myUser2 = new MyUser("apple", "applelastname", "apple@cat.email", "apple@cat.email");
 
-        mono.as(StepVerifier::create)
+        userRepository.save(myUser2).subscribe();
+
+        LOG.info("update that user now");
+        Mono<Integer> mono = userRepository.updateFirstNameAndLastNameAndEmailByAuthenticationId(
+                "John", "InTibet", "dommy@cat.email", "dommy@cat.email");
+
+        userRepository.findAll().subscribe(myUser1 -> LOG.info("found user: {}", myUser1));
+
+        LOG.info("update that user now");
+        userRepository.updateFirstNameAndLastNameAndEmailByAuthenticationId(
+                "John", "InTibet", "dog@cat.email", "dommy@cat.email")
+               .log().subscribe();
+
+        userRepository.findByAuthenticationId("dommy@cat.email")
+                .subscribe(myUser1 -> LOG.info("found user: {}, test condiditon: {}", myUser1, myUser1.getEmail().equals("dog@cat.email")));
+      /*  mono.as(StepVerifier::create)
                 .thenConsumeWhile(myUser1 -> {
                     LOG.info("check John as firstName: {}", myUser1.getFirstName());
                     return myUser1.getFirstName().equals("John");})
                 .thenConsumeWhile(myUser1 -> myUser1.getLastName().equals("inTibet"))
-                .verifyComplete();
+                .verifyComplete();*/
 
-        LOG.info("findByAuthId");
+       /* LOG.info("findByAuthId");
 
         userRepository.findByAuthenticationId("dommy@cat.email").as(StepVerifier::create)
                 .expectNextCount(1)
@@ -84,6 +98,20 @@ public class MyUserRepositoryTests {
                 .expectComplete()
                 .verify();
 
+        userRepository.findByAuthenticationId("dommy@cat.email").as(StepVerifier::create)
+                .consumeNextWith(myUser1 -> LOG.info("found user: {}", myUser1)).verifyComplete();
+
+*/
+
+
+      /*  mono2.as(StepVerifier::create)
+               .assertNext(long -> assertThat(myUser1.getEmail()).isEqualTo("dog@cat.email"))
+                .expectComplete();*/
+
+      /*  userRepository.findByAuthenticationId("dommy@cat.email").as(StepVerifier::create)
+                .consumeNextWith(myUser1 -> LOG.info("found user: {}", myUser1)).verifyComplete();
+
+*/
         userRepository.deleteAll().subscribe();
     }
 
