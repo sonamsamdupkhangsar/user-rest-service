@@ -5,5 +5,5 @@ info:
   description: User rest services api documentation
 
 paths:
-  /jwtnotrequired/user/signup:
+  /public/user/signup:
     s

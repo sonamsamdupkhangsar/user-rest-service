@@ -38,7 +38,7 @@ public class UserWithRemoteEndpoint {
                 "dummy15", "pass", apiKey);
 
 
-        webTestClient.post().uri("https://user-rest-service.sonam.cloud/jwtnotrequired/user/signup")
+        webTestClient.post().uri("https://user-rest-service.sonam.cloud/public/user/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isOk().expectBody(String.class)
                 .consumeWith(stringEntityExchangeResult ->

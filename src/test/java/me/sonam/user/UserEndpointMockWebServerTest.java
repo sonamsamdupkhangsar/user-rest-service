@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * This will test the User signup endpoint
- * to test the '/jwtnotrequired/user/signup' endpoint
+ * to test the '/public/user/signup' endpoint
  * For '/authentication' callout from the {@link me.sonam.user.handler.UserSignupService}
  * it will test that service using a MockWebServer for
  * returning a mocked response.  See {@link Router} for endpoints.
@@ -114,7 +114,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
                 "dummy123", "pass", "dummy");
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/user/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -134,7 +134,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
                 "dummy123", "pass", apiKey);
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/user/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -153,7 +153,7 @@ public class UserEndpointMockWebServerTest {
 
         webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/jwtnotrequired/user/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 

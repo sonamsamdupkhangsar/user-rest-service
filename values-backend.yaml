@@ -47,7 +47,7 @@ ingress:
   hosts:
     - host: user-rest-service.sonam.cloud
       paths:
-        - path: /jwtnotrequired
+        - path: /public
           pathType: Prefix
   tls:
     - secretName: sonam.cloud

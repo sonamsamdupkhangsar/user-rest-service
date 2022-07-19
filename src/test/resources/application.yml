@@ -35,7 +35,7 @@ apiKey: 123
 
 endpoint:
   user:
-    signup: "/jwtnotrequired/user/signup"
+    signup: "/public/user/signup"
     update: "/user"
     getbyauthId: "/user/{authid}"
     matchingnames: "/user/names/{firstname}/{lastname}"

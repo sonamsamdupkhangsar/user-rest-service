@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * This will test the response from the Rest endpoint, the business service
  * , and the data repository interfaces.
- * For the `/jwtnotrequired/user/signup` endpoint see {@link UserEndpointMockWebServerTest}
+ * For the `/public/user/signup` endpoint see {@link UserEndpointMockWebServerTest}
  * will test that endpoint which will mock the response to the Authentication endpoint.
  */
 @EnableAutoConfiguration

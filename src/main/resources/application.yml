@@ -30,5 +30,5 @@ jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/v
 
 springdoc:
   swagger-ui:
-    path: /jwtnotrequired/swaggerui
+    path: /public/swaggerui
     enabled: true
