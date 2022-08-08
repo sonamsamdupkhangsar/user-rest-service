@@ -75,6 +75,6 @@ jobs:
             --set "postgres.dbname=${{ secrets.POSTGRES_DBNAME }}" \
             --set "secretenvs[0].name=apiKey" --set "secretenvs[0].value=${{ secrets.API_KEY }}" \
              $PROJECT_NAME \
-            sonam/mychart -f values-backend.yaml --version 0.1.19 --namespace=backend
+            sonam/mychart -f values-backend.yaml --version 0.1.21 --namespace=backend
 
 

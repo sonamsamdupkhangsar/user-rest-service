@@ -13,6 +13,7 @@ import java.util.UUID;
 public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
     Mono<MyUser> findByEmail(String email);
     Mono<Boolean> existsByEmailAndIdNot(String email, UUID id);
+    Mono<Boolean> existsByEmail(String email);
     Flux<MyUser> findByFirstNameContainingIgnoreCaseAndLastNameContainingIgnoreCase(String firstName, String lastName);
     Mono<MyUser> findByAuthenticationId(String authenticationId);
     @Query("update My_User mu set mu.first_Name= :firstName, mu.last_Name= :lastName where mu.authentication_Id= :authenticationId")

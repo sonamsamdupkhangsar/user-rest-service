@@ -1,11 +1,14 @@
 package me.sonam.user.handler;
 
+
+import me.sonam.user.email.Email;
 import me.sonam.user.repo.UserRepository;
 import me.sonam.user.repo.entity.MyUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -28,14 +31,26 @@ public class UserSignupService implements UserService {
 
     private WebClient webClient;
 
+    @Value("${account-rest-service}")
+    private String accountEp;
+
     @Value("${authentication-rest-service}")
     private String authenticationEp;
 
     @Value("${jwt-rest-service}")
     private String jwtEp;
 
+    @Value("${email-rest-service}")
+    private String emailEp;
+
     @Value("${apiKey}")
     private String apiKey;
+
+    @Value("${emailFrom}")
+    private String emailFrom;
+
+    @Value("${emailBody}")
+    private String emailBody;
 
     @PostConstruct
     public void setWebClient() {
@@ -46,37 +61,37 @@ public class UserSignupService implements UserService {
     public Mono<String> signupUser(Mono<UserTransfer> userMono) {
         LOG.info("signup user, apiKey: {}", apiKey);
 
-       return userMono
-                .filter(userTransfer -> {
-                    //first filter on apiKey
-                    LOG.info(" userTransfer.apiKey: {}, apiKey: {}, match: {}", userTransfer.getApiKey(), apiKey, userTransfer.getApiKey().equals(apiKey));
-                    return userTransfer.getApiKey().equals(apiKey);
-                })
-                .switchIfEmpty(Mono.error(new SignupException("apikey check fail")))
-               .flatMap(userTransfer -> userRepository.findByEmail(userTransfer.getEmail()).switchIfEmpty(Mono.just(new MyUser())).zipWith(Mono.just(userTransfer)))
-               .filter(objects -> {
-                   LOG.info("objects.t1 {}, t2: {}", objects.getT1(), objects.getT2());
-                   return objects.getT1().getId() == null;
-               })
-               .switchIfEmpty(Mono.error(new SignupException("user already exists with email")))
-               .flatMap(objects -> {
-                    LOG.info("save new user, t1: {}", objects.getT1());
-                    MyUser myUser = new MyUser(objects.getT2().getFirstName(), objects.getT2().getLastName(),
-                            objects.getT2().getEmail(), objects.getT2().getAuthenticationId());
-                    return userRepository.save(myUser).zipWith(Mono.just(objects.getT2()));
-                })
-                .flatMap(objects -> {
-                    MyUser myUser = objects.getT1();
-                    UserTransfer userTransfer = objects.getT2();
-                    LOG.info("create authentication with rest call to endpoint {}", authenticationEp);
+        return userMono.flatMap(userTransfer -> {
+            return userRepository.existsByEmail(userTransfer.getEmail())
+                    .filter(aBoolean -> !aBoolean)
+                    .switchIfEmpty(Mono.error(new SignupException("email already exists")))
+                    .flatMap(aBoolean -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
+                            userTransfer.getEmail(), userTransfer.getAuthenticationId())))
+                    .flatMap(myUser -> userRepository.save(myUser))
+                    .flatMap(myUser -> {
+                        LOG.info("create Authentication record with webrequest on endpoint: {}", authenticationEp);
+                        WebClient.ResponseSpec responseSpec = webClient.post().uri(authenticationEp).bodyValue(userTransfer).retrieve();
 
-                    WebClient.ResponseSpec responseSpec = webClient.post().uri(authenticationEp).bodyValue(userTransfer).retrieve();
+                        return responseSpec.bodyToMono(String.class).map(authenticationId -> {
+                            LOG.info("got back authenticationId from service call: {}", authenticationId);
+                            return authenticationId;
+                        }).onErrorResume(throwable -> Mono.error(new SignupException("Authentication api call failed with error: " + throwable.getMessage())));
+                    })
+                    .flatMap(s -> {
+                        LOG.info("create Account record with webrequest on endpoint: {}", accountEp);
 
-                    return responseSpec.bodyToMono(String.class).map(authenticationId -> {
-                        LOG.info("got back authenticationId from service call: {}", authenticationId);
-                        return "user created with id: " + myUser.getEmail() + " with authId: " + authenticationId;
-                    }).onErrorResume(throwable -> Mono.error(new SignupException("Authentication api call failed with error: " + throwable.getMessage())));
-                });
+                        StringBuilder stringBuilder = new StringBuilder(accountEp).append("/")
+                                .append(userTransfer.getAuthenticationId())
+                                .append("/").append(userTransfer.getEmail());
+
+                        WebClient.ResponseSpec spec = webClient.post().uri(stringBuilder.toString()).retrieve();
+
+                        return spec.bodyToMono(String.class).map(string -> {
+                            LOG.info("account create response received: ", string);
+                            return s;
+                        }).onErrorResume(throwable -> Mono.error(new SignupException("Email activation failed: " + throwable.getMessage())));
+                    }).thenReturn("user signup succcessful");
+        });
     }
 
     @Override
@@ -104,16 +119,6 @@ public class UserSignupService implements UserService {
 
                                     })
                                     .thenReturn("user firstname, lastname and email updated")));
-                                    //.flatMap(rowsUpdated -> Mono.just("user firstname, lastname and email updated: "+ rowsUpdated))));
-
-
-
-
-
-/*            userRepository.updateFirstNameAndLastNameByAuthenticationId(userTransfer.getFirstName()
-                    , userTransfer.getLastName(), authenticationId);
-            return Mono.just("user firstName and lastname updated for authId: ");
-        });*/
     }
 
     @Override

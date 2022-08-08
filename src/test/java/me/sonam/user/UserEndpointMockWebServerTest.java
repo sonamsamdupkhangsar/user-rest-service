@@ -50,8 +50,8 @@ public class UserEndpointMockWebServerTest {
     private static final Logger LOG = LoggerFactory.getLogger(UserEndpointMockWebServerTest.class);
 
     private static String authEndpoint = "http://localhost:{port}/create";
-
     private static String jwtEndpoint = "http://localhost:{port}/validate";
+    private static String accountEp = "http://localhost:{port}/accounts";
 
     @Value("${apiKey}")
     private String apiKey;
@@ -103,23 +103,9 @@ public class UserEndpointMockWebServerTest {
     static void properties(DynamicPropertyRegistry r) throws IOException {
         r.add("authentication-rest-service", () -> authEndpoint.replace("{port}", mockWebServer.getPort() + ""));
         r.add("jwt-rest-service", () -> jwtEndpoint.replace("{port}", mockWebServer.getPort() + ""));
+        r.add("account-rest-service", () -> accountEp.replace("{port}", mockWebServer.getPort() + ""));
         LOG.info("updated authentication-rest-service and jwt-rest-service properties");
         LOG.info("mockWebServer.port: {}", mockWebServer.getPort());
-    }
-
-    @Test
-    public void apiKeyWrong() {
-        LOG.info("make rest call to save user and create authentication record");
-
-        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
-                "dummy123", "pass", "dummy");
-
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
-                .bodyValue(userTransfer)
-                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
-
-        LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("apikey check fail");
     }
 
     @Test
@@ -139,7 +125,7 @@ public class UserEndpointMockWebServerTest {
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("user already exists with email");
+        assertThat(result.getResponseBody()).isEqualTo("email already exists");
     }
 
     @Test
@@ -150,8 +136,9 @@ public class UserEndpointMockWebServerTest {
                 "dummy123", "pass", apiKey);
 
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("dummy123"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
 
-        webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
+       // webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
                 .bodyValue(userTransfer)
@@ -159,6 +146,11 @@ public class UserEndpointMockWebServerTest {
 
         LOG.info("start taking request now");
         RecordedRequest request = mockWebServer.takeRequest();
+        LOG.info("response: {}", result.getResponseBody());
+
+
+       assertThat(result.getResponseBody()).isEqualTo("user signup succcessful");
+
         assertThat(request.getMethod()).isEqualTo("POST");
 
         //the body is empty for some reason.

@@ -29,9 +29,13 @@ POSTGRES_DBNAME: dbname
 POSTGRES_SERVICE: dservice
 POSTGRES_PASSWORD: dpassword
 
+account-rest-service: http://localhost:{port}/accounts
 authentication-rest-service: http://localhost:{port}/create
 jwt-rest-service: http://localhost:{port}/validate
 apiKey: 123
+email-rest-service: https://email-rest-service.sonam.cloud/email
+emailFrom: ""
+emailBody: Please activate your email by following this link https://account-rest-service.sonam.cloud/accounts/activate/{accountId}
 
 endpoint:
   user:
