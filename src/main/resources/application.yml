@@ -26,7 +26,7 @@ spring:
       sslMode:  ${DB_SSLMODE}
 
 account-rest-service: http://account-rest-service-mychart.backend.svc.cluster.local:80/accounts
-authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/public/authentications
+authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authentications
 jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/validate
 email-rest-service: https://email-rest-service.sonam.cloud/email
 emailFrom: ""

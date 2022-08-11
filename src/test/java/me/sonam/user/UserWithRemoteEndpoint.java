@@ -7,6 +7,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
+import java.util.UUID;
+
 public class UserWithRemoteEndpoint {
     private static final Logger LOG = LoggerFactory.getLogger(UserWithRemoteEndpoint.class);
 
@@ -31,12 +34,14 @@ public class UserWithRemoteEndpoint {
        // LOG.info("body: {}", responseSpec.bodyToMono(String.class).block());
     }
 
-    //@Test
+    @Test
     public void signup() {
         LOG.info("signup user");
-        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "dummy15",
-                "dummy15", "pass", apiKey);
+        final String id = UUID.randomUUID().toString().replace("-", "");
+        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", id+"@dummy.com",
+                id, "pass", apiKey);
 
+        webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
         webTestClient.post().uri("https://user-rest-service.sonam.cloud/public/user/signup")
                 .bodyValue(userTransfer)

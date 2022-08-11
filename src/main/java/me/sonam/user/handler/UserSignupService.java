@@ -62,9 +62,9 @@ public class UserSignupService implements UserService {
         LOG.info("signup user");
 
         return userMono.flatMap(userTransfer ->
-             userRepository.existsByEmail(userTransfer.getEmail())
+             userRepository.existsByAuthenticationIdOrEmail(userTransfer.getAuthenticationId(), userTransfer.getEmail())
                     .filter(aBoolean -> !aBoolean)
-                    .switchIfEmpty(Mono.error(new SignupException("email already exists")))
+                    .switchIfEmpty(Mono.error(new SignupException("authenticationId or email already exists")))
                     .flatMap(aBoolean -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
                             userTransfer.getEmail(), userTransfer.getAuthenticationId())))
                     .flatMap(myUser -> userRepository.save(myUser))
@@ -89,7 +89,19 @@ public class UserSignupService implements UserService {
                         return spec.bodyToMono(String.class).map(string -> {
                             LOG.info("account has been created with response: {}", string);
                             return string;
-                        }).onErrorResume(throwable -> Mono.error(new SignupException("Email activation failed: " + throwable.getMessage())));
+                        }).onErrorResume(throwable -> {
+                            LOG.info("roll back Authentication and User saved");
+
+                            webClient.post().uri(authenticationEp).bodyValue(userTransfer)
+                                    .retrieve().bodyToMono(String.class)
+                                    .subscribe(s1 ->
+                                            LOG.info("roll-back: deleted authentication on failure, authentication response: {}"
+                                                    , s1));
+                            userRepository.deleteByAuthenticationId(userTransfer.getAuthenticationId())
+                                    .subscribe(unused -> LOG.info("roll-back: deleted user with authId: {}"
+                                            , userTransfer.getAuthenticationId()));
+                            return Mono.error(new SignupException("Email activation failed: " + throwable.getMessage()));
+                        });
                     }).thenReturn("user signup succcessful")
         );
     }
