@@ -61,8 +61,8 @@ public class UserSignupService implements UserService {
     public Mono<String> signupUser(Mono<UserTransfer> userMono) {
         LOG.info("signup user, apiKey: {}", apiKey);
 
-        return userMono.flatMap(userTransfer -> {
-            return userRepository.existsByEmail(userTransfer.getEmail())
+        return userMono.flatMap(userTransfer ->
+             userRepository.existsByEmail(userTransfer.getEmail())
                     .filter(aBoolean -> !aBoolean)
                     .switchIfEmpty(Mono.error(new SignupException("email already exists")))
                     .flatMap(aBoolean -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
@@ -87,11 +87,11 @@ public class UserSignupService implements UserService {
                         WebClient.ResponseSpec spec = webClient.post().uri(stringBuilder.toString()).retrieve();
 
                         return spec.bodyToMono(String.class).map(string -> {
-                            LOG.info("account create response received: ", string);
-                            return s;
+                            LOG.info("account has been created with response: {}", string);
+                            return string;
                         }).onErrorResume(throwable -> Mono.error(new SignupException("Email activation failed: " + throwable.getMessage())));
-                    }).thenReturn("user signup succcessful");
-        });
+                    }).thenReturn("user signup succcessful")
+        );
     }
 
     @Override
