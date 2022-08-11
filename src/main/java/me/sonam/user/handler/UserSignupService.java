@@ -59,7 +59,7 @@ public class UserSignupService implements UserService {
 
     @Override
     public Mono<String> signupUser(Mono<UserTransfer> userMono) {
-        LOG.info("signup user, apiKey: {}", apiKey);
+        LOG.info("signup user");
 
         return userMono.flatMap(userTransfer ->
              userRepository.existsByEmail(userTransfer.getEmail())
