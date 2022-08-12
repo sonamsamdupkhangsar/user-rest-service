@@ -125,7 +125,7 @@ public class UserEndpointMockWebServerTest {
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("email already exists");
+        assertThat(result.getResponseBody()).isEqualTo("authenticationId or email already exists");
     }
 
     @Test
