@@ -89,19 +89,7 @@ public class UserSignupService implements UserService {
                         return spec.bodyToMono(String.class).map(string -> {
                             LOG.info("account has been created with response: {}", string);
                             return string;
-                        }).onErrorResume(throwable -> {
-                            LOG.info("roll back Authentication and User saved");
-
-                            webClient.post().uri(authenticationEp).bodyValue(userTransfer)
-                                    .retrieve().bodyToMono(String.class)
-                                    .subscribe(s1 ->
-                                            LOG.info("roll-back: deleted authentication on failure, authentication response: {}"
-                                                    , s1));
-                            userRepository.deleteByAuthenticationId(userTransfer.getAuthenticationId())
-                                    .subscribe(unused -> LOG.info("roll-back: deleted user with authId: {}"
-                                            , userTransfer.getAuthenticationId()));
-                            return Mono.error(new SignupException("Email activation failed: " + throwable.getMessage()));
-                        });
+                        }).onErrorResume(throwable -> Mono.error(new SignupException("Email activation failed: " + throwable.getMessage())));
                     }).thenReturn("user signup succcessful")
         );
     }
