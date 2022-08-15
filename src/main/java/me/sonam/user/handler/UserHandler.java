@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.UUID;
 
 @Service
@@ -23,17 +24,20 @@ public class UserHandler {
     public Mono<ServerResponse> signupUser(ServerRequest serverRequest) {
         LOG.info("authenticate user");
        return userService.signupUser(serverRequest.bodyToMono(UserTransfer.class))
-                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable ->
-                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(throwable.getMessage()));
+                .flatMap(s ->  ServerResponse.created(URI.create("/user/")).contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {
+                    LOG.error("signup user failed", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
     }
 
     public Mono<ServerResponse> update(ServerRequest serverRequest) {
         LOG.info("authenticate user");
         return userService.updateUser(serverRequest.headers().firstHeader("authId"), serverRequest.bodyToMono(UserTransfer.class))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable -> {LOG.info("got exception in update: {}", throwable.getMessage());
+                .onErrorResume(throwable -> {
+                    LOG.info("user update failed", throwable);
                        return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                                 .bodyValue(throwable.getMessage());
                 });
@@ -43,7 +47,8 @@ public class UserHandler {
         LOG.info("update profile photo");
         return userService.updateProfilePhoto(serverRequest.headers().firstHeader("authId"), serverRequest.bodyToMono(String.class))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable -> {LOG.info("got exception in updateProfilePhoto: {}", throwable.getMessage());
+                .onErrorResume(throwable -> {
+                    LOG.info("update profile photo failed", throwable);
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(throwable.getMessage());
                 });
@@ -52,11 +57,14 @@ public class UserHandler {
     public Mono<ServerResponse> findMatchingFirstNameAndLastName(ServerRequest serverRequest) {
         LOG.info("authenticate user");
         LOG.info("http headers: {}", serverRequest.headers());
+
         return userService.findMatchingName(serverRequest.pathVariable("firstName"), serverRequest.pathVariable("lastName"))
                 .collectList().flatMap(myUsers -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(myUsers))
-                .onErrorResume(throwable ->
-                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(throwable.getMessage()));
+                .onErrorResume(throwable -> {
+                    LOG.error("find matching firstname and lastname", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
     }
 
     public Mono<ServerResponse> getUserByAuthId(ServerRequest serverRequest) {
@@ -67,8 +75,22 @@ public class UserHandler {
 
         return userService.getUserByAuthenticationId(serverRequest.pathVariable("authId"))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable ->
-                        ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(throwable.getMessage()));
+                .onErrorResume(throwable -> {
+                    LOG.error("get user by authid failed", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
+    }
+
+    public Mono<ServerResponse> activateUser(ServerRequest serverRequest) {
+        LOG.info("authenticate user");
+
+        return userService.activateUser(serverRequest.pathVariable("authenticationId"))
+                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {
+                    LOG.error("activate user failed", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
     }
 }

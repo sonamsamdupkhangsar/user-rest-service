@@ -32,6 +32,10 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -109,23 +113,31 @@ public class UserEndpointMockWebServerTest {
     }
 
     @Test
-    public void existingUser() {
-        MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", "yakApiKey");
+    public void existingUser() throws InterruptedException {
+        MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", "existingUser");
 
         Mono<MyUser> userMono = userRepository.save(myUser);
         userMono.subscribe(user1 -> LOG.info("save user first"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("existingUser"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("existingUser"));
 
         LOG.info("make rest call to save user and create authentication record");
 
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
-                "dummy123", "pass", apiKey);
+                "existingUser", "pass", apiKey);
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
                 .bodyValue(userTransfer)
-                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("authenticationId or email already exists");
+        assertThat(result.getResponseBody()).isEqualTo("user signup succcessful");
+
+        RecordedRequest request = mockWebServer.takeRequest();
+        LOG.info("response: {}", result.getResponseBody());
+        mockWebServer.takeRequest();
+
+        assertThat(request.getMethod()).isEqualTo("POST");
     }
 
     @Test
@@ -142,7 +154,7 @@ public class UserEndpointMockWebServerTest {
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
                 .bodyValue(userTransfer)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
 
         LOG.info("start taking request now");
         RecordedRequest request = mockWebServer.takeRequest();
@@ -161,4 +173,38 @@ public class UserEndpointMockWebServerTest {
         LOG.info("assert the path for authenticate was created using path '/create'");
         assertThat(request.getPath()).startsWith("/create");
     }
+
+    @Test
+    public void activateAccount() throws InterruptedException {
+        UUID id = UUID.randomUUID();
+        final String authenticationId = "activateAccount";
+
+        MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", authenticationId);
+
+        Mono<MyUser> userMono = userRepository.save(myUser);
+        userMono.subscribe(user1 -> LOG.info("save user first"));
+
+        userRepository.findByAuthenticationId(authenticationId).as(StepVerifier::create).
+                assertNext(myUser1 -> {
+                    LOG.info("assert active is false");
+                    assertThat(myUser1.getActive()).isFalse();
+                })
+                .verifyComplete();
+
+        LOG.info("activate user authId: {}", id);
+        EntityExchangeResult<String> result = webTestClient.put().uri("/user/activate/" + authenticationId)
+                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("activated: "+authenticationId);
+
+        userRepository.findByAuthenticationId(authenticationId).as(StepVerifier::create).
+                assertNext(myUser1 -> {
+                    LOG.info("assert active is now true");
+                    assertThat(myUser1.getActive()).isTrue();
+                })
+                .verifyComplete();
+
+    }
+
 }

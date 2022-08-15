@@ -62,7 +62,7 @@ public class MyUserMockRestServiceTest {
 
         webTestClient.post().uri("/public/user/signup")
                 .bodyValue(userTransfer)
-                .exchange().expectStatus().isOk()
+                .exchange().expectStatus().isCreated()
                 .expectBody(String.class)
                 .consumeWith(stringEntityExchangeResult -> LOG.info("result: {}", stringEntityExchangeResult.getResponseBody()));
     }

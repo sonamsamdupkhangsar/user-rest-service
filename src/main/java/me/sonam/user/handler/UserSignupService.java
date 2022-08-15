@@ -62,35 +62,42 @@ public class UserSignupService implements UserService {
         LOG.info("signup user");
 
         return userMono.flatMap(userTransfer ->
-             userRepository.existsByAuthenticationIdOrEmail(userTransfer.getAuthenticationId(), userTransfer.getEmail())
-                    .filter(aBoolean -> !aBoolean)
-                    .switchIfEmpty(Mono.error(new SignupException("authenticationId or email already exists")))
-                    .flatMap(aBoolean -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
+                        userRepository.existsByAuthenticationIdAndActiveTrue(userTransfer.getAuthenticationId())
+                        .switchIfEmpty(Mono.error(new SignupException("User is already active with authenticationId")))
+                        //delete any previous attempts that is not activated
+                        .flatMap(aBoolean -> userRepository.deleteByAuthenticationIdAndActiveFalse(userTransfer.getAuthenticationId()))
+                        .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
                             userTransfer.getEmail(), userTransfer.getAuthenticationId())))
-                    .flatMap(myUser -> userRepository.save(myUser))
-                    .flatMap(myUser -> {
-                        LOG.info("create Authentication record with webrequest on endpoint: {}", authenticationEp);
-                        WebClient.ResponseSpec responseSpec = webClient.post().uri(authenticationEp).bodyValue(userTransfer).retrieve();
+                        .flatMap(myUser -> userRepository.save(myUser))
+                        .flatMap(myUser -> {
+                            LOG.info("create Authentication record with webrequest on endpoint: {}", authenticationEp);
+                            WebClient.ResponseSpec responseSpec = webClient.post().uri(authenticationEp).bodyValue(userTransfer).retrieve();
 
-                        return responseSpec.bodyToMono(String.class).map(authenticationId -> {
-                            LOG.info("got back authenticationId from service call: {}", authenticationId);
-                            return authenticationId;
-                        }).onErrorResume(throwable -> Mono.error(new SignupException("Authentication api call failed with error: " + throwable.getMessage())));
-                    })
-                    .flatMap(s -> {
-                        LOG.info("create Account record with webrequest on endpoint: {}", accountEp);
+                            return responseSpec.bodyToMono(String.class).map(authenticationId -> {
+                                LOG.info("got back authenticationId from service call: {}", authenticationId);
+                                return authenticationId;
+                            }).onErrorResume(throwable -> {
+                                LOG.error("authentication rest call failed", throwable);
+                                return Mono.error(new SignupException("Authentication api call failed with error: " + throwable.getMessage()));
+                            });
+                        })
+                        .flatMap(s -> {
+                            LOG.info("create Account record with webrequest on endpoint: {}", accountEp);
 
-                        StringBuilder stringBuilder = new StringBuilder(accountEp).append("/")
-                                .append(userTransfer.getAuthenticationId())
-                                .append("/").append(userTransfer.getEmail());
+                            StringBuilder stringBuilder = new StringBuilder(accountEp).append("/")
+                                    .append(userTransfer.getAuthenticationId())
+                                    .append("/").append(userTransfer.getEmail());
 
-                        WebClient.ResponseSpec spec = webClient.post().uri(stringBuilder.toString()).retrieve();
+                            WebClient.ResponseSpec spec = webClient.post().uri(stringBuilder.toString()).retrieve();
 
-                        return spec.bodyToMono(String.class).map(string -> {
-                            LOG.info("account has been created with response: {}", string);
-                            return string;
-                        }).onErrorResume(throwable -> Mono.error(new SignupException("Email activation failed: " + throwable.getMessage())));
-                    }).thenReturn("user signup succcessful")
+                            return spec.bodyToMono(String.class).map(string -> {
+                                LOG.info("account has been created with response: {}", string);
+                                return string;
+                            }).onErrorResume(throwable -> {
+                                LOG.error("account rest call failed", throwable);
+                                return Mono.error(new SignupException("Email activation failed: " + throwable.getMessage()));
+                            });
+                        }).thenReturn("user signup succcessful")
         );
     }
 
@@ -143,6 +150,14 @@ public class UserSignupService implements UserService {
     public Flux<MyUser> findMatchingName(String firstName, String lastName) {
         LOG.info("find user with firstName and lastName: '{}' '{}'", firstName, lastName);
         return userRepository.findByFirstNameContainingIgnoreCaseAndLastNameContainingIgnoreCase(firstName, lastName);
+    }
+
+    @Override
+    public Mono<String> activateUser(String authenticationId) {
+        LOG.info("activate user");
+
+        return userRepository.updateUserActiveTrue(authenticationId)
+                .thenReturn("activated: "+authenticationId);
     }
 
 

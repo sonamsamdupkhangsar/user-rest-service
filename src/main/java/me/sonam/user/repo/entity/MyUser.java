@@ -20,6 +20,16 @@ public class MyUser implements Persistable<UUID> {
     private String lastName;
     private String email;
     private String authenticationId;
+    private Boolean active;
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
     // these can be populated after login
     private LocalDate birthDate;
     private String profilePhoto; //will contain the full url to the profilephoto
@@ -37,6 +47,7 @@ public class MyUser implements Persistable<UUID> {
         this.lastName = lastName;
         this.email = email;
         this.authenticationId = authenticationId;
+        this.active = false;
 
         this.newAccount = true;
     }

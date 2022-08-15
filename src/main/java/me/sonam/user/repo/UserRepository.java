@@ -14,6 +14,8 @@ public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
     Mono<MyUser> findByEmail(String email);
     Mono<Boolean> existsByEmailAndIdNot(String email, UUID id);
     Mono<Boolean> existsByEmail(String email);
+    Mono<Boolean> existsByAuthenticationIdAndActiveTrue(String authenticationId);
+    Mono<Integer> deleteByAuthenticationIdAndActiveFalse(String authenticationId);
     Mono<Boolean> existsByAuthenticationIdOrEmail(String authenticationId, String email);
     Mono<Void> deleteByAuthenticationId(String authenticationId);
     Flux<MyUser> findByFirstNameContainingIgnoreCaseAndLastNameContainingIgnoreCase(String firstName, String lastName);
@@ -30,4 +32,7 @@ public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
     @Query("update My_User mu set mu.profile_photo= :profilePhoto where mu.authentication_id= :authenticationId")
     Mono<Integer> updateProfilePhoto(@Param("profilePhoto") String profielPhoto, @Param("authenticationId")
                                     String authenticationId);
+
+    @Query("update My_user set active=true where authentication_Id= :authenticationId")
+    Mono<Integer> updateUserActiveTrue(@Param("authenticationId") String authenticationId);
 }
