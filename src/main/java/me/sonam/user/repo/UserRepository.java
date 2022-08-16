@@ -35,4 +35,8 @@ public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
 
     @Query("update My_user set active=true where authentication_Id= :authenticationId")
     Mono<Integer> updateUserActiveTrue(@Param("authenticationId") String authenticationId);
+    Mono<Boolean> existsByAuthenticationIdAndUserAuthAccountCreatedTrue(String authenticationId);
+
+    @Query("update My_user set user_auth_account_created=true where authentication_Id= :authenticationId")
+    Mono<Integer> updatedUserAuthAccountCreatedTrue(String authenticationId);
 }

@@ -65,6 +65,13 @@ public class UserSignupService implements UserService {
                         userRepository.existsByAuthenticationIdAndActiveTrue(userTransfer.getAuthenticationId())
                                 .filter(aBoolean -> !aBoolean)
                         .switchIfEmpty(Mono.error(new SignupException("User is already active with authenticationId")))
+                        .flatMap(aBoolean -> userRepository.existsByAuthenticationIdAndUserAuthAccountCreatedTrue(userTransfer.getAuthenticationId()))
+                        .filter(aBoolean -> {
+                            LOG.info("aBoolean for findByAuthenticationIdAndUserAuthAccountCreatedTrue is {}", aBoolean);
+
+                            return !aBoolean;
+                        })
+                        .switchIfEmpty(Mono.error(new SignupException("User account has already been created, check to activate it by email")))
                         //delete any previous attempts that is not activated
                         .flatMap(aBoolean -> userRepository.deleteByAuthenticationIdAndActiveFalse(userTransfer.getAuthenticationId()))
                         .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
@@ -79,7 +86,10 @@ public class UserSignupService implements UserService {
                                 return authenticationId;
                             }).onErrorResume(throwable -> {
                                 LOG.error("authentication rest call failed", throwable);
-                                return Mono.error(new SignupException("Authentication api call failed with error: " + throwable.getMessage()));
+
+                                LOG.info("rollback userRepository by deleting authenticationId");
+                                return userRepository.deleteByAuthenticationId(userTransfer.getAuthenticationId()).then(
+                                    Mono.error(new SignupException("Authentication api call failed with error: " + throwable.getMessage())));
                             });
                         })
                         .flatMap(s -> {
@@ -93,9 +103,13 @@ public class UserSignupService implements UserService {
 
                             return spec.bodyToMono(String.class).map(string -> {
                                 LOG.info("account has been created with response: {}", string);
-                                return string;
+
+                               return userRepository.updatedUserAuthAccountCreatedTrue(
+                                        userTransfer.getAuthenticationId()).
+                                        thenReturn("updated user with authentication and account creation");
                             }).onErrorResume(throwable -> {
                                 LOG.error("account rest call failed", throwable);
+
                                 LOG.info("rollback userRepository by deleting authenticationId");
                                 return userRepository.deleteByAuthenticationId(userTransfer.getAuthenticationId()).then(
                                     Mono.error(new SignupException("Email activation failed: " + throwable.getMessage())));
