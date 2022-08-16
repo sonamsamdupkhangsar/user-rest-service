@@ -83,7 +83,7 @@ public class UserHandler {
     }
 
     public Mono<ServerResponse> activateUser(ServerRequest serverRequest) {
-        LOG.info("authenticate user");
+        LOG.info("activate user");
 
         return userService.activateUser(serverRequest.pathVariable("authenticationId"))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
