@@ -63,6 +63,7 @@ public class UserSignupService implements UserService {
 
         return userMono.flatMap(userTransfer ->
                         userRepository.existsByAuthenticationIdAndActiveTrue(userTransfer.getAuthenticationId())
+                                .filter(aBoolean -> !aBoolean)
                         .switchIfEmpty(Mono.error(new SignupException("User is already active with authenticationId")))
                         //delete any previous attempts that is not activated
                         .flatMap(aBoolean -> userRepository.deleteByAuthenticationIdAndActiveFalse(userTransfer.getAuthenticationId()))
@@ -95,7 +96,9 @@ public class UserSignupService implements UserService {
                                 return string;
                             }).onErrorResume(throwable -> {
                                 LOG.error("account rest call failed", throwable);
-                                return Mono.error(new SignupException("Email activation failed: " + throwable.getMessage()));
+                                LOG.info("rollback userRepository by deleting authenticationId");
+                                return userRepository.deleteByAuthenticationId(userTransfer.getAuthenticationId()).then(
+                                    Mono.error(new SignupException("Email activation failed: " + throwable.getMessage())));
                             });
                         }).thenReturn("user signup succcessful")
         );

@@ -38,14 +38,14 @@ public class UserWithRemoteEndpoint {
     public void signup() {
         LOG.info("signup user");
         final String id = UUID.randomUUID().toString().replace("-", "");
-        UserTransfer userTransfer = new UserTransfer("sonam", "samdupkhangsar", "test6@sonam.email",
+        UserTransfer userTransfer = new UserTransfer("sonam", "samdupkhangsar", "me@sonam.email",
                 "test6", "rL$7Mrz$", apiKey);
 
         webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
         webTestClient.post().uri("https://user-rest-service.sonam.cloud/public/user/signup")
                 .bodyValue(userTransfer)
-                .exchange().expectStatus().isOk().expectBody(String.class)
+                .exchange().expectStatus().isCreated().expectBody(String.class)
                 .consumeWith(stringEntityExchangeResult ->
                     LOG.info("body: {}, status: {}", stringEntityExchangeResult.getResponseBody(),
                             stringEntityExchangeResult.getStatus()));

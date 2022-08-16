@@ -113,7 +113,7 @@ public class UserEndpointMockWebServerTest {
     }
 
     @Test
-    public void existingUser() throws InterruptedException {
+    public void signupUser() throws InterruptedException {
         MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", "existingUser");
 
         Mono<MyUser> userMono = userRepository.save(myUser);
@@ -138,6 +138,26 @@ public class UserEndpointMockWebServerTest {
         mockWebServer.takeRequest();
 
         assertThat(request.getMethod()).isEqualTo("POST");
+    }
+
+    @Test
+    public void signupUserWhenActiveIsTrue() throws InterruptedException {
+        MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", "existingUser");
+        myUser.setActive(true);
+        Mono<MyUser> userMono = userRepository.save(myUser);
+        userMono.subscribe(user1 -> LOG.info("save user first"));
+
+        LOG.info("make rest call to save user and create authentication record");
+
+        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
+                "existingUser", "pass", apiKey);
+
+        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
+                .bodyValue(userTransfer)
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("assert result contains authId: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("User is already active with authenticationId");
     }
 
     @Test
