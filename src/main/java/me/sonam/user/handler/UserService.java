@@ -16,4 +16,5 @@ public interface UserService {
     Mono<String> updateProfilePhoto(String authenticationId, Mono<String> profilePhotoUrlMono);
     Mono<MyUser> getUserByAuthenticationId(String authenticationId);
     Flux<MyUser> findMatchingName(String firstName, String lastName);
+    Mono<String> activateUser(String authenticationId);
 }

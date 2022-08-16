@@ -47,6 +47,8 @@ public class Router {
                 .andRoute(GET("/user/{authId}").and(accept(MediaType.APPLICATION_JSON)),
                         handler::getUserByAuthId)
                 .andRoute(PUT("/user/profilephoto").and(accept(MediaType.APPLICATION_JSON)),
-                        handler::updateProfilePhoto);
+                        handler::updateProfilePhoto)
+                .andRoute(PUT("/user/activate/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::activateUser);
     }
 }

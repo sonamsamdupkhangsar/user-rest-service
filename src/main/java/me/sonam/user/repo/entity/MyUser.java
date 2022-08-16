@@ -13,6 +13,7 @@ import java.util.UUID;
  */
 
 public class MyUser implements Persistable<UUID> {
+
     @Id
     private UUID id;
     // on user signup only firstname, lastname and email is required
@@ -20,6 +21,17 @@ public class MyUser implements Persistable<UUID> {
     private String lastName;
     private String email;
     private String authenticationId;
+    private Boolean active;
+    private Boolean userAuthAccountCreated;
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
     // these can be populated after login
     private LocalDate birthDate;
     private String profilePhoto; //will contain the full url to the profilephoto
@@ -37,7 +49,8 @@ public class MyUser implements Persistable<UUID> {
         this.lastName = lastName;
         this.email = email;
         this.authenticationId = authenticationId;
-
+        this.active = false;
+        this.userAuthAccountCreated = false;
         this.newAccount = true;
     }
 
@@ -84,6 +97,14 @@ public class MyUser implements Persistable<UUID> {
 
     public String getAuthenticationId() {
         return this.authenticationId;
+    }
+
+    public void setUserAuthAccountCreated(boolean userAuthAccountCreated) {
+        this.userAuthAccountCreated = userAuthAccountCreated;
+    }
+
+    public boolean getUserAuthAccountCreated() {
+        return this.userAuthAccountCreated;
     }
 
     @Override
