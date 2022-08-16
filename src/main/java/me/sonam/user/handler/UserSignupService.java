@@ -57,6 +57,17 @@ public class UserSignupService implements UserService {
         webClient = WebClient.builder().build();
     }
 
+    /**
+     * First, check if user already exists with authenticaitonId and is active
+     * Second,if user is not active with authenticationId then check user, authentication and account was created successfully in a prior call
+     * and throw exception if user/authentication/account was already created before
+     * Third, verify there is no user with that email already.
+     * Then create the user object and save it.
+     * Make a rest call to Authentication to save a Authentication data
+     * Then make another rest call to Account to save a Account data. On success response set the user UserAuthAccountCreated to true
+     * @param userMono
+     * @return
+     */
     @Override
     public Mono<String> signupUser(Mono<UserTransfer> userMono) {
         LOG.info("signup user");
@@ -72,6 +83,9 @@ public class UserSignupService implements UserService {
                             return !aBoolean;
                         })
                         .switchIfEmpty(Mono.error(new SignupException("User account has already been created, check to activate it by email")))
+                        .flatMap(aBoolean -> userRepository.existsByEmail(userTransfer.getEmail()))
+                        .filter(aBoolean -> !aBoolean)
+                        .switchIfEmpty(Mono.error(new SignupException("a user with this email already exists")))
                         //delete any previous attempts that is not activated
                         .flatMap(aBoolean -> userRepository.deleteByAuthenticationIdAndActiveFalse(userTransfer.getAuthenticationId()))
                         .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),

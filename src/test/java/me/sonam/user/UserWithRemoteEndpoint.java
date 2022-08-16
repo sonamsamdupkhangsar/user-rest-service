@@ -19,7 +19,7 @@ public class UserWithRemoteEndpoint {
 
     private WebTestClient webTestClient = WebTestClient.bindToServer().build();
 
-    @Test
+   // @Test
     public void findByNames() {
         final String jwt = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJkdW1teTEyMzQiLCJpc3MiOiJzb25hbS5jbG91ZCIsImF1ZCI6InNvbmFtLmNsb3VkIiwiZXhwIjoxNjU3NjY5NDUxLCJqdGkiOiI2OGVmODYwMC02YjcyLTRhZjMtOTUwOS1jNDliYjc2ZDA0NTgifQ.Ku_5CHVXOZpbdaBl9P7tNEQqdbYq5qu87VjquimFzGWBlg7uvylwZ3eQMC8wq-r6EpSrsRaLDB9WxIB0o49G3Q";
 
@@ -34,12 +34,12 @@ public class UserWithRemoteEndpoint {
        // LOG.info("body: {}", responseSpec.bodyToMono(String.class).block());
     }
 
-    @Test
+   // @Test
     public void signup() {
         LOG.info("signup user");
         final String id = UUID.randomUUID().toString().replace("-", "");
-        UserTransfer userTransfer = new UserTransfer("sonam", "samdupkhangsar", "me@sonam.email",
-                "test6", "rL$7Mrz$", apiKey);
+        UserTransfer userTransfer = new UserTransfer("sonam", "samdupkhangsar", "mex@sonam.co",
+                "test7", "rL$7Mrz$", apiKey);
 
         webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
