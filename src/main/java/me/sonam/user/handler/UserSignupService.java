@@ -105,8 +105,9 @@ public class UserSignupService implements UserService {
                                 LOG.info("account has been created with response: {}", string);
 
                                return userRepository.updatedUserAuthAccountCreatedTrue(
-                                        userTransfer.getAuthenticationId()).
-                                        thenReturn("updated user with authentication and account creation");
+                                        userTransfer.getAuthenticationId())
+                                       .subscribe(integer -> LOG.info("update UserAuthAccountCreatedTrue"));
+
                             }).onErrorResume(throwable -> {
                                 LOG.error("account rest call failed", throwable);
 

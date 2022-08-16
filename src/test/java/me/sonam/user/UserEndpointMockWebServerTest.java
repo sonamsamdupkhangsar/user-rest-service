@@ -138,6 +138,13 @@ public class UserEndpointMockWebServerTest {
         mockWebServer.takeRequest();
 
         assertThat(request.getMethod()).isEqualTo("POST");
+
+        StepVerifier.create(userRepository.findByAuthenticationId("existingUser"))
+            .assertNext(myUser1 -> {
+                LOG.info("assert update of userAuthAccountCreated field to true");
+                assertThat(myUser1.getUserAuthAccountCreated()).isTrue();
+            })
+            .verifyComplete();
     }
 
     @Test
