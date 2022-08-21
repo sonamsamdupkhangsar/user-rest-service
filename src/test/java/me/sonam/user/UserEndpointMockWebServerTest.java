@@ -114,17 +114,16 @@ public class UserEndpointMockWebServerTest {
 
     @Test
     public void signupUser() throws InterruptedException {
-        MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", "existingUser");
+        final String authenticationId = "signupUser";
+        final String email = "signupUser@some.company";
 
-        Mono<MyUser> userMono = userRepository.save(myUser);
-        userMono.subscribe(user1 -> LOG.info("save user first"));
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("existingUser"));
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("existingUser"));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(authenticationId));
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(authenticationId));
 
         LOG.info("make rest call to save user and create authentication record");
 
-        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
-                "existingUser", "pass", apiKey);
+        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
+                authenticationId, "pass", apiKey);
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
                 .bodyValue(userTransfer)
@@ -139,12 +138,41 @@ public class UserEndpointMockWebServerTest {
 
         assertThat(request.getMethod()).isEqualTo("POST");
 
-        StepVerifier.create(userRepository.findByAuthenticationId("existingUser"))
+        StepVerifier.create(userRepository.findByAuthenticationId(authenticationId))
             .assertNext(myUser1 -> {
                 LOG.info("assert update of userAuthAccountCreated field to true");
                 assertThat(myUser1.getUserAuthAccountCreated()).isTrue();
             })
             .verifyComplete();
+    }
+
+    @Test
+    public void signupUserWithExistingEmail() throws InterruptedException {
+        final String authenticationId = "signupUser";
+        final String email = "signupUser@some.company";
+
+        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId);
+
+        Mono<MyUser> userMono = userRepository.save(myUser);
+        userMono.subscribe(user1 -> LOG.info("save user first"));
+        LOG.info("make rest call to save user and create authentication record");
+
+        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
+                authenticationId, "pass", apiKey);
+
+        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
+                .bodyValue(userTransfer)
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("assert result contains authId: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("a user with this email already exists");
+
+        StepVerifier.create(userRepository.findByAuthenticationId(authenticationId))
+                .assertNext(myUser1 -> {
+                    LOG.info("assert update of userAuthAccountCreated field to true");
+                    assertThat(myUser1.getUserAuthAccountCreated()).isFalse();
+                })
+                .verifyComplete();
     }
 
     @Test
