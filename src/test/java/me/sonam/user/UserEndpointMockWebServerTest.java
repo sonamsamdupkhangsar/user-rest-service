@@ -193,7 +193,7 @@ public class UserEndpointMockWebServerTest {
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("User account has already been created, check to activate it by email");
+        assertThat(result.getResponseBody()).isEqualTo("User account has already been created for that id, check to activate it by email");
     }
 
     @Test

@@ -81,8 +81,7 @@ public class UserSignupService implements UserService {
                             LOG.info("aBoolean for findByAuthenticationIdAndUserAuthAccountCreatedTrue is {}", aBoolean);
 
                             return !aBoolean;
-                        })
-                        .switchIfEmpty(Mono.error(new SignupException("User account has already been created, check to activate it by email")))
+                        }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that id, check to activate it by email")))
                         .flatMap(aBoolean -> userRepository.existsByEmail(userTransfer.getEmail()))
                         .filter(aBoolean -> !aBoolean)
                         .switchIfEmpty(Mono.error(new SignupException("a user with this email already exists")))
