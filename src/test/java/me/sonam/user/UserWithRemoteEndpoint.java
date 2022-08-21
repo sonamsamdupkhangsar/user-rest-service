@@ -34,12 +34,12 @@ public class UserWithRemoteEndpoint {
        // LOG.info("body: {}", responseSpec.bodyToMono(String.class).block());
     }
 
-   // @Test
+   @Test
     public void signup() {
         LOG.info("signup user");
         final String id = UUID.randomUUID().toString().replace("-", "");
-        UserTransfer userTransfer = new UserTransfer("sonam", "samdupkhangsar", "mex@sonam.co",
-                "test7", "rL$7Mrz$", apiKey);
+        UserTransfer userTransfer = new UserTransfer("sonam", "samdupkhangsar", "me@sonam.email",
+                "test1", "rL$7Mrz$", apiKey);
 
         webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
