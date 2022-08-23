@@ -191,5 +191,16 @@ public class UserSignupService implements UserService {
                 .thenReturn("activated: "+authenticationId);
     }
 
+    @Override
+    public Mono<String> deleteUser(String authentiationId) {
+        LOG.info("delete user if it's active status is false");
+
+        return userRepository.findByAuthenticationId(authentiationId)
+                .filter(myUser -> !myUser.getActive())
+                .switchIfEmpty(Mono.error(new UserException("user is active, cannot delete")))
+                .flatMap(myUser ->   userRepository.deleteByAuthenticationIdAndActiveFalse(authentiationId))
+                .thenReturn("deleted: " + authentiationId);
+    }
+
 
 }

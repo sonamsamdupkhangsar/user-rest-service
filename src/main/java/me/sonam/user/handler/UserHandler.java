@@ -93,4 +93,18 @@ public class UserHandler {
                             .bodyValue(throwable.getMessage());
                 });
     }
+
+    public Mono<ServerResponse> deleteUser(ServerRequest serverRequest) {
+        LOG.info("delete user");
+
+        return userService.deleteUser(serverRequest.pathVariable("authenticationId"))
+                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {
+                    LOG.error("delete user failed", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
+    }
+
+
 }
