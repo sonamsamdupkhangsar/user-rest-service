@@ -133,9 +133,9 @@ public class UserEndpointMockWebServerTest {
         assertThat(result.getResponseBody()).isEqualTo("user signup succcessful");
 
         RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
         LOG.info("response: {}", result.getResponseBody());
-        mockWebServer.takeRequest();
-
+        request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
 
         StepVerifier.create(userRepository.findByAuthenticationId(authenticationId))
@@ -157,6 +157,8 @@ public class UserEndpointMockWebServerTest {
         userMono.subscribe(user1 -> LOG.info("save user first"));
         LOG.info("make rest call to save user and create authentication record");
 
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("deleted authenticationId that is active false"));
+
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
                 authenticationId, "pass", apiKey);
 
@@ -166,6 +168,13 @@ public class UserEndpointMockWebServerTest {
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isEqualTo("a user with this email already exists");
+
+        RecordedRequest recordedRequest = mockWebServer.takeRequest();
+
+        assertThat(recordedRequest.getMethod()).isEqualTo("POST");
+        recordedRequest = mockWebServer.takeRequest();
+
+        assertThat(recordedRequest.getMethod()).isEqualTo("DELETE");
 
         StepVerifier.create(userRepository.findByAuthenticationId(authenticationId))
                 .assertNext(myUser1 -> {
@@ -239,6 +248,7 @@ public class UserEndpointMockWebServerTest {
 
        assertThat(result.getResponseBody()).isEqualTo("user signup succcessful");
 
+        assertThat(request.getMethod()).isEqualTo("POST");
         assertThat(request.getMethod()).isEqualTo("POST");
 
         //the body is empty for some reason.
