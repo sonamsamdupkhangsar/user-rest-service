@@ -17,4 +17,5 @@ public interface UserService {
     Mono<MyUser> getUserByAuthenticationId(String authenticationId);
     Flux<MyUser> findMatchingName(String firstName, String lastName);
     Mono<String> activateUser(String authenticationId);
+    Mono<String> deleteUser(String authentiationId);
 }

@@ -133,9 +133,9 @@ public class UserEndpointMockWebServerTest {
         assertThat(result.getResponseBody()).isEqualTo("user signup succcessful");
 
         RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
         LOG.info("response: {}", result.getResponseBody());
-        mockWebServer.takeRequest();
-
+        request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
 
         StepVerifier.create(userRepository.findByAuthenticationId(authenticationId))
@@ -157,6 +157,8 @@ public class UserEndpointMockWebServerTest {
         userMono.subscribe(user1 -> LOG.info("save user first"));
         LOG.info("make rest call to save user and create authentication record");
 
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("deleted authenticationId that is active false"));
+
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
                 authenticationId, "pass", apiKey);
 
@@ -166,6 +168,13 @@ public class UserEndpointMockWebServerTest {
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isEqualTo("a user with this email already exists");
+
+        RecordedRequest recordedRequest = mockWebServer.takeRequest();
+
+        assertThat(recordedRequest.getMethod()).isEqualTo("POST");
+        recordedRequest = mockWebServer.takeRequest();
+
+        assertThat(recordedRequest.getMethod()).isEqualTo("DELETE");
 
         StepVerifier.create(userRepository.findByAuthenticationId(authenticationId))
                 .assertNext(myUser1 -> {
@@ -240,6 +249,7 @@ public class UserEndpointMockWebServerTest {
        assertThat(result.getResponseBody()).isEqualTo("user signup succcessful");
 
         assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getMethod()).isEqualTo("POST");
 
         //the body is empty for some reason.
         String body = new String(request.getBody().getBuffer().readByteArray());
@@ -281,6 +291,71 @@ public class UserEndpointMockWebServerTest {
                 })
                 .verifyComplete();
 
+    }
+
+    @Test
+    public void deleteUserWhenUserFalse() {
+        UUID id = UUID.randomUUID();
+        final String authenticationId = "deleteUserWhenUserFalse";
+
+        MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId);
+
+        Mono<MyUser> userMono = userRepository.save(myUser);
+        userMono.subscribe(user1 -> LOG.info("save user first"));
+
+        userMono.as(StepVerifier::create).assertNext(myUser1 -> {
+            LOG.info("assert active is false");
+            assertThat(myUser1.getActive()).isFalse();
+        });
+
+        userRepository.findByAuthenticationId(authenticationId).as(StepVerifier::create).
+                assertNext(myUser1 -> {
+                    LOG.info("assert active is false");
+                    assertThat(myUser1.getActive()).isFalse();
+                })
+                .verifyComplete();
+
+        LOG.info("activate user authId: {}", id);
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/user/" + authenticationId)
+                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("deleted: "+authenticationId);
+
+        userRepository.existsByAuthenticationId(authenticationId).subscribe(aBoolean -> LOG.info("exists should be false: {}", aBoolean));
+    }
+
+    @Test
+    public void deleteUserWhenUserActive() throws InterruptedException {
+        UUID id = UUID.randomUUID();
+        final String authenticationId = "deleteUserWhenUserFalse";
+
+        MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId);
+        myUser.setActive(true);
+
+        Mono<MyUser> userMono = userRepository.save(myUser);
+        userMono.subscribe(user1 -> LOG.info("save user first"));
+
+        userMono.as(StepVerifier::create).assertNext(myUser1 -> {
+            LOG.info("assert active is True");
+            assertThat(myUser1.getActive()).isTrue();
+        });
+
+        userRepository.findByAuthenticationId(authenticationId).as(StepVerifier::create).
+                assertNext(myUser1 -> {
+                    LOG.info("assert active is True");
+                    assertThat(myUser1.getActive()).isTrue();
+                })
+                .verifyComplete();
+
+        LOG.info("activate user authId: {}", id);
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/user/" + authenticationId)
+                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("user is active, cannot delete");
+
+        userRepository.existsByAuthenticationId(authenticationId).subscribe(aBoolean -> LOG.info("exists should be true: {}", aBoolean));
     }
 
 }

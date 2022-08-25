@@ -1,22 +1,18 @@
 package me.sonam.user.handler;
 
 
-import me.sonam.user.email.Email;
 import me.sonam.user.repo.UserRepository;
 import me.sonam.user.repo.entity.MyUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
-import java.util.UUID;
 
 /**
  * This will add a user entry and call authentication service to create
@@ -84,7 +80,8 @@ public class UserSignupService implements UserService {
                         }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that id, check to activate it by email")))
                         .flatMap(aBoolean -> userRepository.existsByEmail(userTransfer.getEmail()))
                         .filter(aBoolean -> !aBoolean)
-                        .switchIfEmpty(Mono.error(new SignupException("a user with this email already exists")))
+                        //.switchIfEmpty(Mono.error(new SignupException("a user with this email already exists")))
+                          .switchIfEmpty(callDeleteAccountCheck(userTransfer.getEmail()))
                         //delete any previous attempts that is not activated
                         .flatMap(aBoolean -> userRepository.deleteByAuthenticationIdAndActiveFalse(userTransfer.getAuthenticationId()))
                         .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
@@ -191,5 +188,30 @@ public class UserSignupService implements UserService {
                 .thenReturn("activated: "+authenticationId);
     }
 
+    @Override
+    public Mono<String> deleteUser(String authentiationId) {
+        LOG.info("delete user if it's active status is false");
 
+        return userRepository.findByAuthenticationId(authentiationId)
+                .filter(myUser -> !myUser.getActive())
+                .switchIfEmpty(Mono.error(new UserException("user is active, cannot delete")))
+                .flatMap(myUser ->   userRepository.deleteByAuthenticationIdAndActiveFalse(authentiationId))
+                .thenReturn("deleted: " + authentiationId);
+    }
+
+
+    private Mono<? extends Boolean> callDeleteAccountCheck(String email) {
+        final StringBuilder stringBuilder = new StringBuilder(accountEp).append("/email/").append(email);
+
+        WebClient.ResponseSpec responseSpec = webClient.delete().uri(stringBuilder.toString()).retrieve();
+
+        return responseSpec.bodyToMono(String.class).map(stringResponse -> {
+            LOG.info("got back response from account deletion service call: {}", stringResponse);
+            return stringResponse;
+        }).onErrorResume(throwable -> {
+            LOG.error("account deletion rest call failed", throwable);
+            return null;
+        }).then(Mono.error(new SignupException("a user with this email already exists")));
+
+    }
 }
