@@ -36,3 +36,8 @@ springdoc:
   swagger-ui:
     path: /public/swaggerui
     enabled: true
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka

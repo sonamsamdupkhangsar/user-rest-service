@@ -44,3 +44,11 @@ endpoint:
     getbyauthId: "/user/{authid}"
     matchingnames: "/user/names/{firstname}/{lastname}"
     profilephoto: "/user/profilephoto"
+
+EUREKA_USER: test
+EUREKA_PASSWORD: test
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
