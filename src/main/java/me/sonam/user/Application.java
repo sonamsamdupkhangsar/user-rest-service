@@ -3,6 +3,7 @@ package me.sonam.user;
 import io.r2dbc.spi.ConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
@@ -11,12 +12,26 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer;
 import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator;
 
+import javax.annotation.PostConstruct;
+
 @EnableEurekaClient
 @SpringBootApplication
 public class Application {
     private static final Logger LOG = LoggerFactory.getLogger(Application.class);
+
+    @Value("${EUREKA_USER}")
+    private String user;
+
+    @Value("${EUREKA_PASSWORD}")
+    private String password;
+
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
+    }
+
+    @PostConstruct
+    public void logProperty() {
+        LOG.info("eureka user: {}, password: {}", user, password);
     }
 
     @Bean()

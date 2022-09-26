@@ -42,7 +42,7 @@ istio:
   enabled: false
 
 ingress:
-  enabled: true
+  enabled: false
   ingressClass: nginx
   hosts:
     - host: user-rest-service.sonam.cloud
@@ -55,12 +55,12 @@ ingress:
         - "*.sonam.cloud"
 
 ingressjwt:
-  enabled: true
+  enabled: false
   ingressClass: nginx
-  annotations:
-    nginx.ingress.kubernetes.io/auth-url: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/validate
+#  annotations:
+#    nginx.ingress.kubernetes.io/auth-url: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/validate
     # pass authId header returned from jwt-rest-service validation of jwt token
-    nginx.ingress.kubernetes.io/auth-response-headers: authId
+#    nginx.ingress.kubernetes.io/auth-response-headers: authId
   hosts:
     - host: user-rest-service.sonam.cloud
       paths:
