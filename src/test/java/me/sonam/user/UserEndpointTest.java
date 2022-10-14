@@ -11,7 +11,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -19,6 +22,11 @@ import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.function.Consumer;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,6 +50,9 @@ public class UserEndpointTest {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    @MockBean
+    ReactiveJwtDecoder jwtDecoder;
 
     @AfterEach
     public void deleteUserRepo() {
@@ -143,5 +154,14 @@ public class UserEndpointTest {
         StepVerifier.create(myUserFlux)
                 .assertNext(s -> { LOG.info("string response is {}", s); assertThat(s).isEqualTo("photo updated"); })
                 .verifyComplete();
+    }
+
+    private Jwt jwt() {
+        return new Jwt("token", null, null,
+                Map.of("alg", "none"), Map.of("sub", "dave"));
+    }
+
+    private Consumer<HttpHeaders> addJwt(Jwt jwt) {
+        return headers -> headers.setBearerAuth(jwt.getTokenValue());
     }
 }
