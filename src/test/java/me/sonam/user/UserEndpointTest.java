@@ -19,6 +19,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
@@ -29,6 +30,8 @@ import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 /**
  * This will test the response from the Rest endpoint, the business service
@@ -63,6 +66,9 @@ public class UserEndpointTest {
     public void updateUser() throws InterruptedException, IOException {
         LOG.info("make rest call to save user and create authentication record");
 
+        Jwt jwt = jwt();
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
         MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
 
         userRepository.save(myUser2).subscribe();
@@ -78,6 +84,7 @@ public class UserEndpointTest {
         EntityExchangeResult<String> result = webTestClient.put().uri("/user")
                 .bodyValue(userTransfer)
                 .headers(httpHeaders -> httpHeaders.set("authId", "dommy@cat.email"))
+                .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("result: {}", result.getResponseBody());

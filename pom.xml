@@ -18,6 +18,8 @@
 
     <properties>
         <spring-cloud.version>2021.0.4</spring-cloud.version>
+        <maven.compiler.target>1.16</maven.compiler.target>
+        <maven.compiler.source>1.16</maven.compiler.source>
     </properties>
 
     <dependencies>
@@ -117,6 +119,12 @@
             <version>4.0.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
+            <version>5.7.5</version>
+        </dependency>
+
     </dependencies>
 
     <build>
