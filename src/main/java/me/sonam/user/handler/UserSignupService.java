@@ -131,7 +131,7 @@ public class UserSignupService implements UserService {
 
     @Override
     public Mono<String> updateUser(String authenticationId, Mono<UserTransfer> userMono) {
-        LOG.info("update user fields");
+        LOG.info("update user fields for authenticationId: {}", authenticationId);
 
         return userMono.flatMap(userTransfer ->
                      userRepository.findByAuthenticationId(authenticationId).flatMap(myUser ->
@@ -146,10 +146,10 @@ public class UserSignupService implements UserService {
                                     })
                                     .switchIfEmpty(Mono.error(new SignupException("email: email already used")))
                                     .flatMap(aBoolean -> {
-                                        LOG.info("update name and email");
+                                        LOG.info("update name and email for authId: {}", authenticationId);
                                         return userRepository.updateFirstNameAndLastNameAndEmailByAuthenticationId(
                                                 userTransfer.getFirstName(), userTransfer.getLastName(), userTransfer.getEmail()
-                                                , userTransfer.getAuthenticationId()
+                                                , authenticationId
                                         );
 
                                     })

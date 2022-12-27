@@ -21,6 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -35,9 +39,13 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 /**
  * This will test the User signup endpoint
@@ -69,6 +77,9 @@ public class UserEndpointMockWebServerTest {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    @MockBean
+    ReactiveJwtDecoder jwtDecoder;
 
     @Before
     public void setUp() {
@@ -264,6 +275,8 @@ public class UserEndpointMockWebServerTest {
     public void activateAccount() throws InterruptedException {
         UUID id = UUID.randomUUID();
         final String authenticationId = "activateAccount";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
         MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", authenticationId);
 
@@ -279,7 +292,7 @@ public class UserEndpointMockWebServerTest {
 
         LOG.info("activate user authId: {}", id);
         EntityExchangeResult<String> result = webTestClient.put().uri("/user/activate/" + authenticationId)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+                .headers(addJwt(jwt)).exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isEqualTo("activated: "+authenticationId);
@@ -297,6 +310,8 @@ public class UserEndpointMockWebServerTest {
     public void deleteUserWhenUserFalse() {
         UUID id = UUID.randomUUID();
         final String authenticationId = "deleteUserWhenUserFalse";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
         MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId);
 
@@ -317,7 +332,7 @@ public class UserEndpointMockWebServerTest {
 
         LOG.info("activate user authId: {}", id);
         EntityExchangeResult<String> result = webTestClient.delete().uri("/user/" + authenticationId)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+                .headers(addJwt(jwt)).exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isEqualTo("deleted: "+authenticationId);
@@ -327,8 +342,12 @@ public class UserEndpointMockWebServerTest {
 
     @Test
     public void deleteUserWhenUserActive() throws InterruptedException {
-        UUID id = UUID.randomUUID();
         final String authenticationId = "deleteUserWhenUserFalse";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
+        UUID id = UUID.randomUUID();
+        //final String authenticationId = "deleteUserWhenUserFalse";
 
         MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId);
         myUser.setActive(true);
@@ -350,12 +369,21 @@ public class UserEndpointMockWebServerTest {
 
         LOG.info("activate user authId: {}", id);
         EntityExchangeResult<String> result = webTestClient.delete().uri("/user/" + authenticationId)
-                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+                .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isEqualTo("user is active, cannot delete");
 
         userRepository.existsByAuthenticationId(authenticationId).subscribe(aBoolean -> LOG.info("exists should be true: {}", aBoolean));
+    }
+
+    private Jwt jwt(String subjectName) {
+        return new Jwt("token", null, null,
+                Map.of("alg", "none"), Map.of("sub", subjectName));
+    }
+
+    private Consumer<HttpHeaders> addJwt(Jwt jwt) {
+        return headers -> headers.setBearerAuth(jwt.getTokenValue());
     }
 
 }

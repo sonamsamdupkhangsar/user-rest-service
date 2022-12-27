@@ -52,3 +52,5 @@ eureka:
   client:
     serviceUrl:
       defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
+
+permitPaths: /public/user/signup, /api/health/*

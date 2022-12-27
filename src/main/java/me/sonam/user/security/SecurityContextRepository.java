@@ -16,7 +16,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @AllArgsConstructor
-@Component
+//@Component
 public class SecurityContextRepository implements ServerSecurityContextRepository {
     private static final Logger LOG = LoggerFactory.getLogger(SecurityContextRepository.class);
 
@@ -30,7 +30,8 @@ public class SecurityContextRepository implements ServerSecurityContextRepositor
 
     @Override
     public Mono<SecurityContext> load(ServerWebExchange swe) {
-        LOG.info("checking for Bearer token");
+        LOG.info("security context load check");
+
         return Mono.justOrEmpty(swe.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
                 .filter(authHeader -> authHeader.startsWith("Bearer "))
                 .switchIfEmpty(Mono.error(new UserException("No Authorization token found")))

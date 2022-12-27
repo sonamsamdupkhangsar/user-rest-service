@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -22,7 +23,7 @@ public class UserHandler {
     private UserService userService;
 
     public Mono<ServerResponse> signupUser(ServerRequest serverRequest) {
-        LOG.info("authenticate user");
+        LOG.info("signup user");
        return userService.signupUser(serverRequest.bodyToMono(UserTransfer.class))
                 .flatMap(s ->  ServerResponse.created(URI.create("/user/")).contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
@@ -33,8 +34,10 @@ public class UserHandler {
     }
 
     public Mono<ServerResponse> update(ServerRequest serverRequest) {
-        LOG.info("authenticate user");
-        return userService.updateUser(serverRequest.headers().firstHeader("authId"), serverRequest.bodyToMono(UserTransfer.class))
+        String authId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+        LOG.info("authenticate user for authId: {}", authId);
+
+        return userService.updateUser(authId, serverRequest.bodyToMono(UserTransfer.class))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.info("user update failed", throwable);

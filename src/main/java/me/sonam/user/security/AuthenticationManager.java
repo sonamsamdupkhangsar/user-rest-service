@@ -10,18 +10,21 @@ import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 //import org.springframework.security.core.Authentication;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Component
+//@Component
 @AllArgsConstructor
 public class AuthenticationManager implements ReactiveAuthenticationManager {
 
@@ -40,12 +43,16 @@ public class AuthenticationManager implements ReactiveAuthenticationManager {
         String authToken = authentication.getCredentials().toString();
 
         return jwtDecoder.decode(authToken).map(jwt -> {
-            LOG.info("returning UsernamePasswordAuthenticationToken");
-            return new UsernamePasswordAuthenticationToken(
-                    jwt.getSubject(),
-                    null,
-                    null
-            );
+            LOG.info("returning UsernamePasswordAuthenticationToken: jwt.subject: {}", jwt.getSubject());
+            //List<String> rolesMap = claims.get("role", List.class);
+            List<GrantedAuthority> list = new ArrayList<>();
+            list.add(new SimpleGrantedAuthority("API_ACCESS"));
+            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                    new UsernamePasswordAuthenticationToken(jwt.getSubject(), null, list);
+
+            SecurityContextHolder.getContext()
+                    .setAuthentication(usernamePasswordAuthenticationToken);
+            return usernamePasswordAuthenticationToken;
         });
     }
 

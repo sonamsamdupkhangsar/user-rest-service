@@ -15,7 +15,7 @@ import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator;
 import javax.annotation.PostConstruct;
 
 @EnableEurekaClient
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "me.sonam")
 public class Application {
     private static final Logger LOG = LoggerFactory.getLogger(Application.class);
 

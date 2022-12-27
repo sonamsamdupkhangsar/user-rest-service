@@ -8,11 +8,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
+//@Component
 public class SonamsJwtDecoder implements ReactiveJwtDecoder {
     private static final Logger LOG = LoggerFactory.getLogger(SonamsJwtDecoder.class);
 
@@ -29,6 +31,7 @@ public class SonamsJwtDecoder implements ReactiveJwtDecoder {
                 .exchangeToMono(clientResponse ->
                         clientResponse.bodyToMono(Map.class)
                                 .map(map -> {
+                                    LOG.info("returning a jwt");
                                     return new Jwt("token", null, null,
                                             Map.of("alg", "none"), Map.of("sub", map.get("subject")));
 

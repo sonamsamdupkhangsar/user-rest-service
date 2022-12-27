@@ -6,6 +6,7 @@ import me.sonam.user.repo.entity.MyUser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,18 +64,29 @@ public class UserEndpointTest {
     }
 
     @Test
+    public void actuatorEndpoint() {
+        LOG.info("access actuator health endpoint");
+        EntityExchangeResult<String> result = webTestClient.get().uri("/public/user/signup")
+                .exchange().expectStatus().is4xxClientError().expectBody(String.class).returnResult();
+
+        LOG.info("result: {}", result.getResponseBody());
+
+    }
+
+    @Test
     public void updateUser() throws InterruptedException, IOException {
         LOG.info("make rest call to save user and create authentication record");
 
-        Jwt jwt = jwt();
+        final String authenticationId = "dave";
+        Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
+        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email",
+                authenticationId);
 
         userRepository.save(myUser2).subscribe();
 
-        UserTransfer userTransfer = new UserTransfer("Josey", "Cat", "dommy@cat.email",
-                "dommy@cat.email", "pass", apiKey);
+        UserTransfer userTransfer = new UserTransfer();
 
         userTransfer.setFirstName("Josey");
         userTransfer.setLastName("Cat");
@@ -83,13 +95,13 @@ public class UserEndpointTest {
         LOG.info("update user fields with jwt in auth bearer token");
         EntityExchangeResult<String> result = webTestClient.put().uri("/user")
                 .bodyValue(userTransfer)
-                .headers(httpHeaders -> httpHeaders.set("authId", "dommy@cat.email"))
+                //.headers(httpHeaders -> httpHeaders.set("authId", "dommy@cat.email"))
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("result: {}", result.getResponseBody());
 
-        userRepository.findByAuthenticationId("dommy@cat.email").as(StepVerifier::create)
+        userRepository.findByAuthenticationId("dave").as(StepVerifier::create)
                 .expectNextMatches(myUser -> {
                     LOG.info("do expectNextMatches");
                    return myUser.getEmail().equals("josey.cat@@cat.emmail");
@@ -103,13 +115,18 @@ public class UserEndpointTest {
     public void getUserByAuthId() {
         LOG.info("make rest call to save user and create authentication record");
 
-        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
+        final String authenticationId = "dommy@cat.email";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
+        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", authenticationId);
 
         userRepository.save(myUser2).subscribe();
 
         LOG.info("get user by auth id");
 
-        Flux<MyUser> myUserFlux = webTestClient.get().uri("/user/"+"dommy@cat.email").exchange().expectStatus().isOk()
+        Flux<MyUser> myUserFlux = webTestClient.get().uri("/user/"+authenticationId)
+                .headers(addJwt(jwt)).exchange().expectStatus().isOk()
                 .returnResult(MyUser.class).getResponseBody();
 
         StepVerifier.create(myUserFlux)
@@ -136,7 +153,12 @@ public class UserEndpointTest {
 
         userRepository.save(myUser).subscribe();
 
+        final String authenticationId = "dommymacn@cat.email";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
         Flux<MyUser> myUserFlux = webTestClient.get().uri("/user/names/dommy/thecat")
+                .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
                 .returnResult(MyUser.class).getResponseBody();
 
@@ -151,10 +173,14 @@ public class UserEndpointTest {
         MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
 
         userRepository.save(myUser).subscribe();
+        final String authenticationId = "dommy@cat.email";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
 
         Flux<String> myUserFlux = webTestClient.put().uri("/user/profilephoto")
                 .bodyValue("http://spaces.sonam.us/myapp/app/someimage.png")
-                .headers(httpHeaders -> httpHeaders.set("authId", "dommy@cat.email"))
+                .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
                 .returnResult(String.class).getResponseBody();
 
@@ -163,9 +189,9 @@ public class UserEndpointTest {
                 .verifyComplete();
     }
 
-    private Jwt jwt() {
+    private Jwt jwt(String subjectName) {
         return new Jwt("token", null, null,
-                Map.of("alg", "none"), Map.of("sub", "dave"));
+                Map.of("alg", "none"), Map.of("sub", subjectName));
     }
 
     private Consumer<HttpHeaders> addJwt(Jwt jwt) {
