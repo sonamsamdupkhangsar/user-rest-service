@@ -18,7 +18,7 @@ import java.util.UUID;
 @Service
 public class UserHandler {
     private static final Logger LOG = LoggerFactory.getLogger(UserHandler.class);
-
+    private static final String AUTHENTICATION_ID = "authenticationId";
     @Autowired
     private UserService userService;
 
@@ -34,10 +34,10 @@ public class UserHandler {
     }
 
     public Mono<ServerResponse> update(ServerRequest serverRequest) {
-        String authId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
-        LOG.info("authenticate user for authId: {}", authId);
+        String authenticationId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+        LOG.info("authenticate user for authId: {}", authenticationId);
 
-        return userService.updateUser(authId, serverRequest.bodyToMono(UserTransfer.class))
+        return userService.updateUser(authenticationId, serverRequest.bodyToMono(UserTransfer.class))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.info("user update failed", throwable);
@@ -48,7 +48,9 @@ public class UserHandler {
     //updateProfilePhoto
     public Mono<ServerResponse> updateProfilePhoto(ServerRequest serverRequest) {
         LOG.info("update profile photo");
-        return userService.updateProfilePhoto(serverRequest.headers().firstHeader("authId"), serverRequest.bodyToMono(String.class))
+        String authenticationId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+
+        return userService.updateProfilePhoto(authenticationId, serverRequest.bodyToMono(String.class))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.info("update profile photo failed", throwable);
@@ -70,13 +72,15 @@ public class UserHandler {
                 });
     }
 
+    /**
+     * allow a user to get user information by authenticationId
+     * @param serverRequest
+     * @return
+     */
     public Mono<ServerResponse> getUserByAuthId(ServerRequest serverRequest) {
         LOG.info("authenticate user");
-        if (serverRequest.pathVariable("authId") == null || serverRequest.pathVariable("authId").isEmpty()) {
-            return Mono.error(new UserException("authenticationId is null"));
-        }
 
-        return userService.getUserByAuthenticationId(serverRequest.pathVariable("authId"))
+        return userService.getUserByAuthenticationId(serverRequest.pathVariable(AUTHENTICATION_ID))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.error("get user by authid failed", throwable);
@@ -85,10 +89,12 @@ public class UserHandler {
                 });
     }
 
+    // The account-rest-service will pass the JWT token to identify the user using security
     public Mono<ServerResponse> activateUser(ServerRequest serverRequest) {
         LOG.info("activate user");
+        String authenticationId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
 
-        return userService.activateUser(serverRequest.pathVariable("authenticationId"))
+        return userService.activateUser(authenticationId)
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.error("activate user failed", throwable);
@@ -99,8 +105,9 @@ public class UserHandler {
 
     public Mono<ServerResponse> deleteUser(ServerRequest serverRequest) {
         LOG.info("delete user");
+        String authenticationId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
 
-        return userService.deleteUser(serverRequest.pathVariable("authenticationId"))
+        return userService.deleteUser(authenticationId)
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.error("delete user failed", throwable);

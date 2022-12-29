@@ -38,19 +38,19 @@ public class Router {
     )
     public RouterFunction<ServerResponse> route(UserHandler handler) {
         LOG.info("building router function");
-        return RouterFunctions.route(POST("/public/user/signup").and(accept(MediaType.APPLICATION_JSON)),
+        return RouterFunctions.route(POST("/users").and(accept(MediaType.APPLICATION_JSON)),
                 handler::signupUser)
-                .andRoute(PUT("/user").and(accept(MediaType.APPLICATION_JSON)),
+                .andRoute(PUT("/users").and(accept(MediaType.APPLICATION_JSON)),
                         handler::update)
-                .andRoute(GET("/user/names/{firstName}/{lastName}").and(accept(MediaType.APPLICATION_JSON)),
+                .andRoute(GET("/users/names/{firstName}/{lastName}").and(accept(MediaType.APPLICATION_JSON)),
                 handler::findMatchingFirstNameAndLastName)
-                .andRoute(GET("/user/{authId}").and(accept(MediaType.APPLICATION_JSON)),
+                .andRoute(GET("/users/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
                         handler::getUserByAuthId)
-                .andRoute(PUT("/user/profilephoto").and(accept(MediaType.APPLICATION_JSON)),
+                .andRoute(PUT("/users/profilephoto").and(accept(MediaType.APPLICATION_JSON)),
                         handler::updateProfilePhoto)
-                .andRoute(PUT("/user/activate/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
+                .andRoute(PUT("/users/activate").and(accept(MediaType.APPLICATION_JSON)),
                         handler::activateUser)
-                .andRoute(DELETE("/user/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
+                .andRoute(DELETE("/users").and(accept(MediaType.APPLICATION_JSON)),
                         handler::deleteUser);
     }
 }
