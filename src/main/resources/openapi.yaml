@@ -183,7 +183,7 @@ components:
         authenticationId:
           type: string
         password:
-          type: password
+          type: string
     BadRequestBody:
       type: object
       properties:
