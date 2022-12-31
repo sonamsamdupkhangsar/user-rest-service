@@ -5,9 +5,9 @@ info:
   description: User rest services api documentation
 
 paths:
-  /users:
+  /users/signup:
     post:
-      description: signup up new user in user-rest-service and then in authentication-rest-service and then in account-rest-service
+      description: signup up new user in user-rest-service and then in authentication-rest-service and then in account-rest-service.  This is in it's own path for making it publicly available path.
       requestBody:
         required: true
         content:
@@ -15,18 +15,19 @@ paths:
             schema:
               $ref: '#/components/schemas/UserTransfer'
       responses:
-       '201':
-         description: Successfully created User in user-rest-service and also registered in authentication-rest-service and account-rest-service
-         content:
-           application/json:
-             schema:
-               $ref: '#/components/schemas/UuuidResponseBody'
-       '400':
-         description: failed to create user record
-         content:
-           application/json:
-             schema:
-               $ref: '#/components/schemas/BadResponseBody'
+        '201':
+          description: Successfully created User in user-rest-service and also registered in authentication-rest-service and account-rest-service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UuidResponseBody'
+        '400':
+          description: failed to create user record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestBody'
+  /users:
     put:
       description: Update User whose credentials matches the JWT user
       requestBody:
@@ -63,7 +64,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BadRequstBody'
+                $ref: '#/components/schemas/BadRequestBody'
   /users/names/{firstName}/{lastName}:
     get:
       description: Get users who name matches firstName and lastName
@@ -184,12 +185,21 @@ components:
           type: string
         password:
           type: string
+    UpdateUser:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
     BadRequestBody:
       type: object
       properties:
         message:
           type: string
-    UuiddResponseBody:
+    UuidResponseBody:
       type: object
       properties:
         message:

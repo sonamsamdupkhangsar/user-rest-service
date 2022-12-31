@@ -38,7 +38,7 @@ public class Router {
     )
     public RouterFunction<ServerResponse> route(UserHandler handler) {
         LOG.info("building router function");
-        return RouterFunctions.route(POST("/users").and(accept(MediaType.APPLICATION_JSON)),
+        return RouterFunctions.route(POST("/users/signup").and(accept(MediaType.APPLICATION_JSON)),
                 handler::signupUser)
                 .andRoute(PUT("/users").and(accept(MediaType.APPLICATION_JSON)),
                         handler::update)

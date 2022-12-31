@@ -66,7 +66,7 @@ public class UserEndpointTest {
     @Test
     public void actuatorEndpoint() {
         LOG.info("access actuator health endpoint");
-        EntityExchangeResult<String> result = webTestClient.get().uri("/public/user/signup")
+        EntityExchangeResult<String> result = webTestClient.get().uri("/users")
                 .exchange().expectStatus().is4xxClientError().expectBody(String.class).returnResult();
 
         LOG.info("result: {}", result.getResponseBody());
@@ -93,7 +93,7 @@ public class UserEndpointTest {
         userTransfer.setEmail("josey.cat@@cat.emmail");
 
         LOG.info("update user fields with jwt in auth bearer token");
-        EntityExchangeResult<String> result = webTestClient.put().uri("/user")
+        EntityExchangeResult<String> result = webTestClient.put().uri("/users")
                 .bodyValue(userTransfer)
                 //.headers(httpHeaders -> httpHeaders.set("authId", "dommy@cat.email"))
                 .headers(addJwt(jwt))
@@ -125,7 +125,7 @@ public class UserEndpointTest {
 
         LOG.info("get user by auth id");
 
-        Flux<MyUser> myUserFlux = webTestClient.get().uri("/user/"+authenticationId)
+        Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/"+authenticationId)
                 .headers(addJwt(jwt)).exchange().expectStatus().isOk()
                 .returnResult(MyUser.class).getResponseBody();
 
@@ -157,7 +157,7 @@ public class UserEndpointTest {
         Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        Flux<MyUser> myUserFlux = webTestClient.get().uri("/user/names/dommy/thecat")
+        Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/names/dommy/thecat")
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
                 .returnResult(MyUser.class).getResponseBody();
@@ -178,7 +178,7 @@ public class UserEndpointTest {
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
 
-        Flux<String> myUserFlux = webTestClient.put().uri("/user/profilephoto")
+        Flux<String> myUserFlux = webTestClient.put().uri("/users/profilephoto")
                 .bodyValue("http://spaces.sonam.us/myapp/app/someimage.png")
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()

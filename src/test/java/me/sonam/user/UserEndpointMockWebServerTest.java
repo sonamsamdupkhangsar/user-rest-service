@@ -136,7 +136,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
                 authenticationId, "pass", apiKey);
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
 
@@ -173,7 +173,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
                 authenticationId, "pass", apiKey);
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -208,7 +208,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
                 "existingUser", "pass", apiKey);
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -228,7 +228,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
                 "existingUser", "pass", apiKey);
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -248,7 +248,7 @@ public class UserEndpointMockWebServerTest {
 
        // webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
 
@@ -291,7 +291,7 @@ public class UserEndpointMockWebServerTest {
                 .verifyComplete();
 
         LOG.info("activate user authId: {}", id);
-        EntityExchangeResult<String> result = webTestClient.put().uri("/user/activate/" + authenticationId)
+        EntityExchangeResult<String> result = webTestClient.put().uri("/users/activate")
                 .headers(addJwt(jwt)).exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -331,7 +331,7 @@ public class UserEndpointMockWebServerTest {
                 .verifyComplete();
 
         LOG.info("activate user authId: {}", id);
-        EntityExchangeResult<String> result = webTestClient.delete().uri("/user/" + authenticationId)
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/users")
                 .headers(addJwt(jwt)).exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
@@ -368,7 +368,7 @@ public class UserEndpointMockWebServerTest {
                 .verifyComplete();
 
         LOG.info("activate user authId: {}", id);
-        EntityExchangeResult<String> result = webTestClient.delete().uri("/user/" + authenticationId)
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/users")
                 .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
