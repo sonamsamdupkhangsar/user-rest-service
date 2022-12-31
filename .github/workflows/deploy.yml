@@ -65,8 +65,8 @@ jobs:
             --set "image.repository=ghcr.io/${{github.repository}}" \
             --set "image.tag=latest" \
             --set "project=$PROJECT_NAME" \
-            --set "secretenvs[1].name=EUREKA_USER" --set "secretenvs[1].value=${{ secrets.EUREKA_USER }}" \
-            --set "secretenvs[2].name=EUREKA_PASSWORD" --set "secretenvs[2].value=${{ secrets.EUREKA_PASSWORD }}" \
+            --set "secretenvs[0].name=EUREKA_USER" --set "secretenvs[0].value=${{ secrets.EUREKA_USER }}" \
+            --set "secretenvs[1].name=EUREKA_PASSWORD" --set "secretenvs[1].value=${{ secrets.EUREKA_PASSWORD }}" \
              $PROJECT_NAME \
             sonam/mychart -f values-backend.yaml --version 0.1.21 --namespace=backend
 
