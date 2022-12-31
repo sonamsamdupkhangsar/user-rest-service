@@ -46,9 +46,6 @@ import static org.mockito.Mockito.when;
 public class UserEndpointTest {
     private static final Logger LOG = LoggerFactory.getLogger(UserEndpointTest.class);
 
-    @Value("${apiKey}")
-    private String apiKey;
-
     @Autowired
     private UserRepository userRepository;
 

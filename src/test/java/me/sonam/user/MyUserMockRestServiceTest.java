@@ -58,7 +58,7 @@ public class MyUserMockRestServiceTest {
         assertThat(webTestClient).isNotNull();
 
         LOG.info("signup user");
-        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey", "authId", "pass", "yakApiKey");
+        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey", "authId", "pass");
 
         webTestClient.post().uri("/public/user/signup")
                 .bodyValue(userTransfer)

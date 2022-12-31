@@ -65,9 +65,6 @@ public class UserEndpointMockWebServerTest {
     private static String jwtEndpoint = "http://localhost:{port}/validate";
     private static String accountEp = "http://localhost:{port}/accounts";
 
-    @Value("${apiKey}")
-    private String apiKey;
-
     private static MockWebServer mockWebServer;
 
     private UserHandler handler;
@@ -134,7 +131,7 @@ public class UserEndpointMockWebServerTest {
         LOG.info("make rest call to save user and create authentication record");
 
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
-                authenticationId, "pass", apiKey);
+                authenticationId, "pass");
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
                 .bodyValue(userTransfer)
@@ -171,7 +168,7 @@ public class UserEndpointMockWebServerTest {
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("deleted authenticationId that is active false"));
 
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
-                authenticationId, "pass", apiKey);
+                authenticationId, "pass");
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
                 .bodyValue(userTransfer)
@@ -206,7 +203,7 @@ public class UserEndpointMockWebServerTest {
         LOG.info("make rest call to save user and create authentication record");
 
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
-                "existingUser", "pass", apiKey);
+                "existingUser", "pass");
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
                 .bodyValue(userTransfer)
@@ -226,7 +223,7 @@ public class UserEndpointMockWebServerTest {
         LOG.info("make rest call to save user and create authentication record");
 
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
-                "existingUser", "pass", apiKey);
+                "existingUser", "pass");
 
         EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
                 .bodyValue(userTransfer)
@@ -241,7 +238,7 @@ public class UserEndpointMockWebServerTest {
         LOG.info("make rest call to save user and create authentication record");
 
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "12yakApiKey",
-                "dummy123", "pass", apiKey);
+                "dummy123", "pass");
 
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("dummy123"));
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));

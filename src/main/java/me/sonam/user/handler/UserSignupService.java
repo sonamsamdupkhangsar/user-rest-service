@@ -39,9 +39,6 @@ public class UserSignupService implements UserService {
     @Value("${email-rest-service}")
     private String emailEp;
 
-    @Value("${apiKey}")
-    private String apiKey;
-
     @Value("${emailFrom}")
     private String emailFrom;
 

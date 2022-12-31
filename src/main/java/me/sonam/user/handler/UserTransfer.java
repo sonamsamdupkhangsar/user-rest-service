@@ -9,28 +9,17 @@ public class UserTransfer {
     private String email;
     private String authenticationId;
     private String password;
-    private String apiKey;
 
     public UserTransfer() {
 
     }
-    public UserTransfer(String firstName, String lastName, String email, String authenticationId, String password, String apiKey) {
+    public UserTransfer(String firstName, String lastName, String email, String authenticationId, String password) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.authenticationId = authenticationId;
         this.password = password;
-        this.apiKey = apiKey;
     }
-
-    public String getApiKey() {
-        return apiKey;
-    }
-
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
-    }
-
     public String getAuthenticationId() {
         return authenticationId;
     }

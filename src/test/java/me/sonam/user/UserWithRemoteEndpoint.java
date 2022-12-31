@@ -41,7 +41,7 @@ public class UserWithRemoteEndpoint {
         LOG.info("signup user");
         final String id = UUID.randomUUID().toString().replace("-", "");
         UserTransfer userTransfer = new UserTransfer("sonam", "", "mex@sonam.co",
-                "apple", "", apiKey);
+                "apple", "");
 
         webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
@@ -58,7 +58,7 @@ public class UserWithRemoteEndpoint {
         LOG.info("authenticate user");
         final String id = UUID.randomUUID().toString().replace("-", "");
         UserTransfer userTransfer = new UserTransfer(null, null, null,
-                "sonam", "50bucks$", null);
+                "sonam", "50bucks$");
 
         webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
