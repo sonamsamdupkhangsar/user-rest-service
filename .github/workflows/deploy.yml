@@ -14,32 +14,25 @@ jobs:
         run: export PROJECT_NAME=$(echo ${{ github.repository }} | cut -d / -f2); echo $PROJECT_NAME
 
       - name: Checkout main
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Setup Open JDK 16
-        uses: actions/setup-java@v2
+      - name: Setup Open JDK 17
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'adopt'
 
-      - name: Build with Maven
-        run: mvn -B test
-
-      - name: Generate JaCoCo Badge
-        uses: cicirello/jacoco-badge-generator@v2
-        with:
-          generate-branches-badge: true
-
       - name: Publish package
-        run: mvn --batch-mode deploy
+        run: mvn -s settings.xml --batch-mode deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Publish Pacts
         run: mvn pact:publish -Dpactbrokerurl=${{ secrets.PACTBROKER_URL }} -Dpactbrokerusername=${{ secrets.PACTBROKER_USERNAME }} -Dpactbrokerpassword=${{ secrets.PACTBROKER_PASSWORD }}
 
       - name: Log in to the Container registry
-        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -47,13 +40,14 @@ jobs:
 
       - name: Build Docker image and push to ghcr.io registry
         id: docker_build
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        uses: docker/build-push-action@v3
         with:
           context: .
           push: true
           tags: ghcr.io/${{github.repository}}:latest
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.PERSONAL_ACCESS_TOKEN }}
+            PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
@@ -71,10 +65,6 @@ jobs:
             --set "image.repository=ghcr.io/${{github.repository}}" \
             --set "image.tag=latest" \
             --set "project=$PROJECT_NAME" \
-            --set "postgres.secretfile=${{ secrets.POSTGRES_SECRET_FILE }}" \
-            --set "postgres.service=${{ secrets.POSTGRES_SERVICE }}" \
-            --set "postgres.dbname=${{ secrets.POSTGRES_DBNAME }}" \
-            --set "secretenvs[0].name=apiKey" --set "secretenvs[0].value=${{ secrets.API_KEY }}" \
             --set "secretenvs[1].name=EUREKA_USER" --set "secretenvs[1].value=${{ secrets.EUREKA_USER }}" \
             --set "secretenvs[2].name=EUREKA_PASSWORD" --set "secretenvs[2].value=${{ secrets.EUREKA_PASSWORD }}" \
              $PROJECT_NAME \
