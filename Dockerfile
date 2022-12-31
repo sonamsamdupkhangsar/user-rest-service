@@ -2,10 +2,13 @@ FROM maven:3-openjdk-17-slim as build
 
 WORKDIR /app
 
-COPY pom.xml ./
+COPY pom.xml settings.xml ./
 COPY src ./src
 
-RUN ["mvn", "clean", "install"]
+# use exec shell form to access secret variable as exported env variable
+RUN --mount=type=secret,id=PERSONAL_ACCESS_TOKEN \
+   export PERSONAL_ACCESS_TOKEN=$(cat /run/secrets/PERSONAL_ACCESS_TOKEN) && \
+   mvn -s settings.xml clean install
 
 FROM openjdk:17
 WORKDIR /app
