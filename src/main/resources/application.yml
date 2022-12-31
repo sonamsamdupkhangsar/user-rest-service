@@ -18,6 +18,8 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: user-rest-service
   r2dbc:
     url: r2dbc:postgresql://${POSTGRES_SERVICE}/${POSTGRES_DBNAME}
     username: ${POSTGRES_USERNAME}
@@ -31,11 +33,6 @@ jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/v
 email-rest-service: https://email-rest-service.sonam.cloud/email
 emailFrom: ""
 emailBody: Please activate your email by following this link https://account-rest-service.sonam.cloud/accounts/activate/{accountId}
-
-springdoc:
-  swagger-ui:
-    path: /public/swaggerui
-    enabled: true
 
 eureka:
   client:
