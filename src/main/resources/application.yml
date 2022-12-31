@@ -41,3 +41,6 @@ eureka:
   client:
     serviceUrl:
       defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
+
+permitPaths: /users/signup, /api/health/*
+jwt-rest-service-public-key-id: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/jwt-rest-service/publickeys/{keyId}
