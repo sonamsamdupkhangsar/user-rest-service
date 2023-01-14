@@ -133,7 +133,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
                 authenticationId, "pass");
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/users")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
 
@@ -170,7 +170,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
                 authenticationId, "pass");
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/users")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -205,7 +205,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
                 "existingUser", "pass");
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/users")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -225,7 +225,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
                 "existingUser", "pass");
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/users")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
@@ -245,7 +245,7 @@ public class UserEndpointMockWebServerTest {
 
        // webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/users/signup")
+        EntityExchangeResult<String> result = webTestClient.post().uri("/users")
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
 
