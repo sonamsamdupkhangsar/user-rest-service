@@ -103,7 +103,8 @@ flowchart TD
   accountExistsByAuthenticationIdAndTrue -->|Yes, account already exists and created, check email to activate| returnError
   accountExistsByAuthenticationIdAndTrue -->|No| accountWithEmailExists{Account with email exists?}
   accountWithEmailExists -->|Yes| deleteAccount[Delete existing account]
-  deleteAccount --> account-rest-service
+  deleteAccount --> deleteExistingAccount[account-rest-service]
+  deleteExistingAccount -->  deleteByAuthenticationIdAndActiveFalse
   accountWithEmailExists -->|No| deleteByAuthenticationIdAndActiveFalse[delete existing account that is false]
   deleteByAuthenticationIdAndActiveFalse --> saveUser[create user]
   saveUser --> createAuthentication[create authentication]
