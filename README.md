@@ -78,10 +78,10 @@ flowchart TD
   isAuthenticationIdUnique -->|Yes| accountExistsByAuthenticationIdAndTrue{Is there an account with AuthenticationId already and account created is true?}
   accountExistsByAuthenticationIdAndTrue -->|Yes, account already exists and created, check email to activate| returnError
   accountExistsByAuthenticationIdAndTrue -->|No| accountWithEmailExists{Account with email exists?}
-  accountWithEmailExists -->|Yes| deleteAccount[Delete existing account]
+  accountWithEmailExists -->|Yes| deleteAccount[Delete existing user that]
   deleteAccount --> deleteExistingAccount[account-rest-service]
   deleteExistingAccount -->  deleteByAuthenticationIdAndActiveFalse
-  accountWithEmailExists -->|No| deleteByAuthenticationIdAndActiveFalse[delete existing account that is false]
+  accountWithEmailExists -->|No| deleteByAuthenticationIdAndActiveFalse[delete existing user if it active status false]
   deleteByAuthenticationIdAndActiveFalse --> userDb[(userDb postgresql)]
   deleteByAuthenticationIdAndActiveFalse --> saveUser[create user]
   saveUser --> createAuthentication[create authentication]
