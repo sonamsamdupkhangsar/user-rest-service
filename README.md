@@ -106,10 +106,20 @@ flowchart TD
   deleteAccount --> deleteExistingAccount[account-rest-service]
   deleteExistingAccount -->  deleteByAuthenticationIdAndActiveFalse
   accountWithEmailExists -->|No| deleteByAuthenticationIdAndActiveFalse[delete existing account that is false]
-  deleteByAuthenticationIdAndActiveFalse --> accountDb[(accountDb postgresql)]
+  deleteByAuthenticationIdAndActiveFalse --> userDb[(userDb postgresql)]
   deleteByAuthenticationIdAndActiveFalse --> saveUser[create user]
   saveUser --> createAuthentication[create authentication]
   createAuthentication --> authentication-rest-service
   authentication-rest-service --> createAccount[create account]
   createAccount --> account-rest-service
+```
+
+## Update User workflow
+```mermaid
+flowchart TD
+ User[user-request] --> user-rest-service[update update]
+ user-rest-service --> findUser[get user by authenticationId]
+ findUser --> userExistByEmailAndIdNot[findUser where email is not already used by someone else]
+ userExistByEmailAndIdNot --> updateFirstNameAndLastNameAndEmail["update user name and email"]
+ updateFirstNameAndLastNameAndEmail --> userDb[(userdb postgresql)]
 ```
