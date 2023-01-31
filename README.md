@@ -128,7 +128,7 @@ flowchart TD
 ```mermaid
 flowchart TD
   User[user-request] --> updateProfilePhoto[update profile photo]
-  updateProfielPhoto --> userDb[(userdb postgresql)]
+  updateProfilePhoto --> userDb[(userdb postgresql)]
 ```
 
 ## Get user by authenticationId
@@ -141,7 +141,7 @@ flowchart TD
 ## find matching name
 ```mermaid
 flowchart TD
-  User[user-request] --> findUser[find users that have matching firstname and lastname ignorecase]
+  User[user-request] --> findUsers[find users that have matching firstname and lastname ignorecase]
   findUsers --> userDb[(userdb postgresql)]
 ```
 
