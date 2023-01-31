@@ -156,8 +156,10 @@ flowchart TD
 ```mermaid
 flowchart TD
   User[user-request] --> deleteUser[delete user by authenticationId]
-  deleteUser --> deleteUserIfNotActive[delete only inactive user]
-  deleteUserIfNotActive --> userDb[(userdb postgresql)]
+  deleteUser --> isUserActive{is user active?}
+  isUserActive -->|Yes, user is already active| returnError[Return 400 to request]
+  isUserActive -->|No| canDeleteUser[user can be deleted]
+  canDeleteUser --> userDb[(userdb postgresql)]
 ```
 
 
