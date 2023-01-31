@@ -113,9 +113,9 @@ flowchart TD
   authentication-rest-service --> createAccount[create account]
   createAccount --> account-rest-service
   
-  click authentication-rest-service href  "https://github.com/sonamsamdupkhangsar"
-  click authentication-rest-service "https://www.github.com" "Open this in a new tab" _blank
 ```
+Check here for create [authentication](https://github.com/sonamsamdupkhangsar/authentication-rest-service/tree/feature/openapi-jan-2-2023#create-authentication-workflow) documentation.
+Check here for create [account](https://github.com/sonamsamdupkhangsar/account-rest-service/tree/feature/route-update-jan-18-2023#create-account) documentation.
 
 ## Update User workflow
 ```mermaid
