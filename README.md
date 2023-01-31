@@ -84,10 +84,11 @@ flowchart TD
   accountWithEmailExists -->|No| deleteByAuthenticationIdAndActiveFalse[delete existing user if active value false]
   deleteByAuthenticationIdAndActiveFalse --> userDb[(userDb postgresql)]
   deleteByAuthenticationIdAndActiveFalse --> saveUser[create user]
+  saveUser --"create user"--> userDb
   saveUser --> createAuthentication[create authentication]
-  createAuthentication --> authentication-rest-service
+  createAuthentication --http callout--> authentication-rest-service
   authentication-rest-service --> createAccount[create account]
-  createAccount --> account-rest-service
+  createAccount --http callout--> account-rest-service
   
 ```
 Check here for create [authentication](https://github.com/sonamsamdupkhangsar/authentication-rest-service/tree/feature/openapi-jan-2-2023#create-authentication-workflow) documentation.
