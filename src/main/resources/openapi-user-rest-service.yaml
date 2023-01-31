@@ -4,6 +4,10 @@ info:
   title: User Api
   description: User rest services api documentation
 
+servers:
+  - url: http://localhost:8083
+    description: local development server
+
 paths:
   /users:
     post:

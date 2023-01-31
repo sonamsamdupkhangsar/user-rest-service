@@ -1,0 +1,19 @@
+# This yaml file is for loading local database, server port, disable eureka and set jwt-rest-service endpoint
+server:
+  port: 8083
+
+POSTGRES_USERNAME: test
+POSTGRES_PASSWORD: test
+POSTGRES_DBNAME: authentication
+POSTGRES_SERVICE: localhost:5432
+DB_SSLMODE: disable
+
+eureka:
+  client:
+    enabled: false
+
+# jwt-rest-service on port 8081 local server
+JWT_REST_SERVICE: http://localhost:8081/jwts/publickeys/{keyId}
+APPLICATION_REST_SERVICE: http://localhost:8082/applications
+account-rest-service: http://localhost:808/accounts
+authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authentications

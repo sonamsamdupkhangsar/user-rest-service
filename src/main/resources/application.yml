@@ -30,7 +30,8 @@ spring:
 account-rest-service: http://account-rest-service-mychart.backend.svc.cluster.local:80/accounts
 authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authentications
 jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/validate
-email-rest-service: https://email-rest-service.sonam.cloud/email
+
+email-rest-service: https://email-rest-service-mychart.backend.svc.cluster.local:80/email
 emailFrom: ""
 emailBody: Please activate your email by following this link https://account-rest-service.sonam.cloud/accounts/activate/{accountId}
 
