@@ -81,7 +81,7 @@ flowchart TD
   accountWithEmailExists -->|Yes| deleteAccount[Delete existing user that]
   deleteAccount --> deleteExistingAccount[account-rest-service]
   deleteExistingAccount -->  deleteByAuthenticationIdAndActiveFalse
-  accountWithEmailExists -->|No| deleteByAuthenticationIdAndActiveFalse[delete existing user if it active status false]
+  accountWithEmailExists -->|No| deleteByAuthenticationIdAndActiveFalse[delete existing user if active value false]
   deleteByAuthenticationIdAndActiveFalse --> userDb[(userDb postgresql)]
   deleteByAuthenticationIdAndActiveFalse --> saveUser[create user]
   saveUser --> createAuthentication[create authentication]
