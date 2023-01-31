@@ -1,10 +1,15 @@
 # user-rest-service
 This is user-rest-service for managing user data.
-This service exposes a user signup api.  Please check the workflow diagrams below to see the service interaction.
+This service exposes a user signup api.  Please check the [workflow](#signup-user-workflow) diagrams below to see the service interaction.
 
-The following is the flowchart showing component dependency for user-rest-service:
+## Run locally using profile
+Use the following to run local profile which will pick up properties defined in the `application-local.yml` :
 
-## Run locally
+```
+mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local"
+```
+
+Or you can do something like following too to specify the db server properties:
 
 ```
 mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=8084 \
