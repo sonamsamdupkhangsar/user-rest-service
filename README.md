@@ -95,6 +95,7 @@ psql -U <USER> -d projectdb -h localhost -p 6432
 
 ## Signup User workflow
 ```mermaid
+flowchart TD
   User[user-request] --> user-rest-service[signup user]
   user-rest-service --> isAuthenticationIdUnique{is authenticationid unique?}
   isAuthenticationIdUnique -->|No, authenticationId already used| returnError[Retrun http 400 error]
