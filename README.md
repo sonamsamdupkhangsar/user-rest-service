@@ -1,37 +1,8 @@
 # user-rest-service
 This is user-rest-service for managing user data.
-This service exposes a user signup api.  This will save the user
-and create a Authentication account using the Authentication API.
-This service requires a API key.
-
-## Mermaid diagrams
+This service exposes a user signup api.  Please check the workflow diagrams below to see the service interaction.
 
 The following is the flowchart showing component dependency for user-rest-service:
-
-```mermaid
-flowchart TD
-    A[user-rest-service] -->|user signup| B[authentication-rest-service]
-    B -->|authentication create| C[(authentication postgresqldb)]    
-    A --> | save user data| D[(user postgresqldb)]
-```
-
-The following is the user sign-up sequence diagram:
-
-```mermaid 
-sequenceDiagram
-    autonumber
-    participant Client
-    participant userapi as user-rest-service
-    participant authapi as authentication-rest-service
-    Client->>userapi: user signup
-    loop Check unique user
-        userapi->>userapi: Check email and authenticationId 
-    end
-    Note right of userapi: check user data for unique user signup
-    userapi ->> authapi: register user authentication
-    authapi ->> userapi: http status ok on creation
-    userapi ->> Client: http status ok on user creation success
-```
 
 ## Run locally
 
