@@ -114,6 +114,7 @@ flowchart TD
   createAccount --> account-rest-service
   
   click authentication-rest-service href  "https://github.com/sonamsamdupkhangsar"
+  click authentication-rest-service "https://www.github.com" "Open this in a new tab" _blank
 ```
 
 ## Update User workflow
