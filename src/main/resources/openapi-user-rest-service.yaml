@@ -5,7 +5,7 @@ info:
   description: User rest services api documentation
 
 servers:
-  - url: http://localhost:8083
+  - url: http://localhost:8084
     description: local development server
 
 paths:
