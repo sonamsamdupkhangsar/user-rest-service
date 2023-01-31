@@ -113,7 +113,7 @@ flowchart TD
   authentication-rest-service --> createAccount[create account]
   createAccount --> account-rest-service
   
-  click authentication-rest-service "https://github.com/sonamsamdupkhangsar/authentication-rest-service/" _blank
+  click authentication-rest-service "https://github.com/sonamsamdupkhangsar" _blank
 ```
 
 ## Update User workflow
