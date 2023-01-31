@@ -113,7 +113,7 @@ flowchart TD
   authentication-rest-service --> createAccount[create account]
   createAccount --> account-rest-service
   
-  click authentication-rest-service "https://github.com/sonamsamdupkhangsar/authentication-rest-service/tree/feature/openapi-jan-2-2023#create-authentication-workflow" 
+  click authentication-rest-service "https://github.com/sonamsamdupkhangsar/authentication-rest-service/" _blank
 ```
 
 ## Update User workflow
