@@ -123,3 +123,43 @@ flowchart TD
  userExistByEmailAndIdNot --> updateFirstNameAndLastNameAndEmail["update user name and email"]
  updateFirstNameAndLastNameAndEmail --> userDb[(userdb postgresql)]
 ```
+
+## Update profilephoto
+```mermaid
+flowchart TD
+  User[user-request] --> updateProfilePhoto[update profile photo]
+  updateProfielPhoto --> userDb[(userdb postgresql)]
+```
+
+## Get user by authenticationId
+```mermaid
+flowchart TD
+  User[user-request] --> getUserByAuthenticationId
+  getUserByAuthenticationId --> userDb[(userdb postgresql)]
+```
+
+## find matching name
+```mermaid
+flowchart TD
+  User[user-request] --> findUser[find users that have matching firstname and lastname ignorecase]
+  findUsers --> userDb[(userdb postgresql)]
+```
+
+## activate user
+```mermaid
+flowchart TD
+  User[user-request] --> activateUser[set active flag to true]
+  activateUser --> userDb[(userdb postgresql)]
+```
+
+## delete user
+```mermaid
+flowchart TD
+  User[user-request] --> deleteUser[delete user by authenticationId]
+  deleteUser --> deleteUserIfNotActive[delete only inactive user]
+  deleteUserIfNotActive --> userDb[(userdb postgresql)]
+```
+
+
+
+
