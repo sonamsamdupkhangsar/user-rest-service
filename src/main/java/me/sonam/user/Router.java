@@ -29,7 +29,7 @@ public class Router {
                         handler::getUserByAuthId)
                 .andRoute(PUT("/users/profilephoto").and(accept(MediaType.APPLICATION_JSON)),
                         handler::updateProfilePhoto)
-                .andRoute(PUT("/users/activate").and(accept(MediaType.APPLICATION_JSON)),
+                .andRoute(PUT("/users/activate/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
                         handler::activateUser)
                 .andRoute(DELETE("/users").and(accept(MediaType.APPLICATION_JSON)),
                         handler::deleteUser);

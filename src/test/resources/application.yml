@@ -30,7 +30,7 @@ POSTGRES_SERVICE: dservice
 POSTGRES_PASSWORD: dpassword
 
 account-rest-service: http://localhost:{port}/accounts
-authentication-rest-service: http://localhost:{port}/create
+authentication-rest-service: http://localhost:{port}/authentications
 jwt-rest-service: http://localhost:{port}/validate
 email-rest-service: https://email-rest-service.sonam.cloud/email
 emailFrom: ""
@@ -53,11 +53,25 @@ eureka:
       defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
 
 #permitPaths: /users/signup, /api/health/*
-jwt-rest-service-public-key-id: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/jwts/publickeys/{keyId}
 
-me.sonam.jwt-validator:
-  permitpath:
-    - path: /users
-      httpMethods: POST
-    - path: /api/health/*
-      httpMethods: GET
+jwt-rest-service-public-key-id: http://localhost:{port}/jwts/publickeys/{keyId}
+jwt-rest-service-accesstoken: http://localhost:{port}/jwts/accesstoken
+
+permitpath:
+  - path: /users
+    httpMethods: POST
+  - path: /api/health/*
+    httpMethods: GET
+
+jwtrequest:
+  - in:  /users
+    out: /authentications
+    jwt: request
+  - in: /users
+    out: /accounts/(.)*/(.)*
+    jwt: request
+
+hmackey:
+  clientId: user-rest-service
+  hmacMD5Algorithm: HmacMD5
+  secretKey: mysecret

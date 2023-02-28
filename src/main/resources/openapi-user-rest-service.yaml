@@ -18,13 +18,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserTransfer'
+              example:
+                firstName: Tashi
+                lastName: Tsering
+                email: me@sonam.email
+                authenticationId: tashi.tsering
+                password: 123-tashi
       responses:
         '201':
           description: Successfully created User in user-rest-service and also registered in authentication-rest-service and account-rest-service
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UuidResponseBody'
+                $ref: '#/components/schemas/MessageResponseBody'
         '400':
           description: failed to create user record
           content:
@@ -45,7 +51,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OkResponseBody'
+                $ref: '#/components/schemas/MessageResponseBody'
         '400':
           description: Failed to update user, email already used
           content:
@@ -61,7 +67,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OkResponseBody'
+                $ref: '#/components/schemas/MessageResponseBody'
         '400':
           description: Failed to delete user.
           content:
@@ -128,15 +134,21 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OkResponseBody'
+                $ref: '#/components/schemas/MessageResponseBody'
         '400':
           description: Failed to update user profile photo url
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BadRequestBody'
-  /users/activate:
+  /users/activate/{authenticationId}:
     put:
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
       description: This service is called by route account-rest-service/public/accounts/activate/{authenticationId}/{secret}. This will set the active flag to true
       responses:
         '200':
@@ -144,7 +156,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OkResponseBody'
+                $ref: '#/components/schemas/MessageResponseBody'
         '400':
           description: Failed to activate user
           content:
@@ -200,7 +212,7 @@ components:
     BadRequestBody:
       type: object
       properties:
-        message:
+        error:
           type: string
     UuidResponseBody:
       type: object
@@ -208,7 +220,7 @@ components:
         message:
           type: string
           format: uuid
-    OkResponseBody:
+    MessageResponseBody:
       type: object
       properties:
         message:
