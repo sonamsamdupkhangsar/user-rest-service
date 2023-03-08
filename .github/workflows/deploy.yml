@@ -59,6 +59,7 @@ jobs:
 
       - name: Deploy to k8 cluster
         run: |
+          kubectl apply -f sealedsecret/user-rest-service-sealed.yaml
           export PROJECT_NAME=$(echo ${{ github.repository }} | cut -d / -f2)
           helm repo add sonam https://sonamsamdupkhangsar.github.io/sonam-helm-chart/
           helm upgrade --install --timeout 5m0s \

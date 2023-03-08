@@ -13,13 +13,12 @@ eureka:
     enabled: false
 
 # jwt-rest-service on port 8081 local server
-jwt-rest-service-public-key-id: http://localhost:8081/jwts/publickeys/{keyId}
-APPLICATION_REST_SERVICE: http://localhost:8082/applications
-account-rest-service: http://localhost:8086/accounts
-authentication-rest-service: http://localhost:8083/authentications
-jwt-rest-service-accesstoken: http://localhost:8081/jwts/accesstoken
+JWT_REST_SERVICE: http://localhost:8081
+APPLICATION_REST_SERVICE: http://localhost:8082
+ACCOUNT_REST_SERVICE: http://localhost:8086
+AUTHENTICATION_REST_SERVICE: http://localhost:8083
 
-hmackey:
+hmacKey:
   clientId: user-rest-service
-  hmacMD5Algorithm: HmacMD5
+  algorithm: HmacMD5
   secretKey: mysecret

@@ -31,16 +31,13 @@ public class UserSignupService implements UserService {
 
     private WebClient webClient;
 
-    @Value("${account-rest-service}")
+    @Value("${account-rest-service.root}${account-rest-service.acounts}")
     private String accountEp;
 
-    @Value("${authentication-rest-service}")
+    @Value("${authentication-rest-service.root}${authentication-rest-service.authentications}")
     private String authenticationEp;
 
-    @Value("${jwt-rest-service}")
-    private String jwtEp;
-
-    @Value("${email-rest-service}")
+    @Value("${email-rest-service.root}${email-rest-service.emails")
     private String emailEp;
 
     @Value("${emailFrom}")

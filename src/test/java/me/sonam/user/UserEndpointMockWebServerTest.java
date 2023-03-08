@@ -104,12 +104,9 @@ public class UserEndpointMockWebServerTest {
      */
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry r) throws IOException {
-        r.add("authentication-rest-service", () -> authEndpoint.replace("{port}", mockWebServer.getPort() + ""));
-
-        r.add("account-rest-service", () -> accountEp.replace("{port}", mockWebServer.getPort() + ""));
-        r.add("jwt-rest-service-accesstoken", () -> jwtRestServiceAccesstoken.replace("{port}", mockWebServer.getPort()+""));
-        LOG.info("updated authentication-rest-service and jwt-rest-service properties");
-        LOG.info("mockWebServer.port: {}", mockWebServer.getPort());
+        r.add("authentication-rest-service.root", () -> "http://localhost:"+mockWebServer.getPort());
+        r.add("account-rest-service.root", () -> "http://localhost:"+mockWebServer.getPort());
+        r.add("jwt-service.root", () -> "http://localhost:"+mockWebServer.getPort());
     }
 
     @BeforeEach

@@ -29,10 +29,23 @@ POSTGRES_DBNAME: dbname
 POSTGRES_SERVICE: dservice
 POSTGRES_PASSWORD: dpassword
 
-account-rest-service: http://localhost:{port}/accounts
-authentication-rest-service: http://localhost:{port}/authentications
-jwt-rest-service: http://localhost:{port}/validate
-email-rest-service: https://email-rest-service.sonam.cloud/email
+authentication-rest-service:
+  root: http://localhost:{port}/authentications
+  authentications: /authentications
+
+account-rest-service:
+  root: http://localhost:{port}/accounts
+  acounts: /accounts
+
+jwt-service:
+  root: http://localhost:{port}
+  public-key-id: /jwts/publickeys/{keyId}
+  accesstoken: /jwts/accesstoken
+
+email-rest-service:
+  root: http://localhost:{port}
+  emails: /emails
+
 emailFrom: ""
 emailBody: Please activate your email by following this link https://account-rest-service.sonam.cloud/accounts/activate/{accountId}
 
@@ -52,11 +65,6 @@ eureka:
     serviceUrl:
       defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
 
-#permitPaths: /users/signup, /api/health/*
-
-jwt-rest-service-public-key-id: http://localhost:{port}/jwts/publickeys/{keyId}
-jwt-rest-service-accesstoken: http://localhost:{port}/jwts/accesstoken
-
 permitpath:
   - path: /users
     httpMethods: POST
@@ -71,7 +79,7 @@ jwtrequest:
     out: /accounts/(.)*/(.)*
     jwt: request
 
-hmackey:
+hmacKey:
   clientId: user-rest-service
-  hmacMD5Algorithm: HmacMD5
+  algorithm: HmacMD5
   secretKey: mysecret
