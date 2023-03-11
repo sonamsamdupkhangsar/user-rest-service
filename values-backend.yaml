@@ -86,7 +86,7 @@ envs:
   - name: JWT_REST_SERVICE
     value: http://jwt-rest-service-mychart.backend.svc.cluster.local:80
   - name: ACCOUNT_REST_SERVICE
-    value: https://account-rest-service.backend.svc.cluster.local:80
+    value: http://account-rest-service-mychart.backend.svc.cluster.local:80
 
 health:
   liveness:
