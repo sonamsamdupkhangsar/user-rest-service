@@ -109,7 +109,7 @@ secretFiles:
         name: EUREKA_USER
       - key: password
         name: EUREKA_PASSWORD
-  - file: account-rest-service
+  - file: user-rest-service
     keys:
       - key: hmac.clientId
         name: HMAC_CLIENTID
