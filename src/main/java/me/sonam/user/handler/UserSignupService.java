@@ -31,20 +31,11 @@ public class UserSignupService implements UserService {
 
     private WebClient webClient;
 
-    @Value("${account-rest-service.root}${account-rest-service.acounts}")
+    @Value("${account-rest-service.root}${account-rest-service.accounts}")
     private String accountEp;
 
     @Value("${authentication-rest-service.root}${authentication-rest-service.authentications}")
     private String authenticationEp;
-
-    @Value("${email-rest-service.root}${email-rest-service.emails")
-    private String emailEp;
-
-    @Value("${emailFrom}")
-    private String emailFrom;
-
-    @Value("${emailBody}")
-    private String emailBody;
 
     @Autowired
     private ReactiveRequestContextHolder reactiveRequestContextHolder;

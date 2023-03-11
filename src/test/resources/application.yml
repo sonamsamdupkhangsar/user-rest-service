@@ -35,19 +35,12 @@ authentication-rest-service:
 
 account-rest-service:
   root: http://localhost:{port}/accounts
-  acounts: /accounts
+  accounts: /accounts
 
 jwt-service:
   root: http://localhost:{port}
   public-key-id: /jwts/publickeys/{keyId}
   accesstoken: /jwts/accesstoken
-
-email-rest-service:
-  root: http://localhost:{port}
-  emails: /emails
-
-emailFrom: ""
-emailBody: Please activate your email by following this link https://account-rest-service.sonam.cloud/accounts/activate/{accountId}
 
 endpoint:
   user:
