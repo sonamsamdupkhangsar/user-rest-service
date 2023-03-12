@@ -69,13 +69,19 @@ public class UserSignupService implements UserService {
 
                             return !aBoolean;
                         }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that id, check to activate it by email")))
-                        .flatMap(aBoolean -> userRepository.existsByEmail(userTransfer.getEmail()))
-                        .filter(aBoolean -> !aBoolean)
-                          .switchIfEmpty(callDeleteAccountCheck(userTransfer.getEmail()))//  comment out for till jwt token is passed
-                                //.switchIfEmpty(Mono.error(new SignupException("a user with this email already exists")))//for now just return this Exception below
-                        //delete any previous attempts that is not activated
-                        .flatMap(aBoolean -> userRepository.deleteByAuthenticationIdAndActiveFalse(userTransfer.getAuthenticationId()))
-                        .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
+                                .flatMap(aBoolean -> userRepository.existsByEmailAndActiveTrue(userTransfer.getEmail()))
+                                .filter(aBoolean -> !aBoolean)
+                                .switchIfEmpty(Mono.error(new SignupException("User account is active for that email")))
+                                .flatMap(aBoolean -> userRepository.existsByEmailAndUserAuthAccountCreatedTrue(userTransfer.getEmail()))
+                                .filter(aBoolean -> {
+                                    LOG.info("emailExistsAndUserAuthAccountCreated is {}", aBoolean);
+                                    return !aBoolean;
+                                }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that email, check to activate it by email")))
+                                .flatMap(aBoolean -> callDeleteAccountCheck(userTransfer.getEmail()))
+                                .flatMap(string -> userRepository.deleteByAuthenticationIdAndUserAuthAccountCreatedFalse(userTransfer.getAuthenticationId()))
+                                //just delete rows with email and acccount created is in false - meaning not fully created
+                                .flatMap(rows -> userRepository.deleteByEmailAndUserAuthAccountCreatedFalse(userTransfer.getEmail()))
+                                .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
                             userTransfer.getEmail(), userTransfer.getAuthenticationId())))
                         .flatMap(myUser -> userRepository.save(myUser))
                         .flatMap(myUser -> {
@@ -205,9 +211,10 @@ public class UserSignupService implements UserService {
     }
 
 
-    private Mono<? extends Boolean> callDeleteAccountCheck(String email) {
+    private Mono<String>/*<? extends String>*/ callDeleteAccountCheck(String email) {
         LOG.info("call delete account check");
         final StringBuilder stringBuilder = new StringBuilder(accountEp).append("/email/").append(email);
+        LOG.info("accountEp: {}", stringBuilder.toString());
 
         WebClient.ResponseSpec responseSpec = webClient.delete().uri(stringBuilder.toString()).retrieve();
 
@@ -215,9 +222,11 @@ public class UserSignupService implements UserService {
             LOG.info("got back response from account deletion service call: {}", map.get("message"));
             return map.get("message");
         }).onErrorResume(throwable -> {
-            LOG.error("account deletion rest call failed", throwable);
-            return null;
-        }).then(Mono.error(new SignupException("a user with this email already exists")));
+            LOG.error("account deletion rest call failed: {}", throwable.getMessage());
+            //return Mono.just(true);
+            //return Mono.just("account deletion not needed");
+            return Mono.just(true);
+        }).then(Mono.just("done calling account delete check"));//.then(Mono.error(new SignupException("a user with this email already exists")));
 
     }
 }

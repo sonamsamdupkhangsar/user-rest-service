@@ -55,6 +55,7 @@ EUREKA_PASSWORD: test
 
 eureka:
   client:
+    enabled: false
     serviceUrl:
       defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
 
