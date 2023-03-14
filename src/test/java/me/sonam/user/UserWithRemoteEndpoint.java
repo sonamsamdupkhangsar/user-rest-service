@@ -33,13 +33,15 @@ public class UserWithRemoteEndpoint {
 
        // LOG.info("body: {}", responseSpec.bodyToMono(String.class).block());
     }
+    //now try on Aug 26 9am with a signup using the same email but different userid like apple
 
-   // @Test
+    //change authenticationId to 'apple' to test deletion from user-rest-service to account-rest-service calling auth and user services
+    @Test
     public void signup() {
         LOG.info("signup user");
         final String id = UUID.randomUUID().toString().replace("-", "");
-        UserTransfer userTransfer = new UserTransfer("sonam", "samdupkhangsar", "mex@sonam.co",
-                "test7", "rL$7Mrz$", apiKey);
+        UserTransfer userTransfer = new UserTransfer("sonam", "", "mex@sonam.co",
+                "apple", "");
 
         webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
 
@@ -49,5 +51,22 @@ public class UserWithRemoteEndpoint {
                 .consumeWith(stringEntityExchangeResult ->
                     LOG.info("body: {}, status: {}", stringEntityExchangeResult.getResponseBody(),
                             stringEntityExchangeResult.getStatus()));
+    }
+
+    @Test
+    public void authenticate() {
+        LOG.info("authenticate user");
+        final String id = UUID.randomUUID().toString().replace("-", "");
+        UserTransfer userTransfer = new UserTransfer(null, null, null,
+                "sonam", "50bucks$");
+
+        webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
+
+        webTestClient.post().uri("https://authentication-rest-service.sonam.cloud/public/authentications/authenticate")
+                .bodyValue(userTransfer)
+                .exchange().expectStatus().isOk().expectBody(String.class)
+                .consumeWith(stringEntityExchangeResult ->
+                        LOG.info("body: {}, status: {}", stringEntityExchangeResult.getResponseBody(),
+                                stringEntityExchangeResult.getStatus()));
     }
 }

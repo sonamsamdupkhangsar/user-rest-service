@@ -18,6 +18,8 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: user-rest-service
   r2dbc:
     url: r2dbc:postgresql://${POSTGRES_SERVICE}/${POSTGRES_DBNAME}
     username: ${POSTGRES_USERNAME}
@@ -25,14 +27,39 @@ spring:
     properties:
       sslMode:  ${DB_SSLMODE}
 
-account-rest-service: http://account-rest-service-mychart.backend.svc.cluster.local:80/accounts
-authentication-rest-service: http://authentication-rest-service-mychart.backend.svc.cluster.local:80/authentications
-jwt-rest-service: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/validate
-email-rest-service: https://email-rest-service.sonam.cloud/email
-emailFrom: ""
-emailBody: Please activate your email by following this link https://account-rest-service.sonam.cloud/accounts/activate/{accountId}
+authentication-rest-service:
+  root: ${AUTHENTICATION_REST_SERVICE}
+  authentications: /authentications
 
-springdoc:
-  swagger-ui:
-    path: /public/swaggerui
-    enabled: true
+account-rest-service:
+  root: ${ACCOUNT_REST_SERVICE}
+  accounts: /accounts
+
+jwt-service:
+  root: ${JWT_REST_SERVICE}
+  public-key-id: /jwts/publickeys/{keyId}
+  accesstoken: /jwts/accesstoken
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: https://${EUREKA_USER}:${EUREKA_PASSWORD}@discovery-service.sonam.cloud/eureka
+
+permitpath:
+  - path: /users
+    httpMethods: POST
+  - path: /api/health/*
+    httpMethods: GET
+
+jwtrequest:
+  - in: /users
+    out: /authentications
+    jwt: request
+  - in: /users
+    out: /accounts/(.)*/(.)*
+    jwt: request
+
+hmacKey:
+  clientId: ${HMAC_CLIENTID}
+  algorithm: ${HMAC_ALGORITHM}
+  secretKey: ${HMAC_SECRET}

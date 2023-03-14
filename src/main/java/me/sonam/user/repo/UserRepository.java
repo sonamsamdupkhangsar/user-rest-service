@@ -16,6 +16,9 @@ public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
     Mono<Boolean> existsByEmail(String email);
     Mono<Boolean> existsByAuthenticationId(String authenticationId);
     Mono<Boolean> existsByAuthenticationIdAndActiveTrue(String authenticationId);
+    Mono<Integer> deleteByAuthenticationIdAndEmailAndActiveFalse(String authenticationId, String email);
+    Mono<Integer> deleteByEmailAndActiveFalse(String email);
+    Mono<Boolean> existsByEmailAndActiveTrue(String email);
     Mono<Integer> deleteByAuthenticationIdAndActiveFalse(String authenticationId);
     Mono<Boolean> existsByAuthenticationIdOrEmail(String authenticationId, String email);
     Mono<Void> deleteByAuthenticationId(String authenticationId);
@@ -37,6 +40,9 @@ public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
     @Query("update My_user set active=true where authentication_Id= :authenticationId")
     Mono<Integer> updateUserActiveTrue(@Param("authenticationId") String authenticationId);
     Mono<Boolean> existsByAuthenticationIdAndUserAuthAccountCreatedTrue(String authenticationId);
+    Mono<Integer> deleteByAuthenticationIdAndUserAuthAccountCreatedFalse(String authenticationId);
+    Mono<Integer> deleteByEmailAndUserAuthAccountCreatedFalse(String email);
+    Mono<Boolean> existsByEmailAndUserAuthAccountCreatedTrue(String email);
 
     @Query("update My_user set user_auth_account_created=true where authentication_Id= :authenticationId")
     Mono<Integer> updatedUserAuthAccountCreatedTrue(String authenticationId);

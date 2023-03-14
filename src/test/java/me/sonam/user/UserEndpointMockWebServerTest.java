@@ -8,36 +8,35 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.Before;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 /**
  * This will test the User signup endpoint
@@ -53,12 +52,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class UserEndpointMockWebServerTest {
     private static final Logger LOG = LoggerFactory.getLogger(UserEndpointMockWebServerTest.class);
 
-    private static String authEndpoint = "http://localhost:{port}/create";
-    private static String jwtEndpoint = "http://localhost:{port}/validate";
+    private static String authEndpoint = "http://localhost:{port}/authentications";
+    private static String jwtRestServiceAccesstoken = "http://localhost:{port}/jwts/accesstoken";
     private static String accountEp = "http://localhost:{port}/accounts";
-
-    @Value("${apiKey}")
-    private String apiKey;
 
     private static MockWebServer mockWebServer;
 
@@ -69,6 +65,9 @@ public class UserEndpointMockWebServerTest {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    @MockBean
+    ReactiveJwtDecoder jwtDecoder;
 
     @Before
     public void setUp() {
@@ -105,38 +104,86 @@ public class UserEndpointMockWebServerTest {
      */
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry r) throws IOException {
-        r.add("authentication-rest-service", () -> authEndpoint.replace("{port}", mockWebServer.getPort() + ""));
-        r.add("jwt-rest-service", () -> jwtEndpoint.replace("{port}", mockWebServer.getPort() + ""));
-        r.add("account-rest-service", () -> accountEp.replace("{port}", mockWebServer.getPort() + ""));
-        LOG.info("updated authentication-rest-service and jwt-rest-service properties");
-        LOG.info("mockWebServer.port: {}", mockWebServer.getPort());
+        r.add("authentication-rest-service.root", () -> "http://localhost:"+mockWebServer.getPort());
+        r.add("account-rest-service.root", () -> "http://localhost:"+mockWebServer.getPort());
+        r.add("jwt-service.root", () -> "http://localhost:"+mockWebServer.getPort());
+    }
+
+    @BeforeEach
+    public void checkRequest() throws InterruptedException {
+        LOG.info("requestCount: {}", mockWebServer.getRequestCount());
     }
 
     @Test
     public void signupUser() throws InterruptedException {
         final String authenticationId = "signupUser";
-        final String email = "signupUser@some.company";
+        final String email = "signupUser@some1.company";
 
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(authenticationId));
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(authenticationId));
+        LOG.info("try to POST with the same email/authId");
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
 
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(200).setBody(jwtTokenMsg));
+
+        //2
+        final String msg = "{\"error\": \"no account with email\"}";
+        //Http 500 will throw a Exception in the webclient call, exectuing the onError block
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
+
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
+        final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(201).setBody(authenticationCreatedResponse));
+
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(201).setBody(accountCreatedResponse));
         LOG.info("make rest call to save user and create authentication record");
 
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
-                authenticationId, "pass", apiKey);
+                authenticationId, "pass");
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
                 .bodyValue(userTransfer)
-                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("user signup succcessful");
+        assertThat(result.getResponseBody().get("message")).isEqualTo("user signup succcessful");
+
+        LOG.info("after post requestCount: {}", mockWebServer.getRequestCount());
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        LOG.info("response: {}", result.getResponseBody());
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/accounts");
+
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/authentications");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/accounts");
+
+        LOG.info("end requestCount: {}", mockWebServer.getRequestCount());
 
         StepVerifier.create(userRepository.findByAuthenticationId(authenticationId))
             .assertNext(myUser1 -> {
@@ -147,9 +194,391 @@ public class UserEndpointMockWebServerTest {
     }
 
     @Test
-    public void signupUserWithExistingEmail() throws InterruptedException {
+    public void signupUserBadResponseFromAuthentication() throws InterruptedException {
         final String authenticationId = "signupUser";
-        final String email = "signupUser@some.company";
+        final String email = "signupUser@some1.company";
+
+        LOG.info("try to POST with the same email/authId");
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+
+        //1
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        //2
+        final String msg = "{\"error\": \"no account with email\"}";
+        //Http 500 will throw a Exception in the webclient call, exectuing the onError block
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
+
+        //3
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String authMessage = "Authentication api call failed with error: " + authenticationId;
+        final String authenticationCreatedResponse = " {\"error\":\""+ authMessage +"\"}";
+
+        //4
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(400).setBody(authenticationCreatedResponse));
+
+        LOG.info("make rest call to save user and create authentication record");
+
+        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
+                authenticationId, "pass");
+
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
+                .bodyValue(userTransfer)
+                .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
+
+        assertThat(result.getResponseBody().get("error")).isNotNull();
+
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).isEqualTo("/jwts/accesstoken");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/accounts");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).isEqualTo("/jwts/accesstoken");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).isEqualTo("/authentications");
+        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: Authentication api call failed with error: 400 Bad Request from POST http://localhost:"+mockWebServer.getPort()+"/authentications");
+
+
+        StepVerifier.create(userRepository.existsByAuthenticationId(authenticationId))
+                .assertNext(aBoolean -> {
+                    LOG.info("assert no user exists with the failed authenticationId");
+                    assertThat(aBoolean).isFalse();
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    public void signupUserBadResponseFromAccount() throws InterruptedException {
+        final String authenticationId = "signupUser";
+        final String email = "signupUser@some1.company";
+
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        //2
+        final String msg = "{\"error\": \"no account with email\"}";
+        //Http 500 will throw a Exception in the webclient call, exectuing the onError block
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
+
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
+        final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
+
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(201).setBody(authenticationCreatedResponse));
+
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String accountCreatedResponse = "{\"message\":\"Account create failed\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(400).setBody(accountCreatedResponse));
+        LOG.info("make rest call to save user and create authentication record");
+
+        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
+                authenticationId, "pass");
+
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
+                .bodyValue(userTransfer)
+                .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
+
+        LOG.info("assert result contains authId: {}", result.getResponseBody());
+        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: Account api call failed with error: {\"message\":\"Account create failed\"}");
+
+        LOG.info("after post requestCount: {}", mockWebServer.getRequestCount());
+
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+
+        request = mockWebServer.takeRequest();
+        LOG.info("path: {}", request.getPath());
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/accounts");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/authentications");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/accounts");
+
+        LOG.info("end requestCount: {}", mockWebServer.getRequestCount());
+
+        StepVerifier.create(userRepository.existsByAuthenticationId(authenticationId))
+                .assertNext(aBoolean -> {
+                    LOG.info("assert update of userAuthAccountCreated field to true");
+                    assertThat(aBoolean).isFalse();
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    public void signupUserWithAnotherUserWithEmailActiveFalse() throws InterruptedException {
+        final String authenticationId = "signupUser";
+        final String email = "signupUser@some1.company";
+
+        MyUser myUser = new MyUser("firstname", "lastname", email, "johnny");
+
+        Mono<MyUser> userMono = userRepository.save(myUser);
+        userMono.subscribe(user1 -> LOG.info("save user first: {}", user1.getEmail()));
+        LOG.info("make rest call to save user and create authentication record");
+
+
+        LOG.info("try to POST with the same email/authId");
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        //1
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        //2
+        final String msg = "{\"error\": \"no account with email\"}";
+        //Http 500 will throw a Exception in the webclient call, exectuing the onError block
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
+
+        //3
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
+        final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
+        //4
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(201).setBody(authenticationCreatedResponse));
+
+        //5
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
+        //6
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(201).setBody(accountCreatedResponse));
+        LOG.info("make rest call to save user and create authentication record");
+
+        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
+                authenticationId, "pass");
+
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
+                .bodyValue(userTransfer)
+                .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
+
+        LOG.info("assert result contains authId: {}", result.getResponseBody());
+        assertThat(result.getResponseBody().get("message")).isEqualTo("user signup succcessful");
+
+        LOG.info("after post requestCount: {}", mockWebServer.getRequestCount());
+
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+
+        request = mockWebServer.takeRequest();
+        LOG.info("path: {}", request.getPath());
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/accounts");
+        LOG.info("response: {}", result.getResponseBody());
+
+        request = mockWebServer.takeRequest();
+        LOG.info("path: {}", request.getPath());
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        LOG.info("response: {}", result.getResponseBody());
+
+        request = mockWebServer.takeRequest();
+        LOG.info("path: {}", request.getPath());
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/authentications");
+
+        request = mockWebServer.takeRequest();
+        LOG.info("path: {}", request.getPath());
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        LOG.info("response: {}", result.getResponseBody());
+
+        request = mockWebServer.takeRequest();
+        LOG.info("path: {}", request.getPath());
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/accounts");
+
+        LOG.info("end requestCount: {}", mockWebServer.getRequestCount());
+
+        StepVerifier.create(userRepository.findByAuthenticationId(authenticationId))
+                .assertNext(myUser1 -> {
+                    LOG.info("assert update of userAuthAccountCreated field to true");
+                    assertThat(myUser1.getUserAuthAccountCreated()).isTrue();
+                })
+                .verifyComplete();
+    }
+
+    //test with a existing email account with UserAuthAccountCreated and try adding a new user
+    // with new AuthenticationId and existing email.
+    @Test
+    public void signupUserWithExistingEmailAndUserAuthAccountCreatedTrue() throws InterruptedException {
+        final String authenticationId = "signupUser";
+        final String newAuthenticationId = "signupUser1";
+        final String email = "signupUser@some2.company";
+
+        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId);
+        myUser.setUserAuthAccountCreated(true);
+
+        Mono<MyUser> userMono = userRepository.save(myUser);
+        userMono.subscribe(user1 -> LOG.info("save user first"));
+        LOG.info("make rest call to save user and create authentication record");
+
+        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
+                newAuthenticationId, "pass");
+
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
+                .bodyValue(userTransfer)
+                .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
+
+        LOG.info("assert result contains authId: {}", result.getResponseBody());
+        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User account has already been created for that email, check to activate it by email");
+        LOG.info("mockWebServer: {}", mockWebServer.getRequestCount());
+
+        StepVerifier.create(userRepository.existsByAuthenticationId(newAuthenticationId))
+                .assertNext(aBoolean -> {
+                    LOG.info("assert newAuth didn't get created");
+                    assertThat(aBoolean).isFalse();
+                })
+                .verifyComplete();
+    }
+
+    //test with a existing email account with UserAuthAccountCreated and try adding a new user
+    // with same AuthenticationId and existing email.
+    @Test
+    public void signupUserWithExistingEmailAndUserAuthAccountCreatedTrueAndSameAuthId() throws InterruptedException {
+        final String authenticationId = "signupUser";
+        final String email = "signupUser@some2.company";
+
+        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId);
+        myUser.setUserAuthAccountCreated(true);
+
+        Mono<MyUser> userMono = userRepository.save(myUser);
+        userMono.subscribe(user1 -> LOG.info("save user first"));
+        LOG.info("make rest call to save user and create authentication record");
+
+        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
+                authenticationId, "pass");
+
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
+                .bodyValue(userTransfer)
+                .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
+
+        LOG.info("assert result contains authId: {}", result.getResponseBody());
+        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User account has already been created for that id, check to activate it by email");
+        LOG.info("mockWebServer: {}", mockWebServer.getRequestCount());
+
+        StepVerifier.create(userRepository.existsByAuthenticationId(authenticationId))
+                .assertNext(aBoolean -> {
+                    LOG.info("assert existing user created is true");
+                    assertThat(aBoolean).isTrue();
+                })
+                .verifyComplete();
+    }
+
+    //test with a existing email account with isActive True and try adding a new user
+    // with same email.
+    @Test
+    public void signupUserWithExistingEmailAndActiveTrueAndSameEmail() throws InterruptedException {
+        final String authenticationId = "signupUser";
+        final String newAuthenticationId = authenticationId+"1";
+        final String email = "signupUser@some2.company";
+
+        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId);
+        myUser.setActive(true);
+
+        Mono<MyUser> userMono = userRepository.save(myUser);
+        userMono.subscribe(user1 -> LOG.info("save user first"));
+        LOG.info("make rest call to save user and create authentication record");
+
+        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
+                newAuthenticationId, "pass");
+
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
+                .bodyValue(userTransfer)
+                .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
+
+        LOG.info("assert result contains authId: {}", result.getResponseBody());
+        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User account is active for that email");
+        LOG.info("mockWebServer: {}", mockWebServer.getRequestCount());
+
+        StepVerifier.create(userRepository.existsByAuthenticationId(newAuthenticationId))
+                .assertNext(aBoolean -> {
+                    LOG.info("assert newAuth didn't get created");
+                    assertThat(aBoolean).isFalse();
+                })
+                .verifyComplete();
+    }
+
+    //test with a existing email account with isActive True and try adding a new user
+    // with same email.
+    @Test
+    public void signupUserExistingAuthIdAndActiveTrue() throws InterruptedException {
+        final String authenticationId = "signupUser";
+        final String email = "signupUser@some2.company";
+
+        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId);
+        myUser.setActive(true);
+
+        Mono<MyUser> userMono = userRepository.save(myUser);
+        userMono.subscribe(user1 -> LOG.info("save user first"));
+        LOG.info("make rest call to save user and create authentication record");
+
+        UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
+                authenticationId, "pass");
+
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
+                .bodyValue(userTransfer)
+                .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
+
+        LOG.info("assert result contains authId: {}", result.getResponseBody());
+        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User is already active with authenticationId");
+        LOG.info("mockWebServer: {}", mockWebServer.getRequestCount());
+
+        StepVerifier.create(userRepository.existsByAuthenticationId(authenticationId))
+                .assertNext(aBoolean -> {
+                    LOG.info("assert existing authId still exists");
+                    assertThat(aBoolean).isTrue();
+                })
+                .verifyComplete();
+    }
+
+    /**
+     * Add a user that is not active and UserAuthAccountCreated is false.
+     * Add another user that has the same email only and different authId
+     * Account service will throw a exception indicating there is no account with email
+     * But this should allow to create a new user account with the same email since that email acount was not created
+     * successfully.
+     * @throws InterruptedException
+     */
+    @Test
+    public void signupUserWithExistingEmailThrowAccountServiceException() throws InterruptedException {
+        final String authenticationId = "signupUser";
+        final String newAuthenticationId = "signupUser2";
+        final String email = "signupUser@some2.company";
 
         MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId);
 
@@ -157,32 +586,101 @@ public class UserEndpointMockWebServerTest {
         userMono.subscribe(user1 -> LOG.info("save user first"));
         LOG.info("make rest call to save user and create authentication record");
 
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("deleted authenticationId that is active false"));
+        //1
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        //2
+        final String msg = "{\"error\": \"no account with email\"}";
+        //Http 500 will throw a Exception in the webclient call, exectuing the onError block
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
+
+        //3
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
+        final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
+
+        //4
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(201).setBody(authenticationCreatedResponse));
+
+        //5
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
+        //6
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(201).setBody(accountCreatedResponse));
+        LOG.info("make rest call to save user and create authentication record");
 
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", email,
-                authenticationId, "pass", apiKey);
+                newAuthenticationId, "pass");
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
                 .bodyValue(userTransfer)
-                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("a user with this email already exists");
+        assertThat(result.getResponseBody().get("message")).isEqualTo("user signup succcessful");
 
-        RecordedRequest recordedRequest = mockWebServer.takeRequest();
+        LOG.info("after post requestCount: {}", mockWebServer.getRequestCount());
 
-        assertThat(recordedRequest.getMethod()).isEqualTo("POST");
-        recordedRequest = mockWebServer.takeRequest();
+        //1
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
 
-        assertThat(recordedRequest.getMethod()).isEqualTo("DELETE");
+        request = mockWebServer.takeRequest();
+        //2
+        LOG.info("path: {}", request.getPath());
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/accounts");
 
-        StepVerifier.create(userRepository.findByAuthenticationId(authenticationId))
+        LOG.info("response: {}", result.getResponseBody());
+
+        //3
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+
+        //4
+        request = mockWebServer.takeRequest();
+        LOG.info("path: {}", request.getPath());
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/authentications");
+        LOG.info("response: {}", result.getResponseBody());
+
+        request = mockWebServer.takeRequest();
+        //5
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+
+        request = mockWebServer.takeRequest();
+        //6
+        LOG.info("path: {}", request.getPath());
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/accounts");
+
+        LOG.info("end requestCount: {}", mockWebServer.getRequestCount());
+
+        StepVerifier.create(userRepository.findByAuthenticationId(newAuthenticationId))
                 .assertNext(myUser1 -> {
                     LOG.info("assert update of userAuthAccountCreated field to true");
-                    assertThat(myUser1.getUserAuthAccountCreated()).isFalse();
+                    assertThat(myUser1.getUserAuthAccountCreated()).isTrue();
+                })
+                .verifyComplete();
+
+        StepVerifier.create(userRepository.existsByAuthenticationId(authenticationId))
+                .assertNext(aBoolean -> {
+                    LOG.info("assert previous authentiationId record does not exist anymore");
+                    assertThat(aBoolean).isFalse();
                 })
                 .verifyComplete();
     }
+
 
     @Test
     public void signupUserUserAuthAccountCreated() throws InterruptedException {
@@ -195,14 +693,14 @@ public class UserEndpointMockWebServerTest {
         LOG.info("make rest call to save user and create authentication record");
 
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
-                "existingUser", "pass", apiKey);
+                "existingUser", "pass");
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
                 .bodyValue(userTransfer)
-                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("User account has already been created for that id, check to activate it by email");
+        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User account has already been created for that id, check to activate it by email");
     }
 
     @Test
@@ -215,55 +713,98 @@ public class UserEndpointMockWebServerTest {
         LOG.info("make rest call to save user and create authentication record");
 
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "yakApiKey",
-                "existingUser", "pass", apiKey);
+                "existingUser", "pass");
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
                 .bodyValue(userTransfer)
-                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("User is already active with authenticationId");
+        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User is already active with authenticationId");
     }
 
     @Test
     public void newUserValidTest() throws InterruptedException {
         LOG.info("make rest call to save user and create authentication record");
-
+        final String authenticationId = "dummy123";
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "12yakApiKey",
-                "dummy123", "pass", apiKey);
+                authenticationId, "pass");
 
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("dummy123"));
-        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("email sent"));
+        LOG.info("try to POST with the same email/authId");
+        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
 
-       // webTestClient = webTestClient.mutate().responseTimeout(Duration.ofSeconds(30)).build();
+        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
 
-        EntityExchangeResult<String> result = webTestClient.post().uri("/public/user/signup")
+        //2
+        final String msg = "{\"error\": \"no account with email\"}";
+        //Http 500 will throw a Exception in the webclient call, exectuing the onError block
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
+
+        //3
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        final String authMessage = "Authentication created successfully for authenticationId: " + userTransfer.getAuthenticationId();
+        final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
+
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(201).setBody(authenticationCreatedResponse));
+
+        LOG.info("add the same token again as another account webservice is called after the Authentication one");
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+
+        final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(201).setBody(accountCreatedResponse));
+
+        EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
                 .bodyValue(userTransfer)
-                .exchange().expectStatus().isCreated().expectBody(String.class).returnResult();
+                .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
 
         LOG.info("start taking request now");
+
         RecordedRequest request = mockWebServer.takeRequest();
-        LOG.info("response: {}", result.getResponseBody());
-
-
-       assertThat(result.getResponseBody()).isEqualTo("user signup succcessful");
-
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
 
-        //the body is empty for some reason.
-        String body = new String(request.getBody().getBuffer().readByteArray());
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/accounts");
+
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/authentications");
+
+        request = mockWebServer.takeRequest();
         LOG.info("path: {}", request.getPath());
-        LOG.info("request: {}", body);
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
 
-        LOG.info("assert the path for authenticate was created using path '/create'");
-        assertThat(request.getPath()).startsWith("/create");
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/accounts");
+
+        LOG.info("end requestCount: {}", mockWebServer.getRequestCount());
+
+        StepVerifier.create(userRepository.findByAuthenticationId(authenticationId))
+                .assertNext(myUser1 -> {
+                    LOG.info("assert update of userAuthAccountCreated field to true");
+                    assertThat(myUser1.getUserAuthAccountCreated()).isTrue();
+                })
+                .verifyComplete();
+
     }
 
     @Test
     public void activateAccount() throws InterruptedException {
         UUID id = UUID.randomUUID();
         final String authenticationId = "activateAccount";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
         MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", authenticationId);
 
@@ -278,8 +819,8 @@ public class UserEndpointMockWebServerTest {
                 .verifyComplete();
 
         LOG.info("activate user authId: {}", id);
-        EntityExchangeResult<String> result = webTestClient.put().uri("/user/activate/" + authenticationId)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+        EntityExchangeResult<String> result = webTestClient.put().uri("/users/activate/"+authenticationId)
+                .headers(addJwt(jwt)).exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isEqualTo("activated: "+authenticationId);
@@ -297,6 +838,8 @@ public class UserEndpointMockWebServerTest {
     public void deleteUserWhenUserFalse() {
         UUID id = UUID.randomUUID();
         final String authenticationId = "deleteUserWhenUserFalse";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
         MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId);
 
@@ -316,8 +859,8 @@ public class UserEndpointMockWebServerTest {
                 .verifyComplete();
 
         LOG.info("activate user authId: {}", id);
-        EntityExchangeResult<String> result = webTestClient.delete().uri("/user/" + authenticationId)
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/users")
+                .headers(addJwt(jwt)).exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isEqualTo("deleted: "+authenticationId);
@@ -327,8 +870,12 @@ public class UserEndpointMockWebServerTest {
 
     @Test
     public void deleteUserWhenUserActive() throws InterruptedException {
-        UUID id = UUID.randomUUID();
         final String authenticationId = "deleteUserWhenUserFalse";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
+        UUID id = UUID.randomUUID();
+        //final String authenticationId = "deleteUserWhenUserFalse";
 
         MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId);
         myUser.setActive(true);
@@ -349,13 +896,22 @@ public class UserEndpointMockWebServerTest {
                 .verifyComplete();
 
         LOG.info("activate user authId: {}", id);
-        EntityExchangeResult<String> result = webTestClient.delete().uri("/user/" + authenticationId)
-                .exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
+        EntityExchangeResult<String> result = webTestClient.delete().uri("/users")
+                .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());
         assertThat(result.getResponseBody()).isEqualTo("user is active, cannot delete");
 
         userRepository.existsByAuthenticationId(authenticationId).subscribe(aBoolean -> LOG.info("exists should be true: {}", aBoolean));
+    }
+
+    private Jwt jwt(String subjectName) {
+        return new Jwt("token", null, null,
+                Map.of("alg", "none"), Map.of("sub", subjectName));
+    }
+
+    private Consumer<HttpHeaders> addJwt(Jwt jwt) {
+        return headers -> headers.setBearerAuth(jwt.getTokenValue());
     }
 
 }

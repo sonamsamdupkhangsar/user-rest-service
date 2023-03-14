@@ -42,29 +42,12 @@ istio:
   enabled: false
 
 ingress:
-  enabled: true
+  enabled: false
   ingressClass: nginx
   hosts:
     - host: user-rest-service.sonam.cloud
       paths:
         - path: /public
-          pathType: Prefix
-  tls:
-    - secretName: sonam.cloud
-      hosts:
-        - "*.sonam.cloud"
-
-ingressjwt:
-  enabled: true
-  ingressClass: nginx
-  annotations:
-    nginx.ingress.kubernetes.io/auth-url: http://jwt-rest-service-mychart.backend.svc.cluster.local:80/validate
-    # pass authId header returned from jwt-rest-service validation of jwt token
-    nginx.ingress.kubernetes.io/auth-response-headers: authId
-  hosts:
-    - host: user-rest-service.sonam.cloud
-      paths:
-        - path: /
           pathType: Prefix
   tls:
     - secretName: sonam.cloud
@@ -91,22 +74,46 @@ affinity: {}
 
 postgres:
   port: "5432"
-# dbname and secret file containing username/password are passed via Helm chart installation see deploy.yml file
+  service: user-minimal-cluster
+  secretfile: sonam.user-minimal-cluster.credentials.postgresql.acid.zalan.do
+  dbname: user
 
 envs:
   - name: DB_SSLMODE
     value: REQUIRE
+  - name: AUTHENTICATION_REST_SERVICE
+    value: http://authentication-rest-service-mychart.backend.svc.cluster.local:80
+  - name: JWT_REST_SERVICE
+    value: http://jwt-rest-service-mychart.backend.svc.cluster.local:80
+  - name: ACCOUNT_REST_SERVICE
+    value: http://account-rest-service-mychart.backend.svc.cluster.local:80
 
 health:
   liveness:
     path: /api/health/liveness
     port: 8080
-    initialDelaySeconds: 60
+    initialDelaySeconds: 10
     periodSeconds: 5
     failureThreshold: 5
   readiness:
     path: /api/health/readiness
     port: 8080
-    initialDelaySeconds: 60
+    initialDelaySeconds: 10
     periodSeconds: 5
     failureThreshold: 5
+
+secretFiles:
+  - file: eureka-discovery
+    keys:
+      - key: user
+        name: EUREKA_USER
+      - key: password
+        name: EUREKA_PASSWORD
+  - file: user-rest-service
+    keys:
+      - key: hmac.clientId
+        name: HMAC_CLIENTID
+      - key: hmac.algorithm
+        name: HMAC_ALGORITHM
+      - key: hmac.secret
+        name: HMAC_SECRET

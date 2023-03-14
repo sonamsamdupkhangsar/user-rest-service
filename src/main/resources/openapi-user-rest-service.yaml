@@ -1,0 +1,227 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: User Api
+  description: User rest services api documentation
+
+servers:
+  - url: http://localhost:8084
+    description: local development server
+
+paths:
+  /users:
+    post:
+      description: signup up new user in user-rest-service and then in authentication-rest-service and then in account-rest-service.  This is in it's own path for making it publicly available path.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserTransfer'
+              example:
+                firstName: Tashi
+                lastName: Tsering
+                email: me@sonam.email
+                authenticationId: tashi.tsering
+                password: 123-tashi
+      responses:
+        '201':
+          description: Successfully created User in user-rest-service and also registered in authentication-rest-service and account-rest-service
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseBody'
+        '400':
+          description: failed to create user record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestBody'
+    put:
+      description: Update User whose credentials matches the JWT user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUser'
+      responses:
+        '200':
+          description: Updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseBody'
+        '400':
+          description: Failed to update user, email already used
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestBody'
+
+    delete:
+      description: Deleted user whose credentials matches the JWT
+      responses:
+        '200':
+          description: Successfully deleted logged-in user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseBody'
+        '400':
+          description: Failed to delete user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestBody'
+  /users/names/{firstName}/{lastName}:
+    get:
+      description: Get users who name matches firstName and lastName
+      parameters:
+        - name: firstName
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: lastName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Succcessfully retrieved users with matching firstName and lastName
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MyUser'
+        '400':
+          description: Failed to get list of matching users with firstName and lastName
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestBody'
+  /users/{authenticationId}:
+    get:
+      description: Find user by authenticationId
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully found a user with the authenticationId
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyUser'
+        '400':
+          description: User entered a bad format for authenticationId
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestBody'
+  /users/profilephoto:
+    put:
+      description: Update user profile photo url
+      responses:
+        '200':
+          description: Successfully update user profile photo url
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseBody'
+        '400':
+          description: Failed to update user profile photo url
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestBody'
+  /users/activate/{authenticationId}:
+    put:
+      parameters:
+        - name: authenticationId
+          in: path
+          required: true
+          schema:
+            type: string
+      description: This service is called by route account-rest-service/public/accounts/activate/{authenticationId}/{secret}. This will set the active flag to true
+      responses:
+        '200':
+          description: This user is now activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponseBody'
+        '400':
+          description: Failed to activate user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestBody'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    MyUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        authenticationId:
+          type: string
+        userAuthAccountCreated:
+          type: boolean
+    UserTransfer:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        authenticationId:
+          type: string
+        password:
+          type: string
+    UpdateUser:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+    BadRequestBody:
+      type: object
+      properties:
+        error:
+          type: string
+    UuidResponseBody:
+      type: object
+      properties:
+        message:
+          type: string
+          format: uuid
+    MessageResponseBody:
+      type: object
+      properties:
+        message:
+          type: string
