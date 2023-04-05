@@ -19,6 +19,8 @@ server:
   port: 9001
 
 spring:
+  profiles:
+    active: test
   r2dbc:
     url: r2dbc:h2:mem:///contentitem?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     name: sa

@@ -38,10 +38,13 @@ public class UserSignupService implements UserService {
     private String authenticationEp;
 
     @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    @Autowired
     private ReactiveRequestContextHolder reactiveRequestContextHolder;
     @PostConstruct
     public void setWebClient() {
-        webClient = WebClient.builder().filter(reactiveRequestContextHolder.headerFilter()).build();
+        webClientBuilder.filter(reactiveRequestContextHolder.headerFilter());
     }
 
     /**
@@ -91,7 +94,7 @@ public class UserSignupService implements UserService {
                             payloadMap.put("authenticationId", userTransfer.getAuthenticationId());
                             payloadMap.put("password", userTransfer.getPassword());
                             payloadMap.put("userId", myUser.getId().toString());
-                            WebClient.ResponseSpec responseSpec = webClient.post().uri(authenticationEp).bodyValue(payloadMap).retrieve();
+                            WebClient.ResponseSpec responseSpec = webClientBuilder.build().post().uri(authenticationEp).bodyValue(payloadMap).retrieve();
 
                             return responseSpec.bodyToMono(Map.class).map(map -> {
                                 LOG.info("got back authenticationId from service call: {}", map.get("message"));
@@ -111,7 +114,7 @@ public class UserSignupService implements UserService {
                                     .append(userTransfer.getAuthenticationId())
                                     .append("/").append(userTransfer.getEmail());
 
-                            WebClient.ResponseSpec spec = webClient.post().uri(stringBuilder.toString()).retrieve();
+                            WebClient.ResponseSpec spec = webClientBuilder.build().post().uri(stringBuilder.toString()).retrieve();
 
                             return spec.bodyToMono(Map.class).map(map -> {
                                 LOG.info("account has been created with response: {}", map.get("message"));
@@ -216,7 +219,7 @@ public class UserSignupService implements UserService {
         final StringBuilder stringBuilder = new StringBuilder(accountEp).append("/email/").append(email);
         LOG.info("accountEp: {}", stringBuilder.toString());
 
-        WebClient.ResponseSpec responseSpec = webClient.delete().uri(stringBuilder.toString()).retrieve();
+        WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(stringBuilder.toString()).retrieve();
 
         return responseSpec.bodyToMono(Map.class).map(map -> {
             LOG.info("got back response from account deletion service call: {}", map.get("message"));
