@@ -17,12 +17,39 @@ public class LivenessReadinessHandler {
 
     public Mono<ServerResponse> liveness(ServerRequest serverRequest) {
         LOG.debug("liveness check");
-        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).build();
+        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(new ReadinessStatus("alive"));
     }
 
     public Mono<ServerResponse> readiness(ServerRequest serverRequest) {
         LOG.debug("readiness check");
-        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).build();
+
+        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(new ReadinessStatus("ready"));
+    }
+
+    class ReadinessStatus {
+        private String readyStatus;
+        public ReadinessStatus(String readyStatus) {
+            this.readyStatus = readyStatus;
+        }
+        public ReadinessStatus() {
+
+        }
+        public String getReadyStatus() {
+            return readyStatus;
+        }
+    }
+
+    class LivenessStatus {
+        private String liveStatus;
+        public LivenessStatus(String liveStatus) {
+            this.liveStatus = liveStatus;
+        }
+        public LivenessStatus() {
+
+        }
+        public String getLiveStatus() {
+            return liveStatus;
+        }
     }
 
 }

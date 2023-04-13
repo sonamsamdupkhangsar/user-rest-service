@@ -29,8 +29,6 @@ public class UserSignupService implements UserService {
     @Autowired
     private UserRepository userRepository;
 
-    private WebClient webClient;
-
     @Value("${account-rest-service.root}${account-rest-service.accounts}")
     private String accountEp;
 

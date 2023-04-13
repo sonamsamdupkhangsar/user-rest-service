@@ -7,13 +7,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.reactive.function.client.WebClient;
 
+/*
 @Profile("test")
 @Configuration
+*/
 public class WebClientConfig {
-    private static final Logger LOG = LoggerFactory.getLogger(WebClientConfig.class);
+   /* private static final Logger LOG = LoggerFactory.getLogger(WebClientConfig.class);
     @Bean
     public WebClient.Builder webClientBuilder() {
-        LOG.info("returning load balanced webclient part 2");
+        LOG.info("returning test load balanced webclient");
         return WebClient.builder();
-    }
+    }*/
 }

@@ -41,8 +41,7 @@ public class Application {
         CorsConfiguration corsConfig = new CorsConfiguration();
         corsConfig.setMaxAge(8000L);
         corsConfig.addAllowedOrigin("*");
-        corsConfig.addAllowedMethod("GET");
-        corsConfig.addAllowedMethod("POST");
+        corsConfig.addAllowedMethod("*");
         corsConfig.addAllowedHeader("Content-Type");
         corsConfig.addAllowedHeader("api_key");
         corsConfig.addAllowedHeader("Authorization");

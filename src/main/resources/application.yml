@@ -2,7 +2,8 @@ logging:
   level:
     root: error
     me:
-      sonam: info
+      sonam: debug
+
 info:
   app:
     name: Springboot me.sonam.account.Application
@@ -48,7 +49,7 @@ eureka:
 permitpath:
   - path: /users
     httpMethods: POST
-  - path: /api/health/*
+  - path: /users/api/health/*
     httpMethods: GET
 
 jwtrequest:
