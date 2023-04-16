@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
@@ -22,7 +21,6 @@ import java.util.Map;
  * This will add a user entry and call authentication service to create
  * authentication entry in that remote service
  */
-@Service
 public class UserSignupService implements UserService {
     private static final Logger LOG = LoggerFactory.getLogger(UserSignupService.class);
 
@@ -35,11 +33,14 @@ public class UserSignupService implements UserService {
     @Value("${authentication-rest-service.root}${authentication-rest-service.authentications}")
     private String authenticationEp;
 
-    @Autowired
     private WebClient.Builder webClientBuilder;
 
     @Autowired
     private ReactiveRequestContextHolder reactiveRequestContextHolder;
+
+    public UserSignupService(WebClient.Builder webClientBuilder) {
+        this.webClientBuilder = webClientBuilder;
+    }
     @PostConstruct
     public void setWebClient() {
         webClientBuilder.filter(reactiveRequestContextHolder.headerFilter());
