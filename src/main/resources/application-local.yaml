@@ -19,10 +19,10 @@ eureka:
 DEFAULT_ZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
 
 # jwt-rest-service on port 8081 local server
-JWT_REST_SERVICE: http://localhost:8081
-APPLICATION_REST_SERVICE: http://localhost:8082
-ACCOUNT_REST_SERVICE: http://localhost:8086
-AUTHENTICATION_REST_SERVICE: http://localhost:8083
+JWT_REST_SERVICE: http://jwt-rest-service
+APPLICATION_REST_SERVICE: http://application-rest-service
+ACCOUNT_REST_SERVICE: http://account-rest-service
+AUTHENTICATION_REST_SERVICE: http://authentication-rest-service
 
 hmacKey:
   clientId: user-rest-service

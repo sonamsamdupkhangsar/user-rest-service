@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.6.2</version>
+        <version>2.6.3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -18,14 +18,17 @@
 
     <properties>
         <spring-cloud.version>2021.0.4</spring-cloud.version>
-        <maven.compiler.target>1.16</maven.compiler.target>
-        <maven.compiler.source>1.16</maven.compiler.source>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>me.sonam</groupId>
+            <artifactId>jwt-validator</artifactId>
+            <version>1.0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -36,16 +39,17 @@
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId> <!-- Provide basic auth for Eureka client registration -->
-        </dependency>
-        <dependency>
             <groupId>io.r2dbc</groupId>
             <artifactId>r2dbc-postgresql</artifactId>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.1.6</version>
         </dependency>
         <dependency>
             <groupId>io.r2dbc</groupId>
@@ -86,16 +90,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-webflux-core</artifactId>
-            <version>1.4.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-webflux-ui</artifactId>
-            <version>1.4.3</version>
-        </dependency>
-        <dependency>
             <groupId>au.com.dius</groupId>
             <artifactId>pact-jvm-consumer-junit5</artifactId>
             <version>4.0.10</version>
@@ -118,11 +112,6 @@
             <artifactId>mockwebserver</artifactId>
             <version>4.0.1</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>me.sonam</groupId>
-            <artifactId>jwt-validator</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -155,25 +144,6 @@
                         <pact.verifier.publishResults>true</pact.verifier.publishResults>
                     </configuration>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.8</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>generate-code-coverage-report</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

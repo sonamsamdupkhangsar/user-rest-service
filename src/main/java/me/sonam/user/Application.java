@@ -34,23 +34,4 @@ public class Application {
         //initializer.setDatabaseCleaner(new ResourceDatabasePopulator(new ClassPathResource("cleanup.sql")));
         return initializer;
     }
-
-    @Bean
-    CorsWebFilter corsWebFilter() {
-        LOG.info("allow cors filter");
-        CorsConfiguration corsConfig = new CorsConfiguration();
-        corsConfig.setMaxAge(8000L);
-        corsConfig.addAllowedOrigin("*");
-        corsConfig.addAllowedMethod("GET");
-        corsConfig.addAllowedMethod("POST");
-        corsConfig.addAllowedHeader("Content-Type");
-        corsConfig.addAllowedHeader("api_key");
-        corsConfig.addAllowedHeader("Authorization");
-
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfig);
-
-        return new CorsWebFilter(source);
-    }
 }

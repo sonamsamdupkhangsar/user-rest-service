@@ -8,7 +8,10 @@ Use the following to run local profile which will pick up properties defined in 
 ```
 mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local"
 ```
-
+To run another instance on another port use :
+```
+mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local --server.port=9001"
+```
 Or you can do something like following too to specify the db server properties:
 
 ```

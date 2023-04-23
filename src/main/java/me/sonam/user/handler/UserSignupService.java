@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
@@ -22,14 +21,11 @@ import java.util.Map;
  * This will add a user entry and call authentication service to create
  * authentication entry in that remote service
  */
-@Service
 public class UserSignupService implements UserService {
     private static final Logger LOG = LoggerFactory.getLogger(UserSignupService.class);
 
     @Autowired
     private UserRepository userRepository;
-
-    private WebClient webClient;
 
     @Value("${account-rest-service.root}${account-rest-service.accounts}")
     private String accountEp;
@@ -37,11 +33,17 @@ public class UserSignupService implements UserService {
     @Value("${authentication-rest-service.root}${authentication-rest-service.authentications}")
     private String authenticationEp;
 
+    private WebClient.Builder webClientBuilder;
+
     @Autowired
     private ReactiveRequestContextHolder reactiveRequestContextHolder;
+
+    public UserSignupService(WebClient.Builder webClientBuilder) {
+        this.webClientBuilder = webClientBuilder;
+    }
     @PostConstruct
     public void setWebClient() {
-        webClient = WebClient.builder().filter(reactiveRequestContextHolder.headerFilter()).build();
+        webClientBuilder.filter(reactiveRequestContextHolder.headerFilter());
     }
 
     /**
@@ -91,7 +93,7 @@ public class UserSignupService implements UserService {
                             payloadMap.put("authenticationId", userTransfer.getAuthenticationId());
                             payloadMap.put("password", userTransfer.getPassword());
                             payloadMap.put("userId", myUser.getId().toString());
-                            WebClient.ResponseSpec responseSpec = webClient.post().uri(authenticationEp).bodyValue(payloadMap).retrieve();
+                            WebClient.ResponseSpec responseSpec = webClientBuilder.build().post().uri(authenticationEp).bodyValue(payloadMap).retrieve();
 
                             return responseSpec.bodyToMono(Map.class).map(map -> {
                                 LOG.info("got back authenticationId from service call: {}", map.get("message"));
@@ -111,7 +113,7 @@ public class UserSignupService implements UserService {
                                     .append(userTransfer.getAuthenticationId())
                                     .append("/").append(userTransfer.getEmail());
 
-                            WebClient.ResponseSpec spec = webClient.post().uri(stringBuilder.toString()).retrieve();
+                            WebClient.ResponseSpec spec = webClientBuilder.build().post().uri(stringBuilder.toString()).retrieve();
 
                             return spec.bodyToMono(Map.class).map(map -> {
                                 LOG.info("account has been created with response: {}", map.get("message"));
@@ -216,7 +218,7 @@ public class UserSignupService implements UserService {
         final StringBuilder stringBuilder = new StringBuilder(accountEp).append("/email/").append(email);
         LOG.info("accountEp: {}", stringBuilder.toString());
 
-        WebClient.ResponseSpec responseSpec = webClient.delete().uri(stringBuilder.toString()).retrieve();
+        WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(stringBuilder.toString()).retrieve();
 
         return responseSpec.bodyToMono(Map.class).map(map -> {
             LOG.info("got back response from account deletion service call: {}", map.get("message"));
