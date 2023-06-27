@@ -26,6 +26,11 @@ spring:
     password: ${POSTGRES_PASSWORD}
     properties:
       sslMode:  ${DB_SSLMODE}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://authorization-server
 
 authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE}
