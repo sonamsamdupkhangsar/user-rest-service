@@ -81,12 +81,12 @@ postgres:
 envs:
   - name: DB_SSLMODE
     value: REQUIRE
+  - name: EUREKA_HOST
+    value: discovery-service.sonam.cloud
   - name: AUTHENTICATION_REST_SERVICE
-    value: http://authentication-rest-service-mychart.backend.svc.cluster.local:80
-  - name: JWT_REST_SERVICE
-    value: http://jwt-rest-service-mychart.backend.svc.cluster.local:80
+    value: http://authentication-rest-service
   - name: ACCOUNT_REST_SERVICE
-    value: http://account-rest-service-mychart.backend.svc.cluster.local:80
+    value: http://account-rest-service
   - name: DEFAULT_ZONE
     value: https://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
 

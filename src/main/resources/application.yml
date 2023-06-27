@@ -63,8 +63,3 @@ jwtrequest:
   - in: /users
     out: /accounts/(.)*/(.)*
     jwt: request
-
-hmacKey:
-  clientId: ${HMAC_CLIENTID}
-  algorithm: ${HMAC_ALGORITHM}
-  secretKey: ${HMAC_SECRET}
