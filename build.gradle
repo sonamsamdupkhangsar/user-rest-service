@@ -105,3 +105,11 @@ publishing {
         }
     }
 }
+
+pact {
+    publish {
+        pactBrokerUrl = System.getenv('pactbrokerurl')
+        pactBrokerUsername = System.getenv('pactbrokerusername')
+        pactBrokerPassword = System.getenv('pactbrokerpassword')
+    }
+}
