@@ -69,6 +69,13 @@ public class UserEndpointMockWebServerTest {
     @MockBean
     ReactiveJwtDecoder jwtDecoder;
 
+    final String clientCredentialResponse = "{" +
+            "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
+            "    \"scope\": \"message.read message.write\"," +
+            "    \"token_type\": \"Bearer\"," +
+            "    \"expires_in\": 299" +
+            "}";
+
     @Before
     public void setUp() {
         LOG.info("setup mock");
@@ -106,7 +113,7 @@ public class UserEndpointMockWebServerTest {
     static void properties(DynamicPropertyRegistry r) throws IOException {
         r.add("authentication-rest-service.root", () -> "http://localhost:"+mockWebServer.getPort());
         r.add("account-rest-service.root", () -> "http://localhost:"+mockWebServer.getPort());
-        r.add("jwt-service.root", () -> "http://localhost:"+mockWebServer.getPort());
+        r.add("auth-server.root", () -> "http://localhost:"+ mockWebServer.getPort());
     }
 
     @BeforeEach
@@ -120,27 +127,22 @@ public class UserEndpointMockWebServerTest {
         final String email = "signupUser@some1.company";
 
         LOG.info("try to POST with the same email/authId");
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
-                .setResponseCode(200).setBody(jwtTokenMsg));
 
         //2
         final String msg = "{\"error\": \"no account with email\"}";
         //Http 500 will throw a Exception in the webclient call, exectuing the onError block
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
 
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
-                .setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
         final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
                 .setResponseCode(201).setBody(authenticationCreatedResponse));
 
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
-                .setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
@@ -161,7 +163,7 @@ public class UserEndpointMockWebServerTest {
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("DELETE");
@@ -169,7 +171,7 @@ public class UserEndpointMockWebServerTest {
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
@@ -177,7 +179,7 @@ public class UserEndpointMockWebServerTest {
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
@@ -199,11 +201,7 @@ public class UserEndpointMockWebServerTest {
         final String email = "signupUser@some1.company";
 
         LOG.info("try to POST with the same email/authId");
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
-        //1
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         //2
         final String msg = "{\"error\": \"no account with email\"}";
@@ -211,7 +209,7 @@ public class UserEndpointMockWebServerTest {
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
 
         //3
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String authMessage = "Authentication api call failed with error: " + authenticationId;
         final String authenticationCreatedResponse = " {\"error\":\""+ authMessage +"\"}";
@@ -233,7 +231,7 @@ public class UserEndpointMockWebServerTest {
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).isEqualTo("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("DELETE");
@@ -241,7 +239,7 @@ public class UserEndpointMockWebServerTest {
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).isEqualTo("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
@@ -262,18 +260,13 @@ public class UserEndpointMockWebServerTest {
         final String authenticationId = "signupUser";
         final String email = "signupUser@some1.company";
 
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
-
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
         //2
         final String msg = "{\"error\": \"no account with email\"}";
         //Http 500 will throw a Exception in the webclient call, exectuing the onError block
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
 
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
-                .setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
         final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
@@ -281,8 +274,7 @@ public class UserEndpointMockWebServerTest {
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
                 .setResponseCode(201).setBody(authenticationCreatedResponse));
 
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
-                .setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String accountCreatedResponse = "{\"message\":\"Account create failed\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
@@ -303,7 +295,7 @@ public class UserEndpointMockWebServerTest {
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         LOG.info("path: {}", request.getPath());
@@ -312,7 +304,7 @@ public class UserEndpointMockWebServerTest {
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
@@ -320,7 +312,7 @@ public class UserEndpointMockWebServerTest {
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
@@ -349,11 +341,8 @@ public class UserEndpointMockWebServerTest {
 
 
         LOG.info("try to POST with the same email/authId");
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
         //1
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         //2
         final String msg = "{\"error\": \"no account with email\"}";
@@ -361,7 +350,7 @@ public class UserEndpointMockWebServerTest {
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
 
         //3
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
         final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
@@ -370,7 +359,7 @@ public class UserEndpointMockWebServerTest {
                 .setResponseCode(201).setBody(authenticationCreatedResponse));
 
         //5
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
         //6
@@ -392,7 +381,7 @@ public class UserEndpointMockWebServerTest {
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         LOG.info("path: {}", request.getPath());
@@ -403,7 +392,7 @@ public class UserEndpointMockWebServerTest {
         request = mockWebServer.takeRequest();
         LOG.info("path: {}", request.getPath());
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
         LOG.info("response: {}", result.getResponseBody());
 
         request = mockWebServer.takeRequest();
@@ -414,7 +403,7 @@ public class UserEndpointMockWebServerTest {
         request = mockWebServer.takeRequest();
         LOG.info("path: {}", request.getPath());
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
         LOG.info("response: {}", result.getResponseBody());
 
         request = mockWebServer.takeRequest();
@@ -587,18 +576,14 @@ public class UserEndpointMockWebServerTest {
         LOG.info("make rest call to save user and create authentication record");
 
         //1
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
-
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
         //2
         final String msg = "{\"error\": \"no account with email\"}";
         //Http 500 will throw a Exception in the webclient call, exectuing the onError block
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
 
         //3
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
         final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
@@ -608,7 +593,7 @@ public class UserEndpointMockWebServerTest {
                 .setResponseCode(201).setBody(authenticationCreatedResponse));
 
         //5
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
         //6
@@ -631,7 +616,7 @@ public class UserEndpointMockWebServerTest {
         //1
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         //2
@@ -644,7 +629,7 @@ public class UserEndpointMockWebServerTest {
         //3
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         //4
         request = mockWebServer.takeRequest();
@@ -656,7 +641,7 @@ public class UserEndpointMockWebServerTest {
         request = mockWebServer.takeRequest();
         //5
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         //6
@@ -731,18 +716,14 @@ public class UserEndpointMockWebServerTest {
                 authenticationId, "pass");
 
         LOG.info("try to POST with the same email/authId");
-        final String jwt= "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ";
-
-        final String jwtTokenMsg = " {\"token\":\""+jwt+"\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
-
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
         //2
         final String msg = "{\"error\": \"no account with email\"}";
         //Http 500 will throw a Exception in the webclient call, exectuing the onError block
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
 
         //3
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
         final String authMessage = "Authentication created successfully for authenticationId: " + userTransfer.getAuthenticationId();
         final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
 
@@ -750,7 +731,7 @@ public class UserEndpointMockWebServerTest {
                 .setResponseCode(201).setBody(authenticationCreatedResponse));
 
         LOG.info("add the same token again as another account webservice is called after the Authentication one");
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(jwtTokenMsg));
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
@@ -764,7 +745,7 @@ public class UserEndpointMockWebServerTest {
 
         RecordedRequest request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("DELETE");
@@ -773,7 +754,7 @@ public class UserEndpointMockWebServerTest {
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
@@ -782,7 +763,7 @@ public class UserEndpointMockWebServerTest {
         request = mockWebServer.takeRequest();
         LOG.info("path: {}", request.getPath());
         assertThat(request.getMethod()).isEqualTo("POST");
-        assertThat(request.getPath()).startsWith("/jwts/accesstoken");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");

@@ -1,6 +1,5 @@
 package me.sonam.user.handler;
 
-import me.sonam.user.repo.entity.MyUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +7,6 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
@@ -16,7 +14,6 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class UserHandler {
@@ -38,29 +35,30 @@ public class UserHandler {
     }
 
     public Mono<ServerResponse> update(ServerRequest serverRequest) {
-        String authenticationId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
-        LOG.info("authenticate user for authId: {}", authenticationId);
 
-        return userService.updateUser(authenticationId, serverRequest.bodyToMono(UserTransfer.class))
+        return serverRequest.principal().flatMap(principal ->
+                userService.updateUser(principal.getName(), serverRequest.bodyToMono(UserTransfer.class))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.info("user update failed: ", throwable);
                        return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                                 .bodyValue(throwable.getMessage());
-                });
+                })
+        );
     }
     //updateProfilePhoto
     public Mono<ServerResponse> updateProfilePhoto(ServerRequest serverRequest) {
         LOG.info("update profile photo");
-        String authenticationId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
 
-        return userService.updateProfilePhoto(authenticationId, serverRequest.bodyToMono(String.class))
+        return serverRequest.principal().flatMap(principal ->
+                userService.updateProfilePhoto(principal.getName(), serverRequest.bodyToMono(String.class))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.info("update profile photo failed", throwable);
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(throwable.getMessage());
-                });
+                })
+        );
     }
 
     public Mono<ServerResponse> findMatchingFirstNameAndLastName(ServerRequest serverRequest) {
@@ -108,15 +106,15 @@ public class UserHandler {
 
     public Mono<ServerResponse> deleteUser(ServerRequest serverRequest) {
         LOG.info("delete user");
-        String authenticationId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
 
-        return userService.deleteUser(authenticationId)
+        return serverRequest.principal().flatMap(principal -> userService.deleteUser(principal.getName())
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.error("delete user failed", throwable);
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(throwable.getMessage());
-                });
+                })
+        );
     }
 
     public static Map<String, String> getMap(Pair<String, String>... pairs){
