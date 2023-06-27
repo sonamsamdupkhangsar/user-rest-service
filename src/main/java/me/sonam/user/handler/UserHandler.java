@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -117,6 +116,7 @@ public class UserHandler {
         );
     }
 
+    @SafeVarargs
     public static Map<String, String> getMap(Pair<String, String>... pairs){
         Map<String, String> map = new HashMap<>();
         for(Pair<String, String> pair: pairs) {
