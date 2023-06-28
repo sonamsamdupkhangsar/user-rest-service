@@ -40,11 +40,6 @@ account-rest-service:
   root: ${ACCOUNT_REST_SERVICE}
   accounts: /accounts
 
-jwt-service:
-  root: ${JWT_REST_SERVICE}
-  public-key-id: /jwts/publickeys/{keyId}
-  accesstoken: /jwts/accesstoken
-
 eureka:
   client:
     serviceUrl:
@@ -59,7 +54,13 @@ permitpath:
 jwtrequest:
   - in: /users
     out: /authentications
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /users
     out: /accounts/(.)*/(.)*
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==

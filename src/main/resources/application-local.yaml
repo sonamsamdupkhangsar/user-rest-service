@@ -23,8 +23,3 @@ JWT_REST_SERVICE: http://localhost:8081
 APPLICATION_REST_SERVICE: http://localhost:8082
 ACCOUNT_REST_SERVICE: http://localhost:8086
 AUTHENTICATION_REST_SERVICE: http://localhost:8083
-
-hmacKey:
-  clientId: user-rest-service
-  algorithm: HmacMD5
-  secretKey: mysecret
