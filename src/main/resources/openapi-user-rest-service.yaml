@@ -5,8 +5,10 @@ info:
   description: User rest services api documentation
 
 servers:
+  - url: http://localhost:8080
+    description: api-gateway server
   - url: http://localhost:8084
-    description: local development server
+    description: user-rest-service server
 
 paths:
   /users:

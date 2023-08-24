@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -14,8 +15,9 @@ public interface UserService {
     Mono<String> signupUser(Mono<UserTransfer> userMono);
     Mono<String> updateUser(String authenticationId, Mono<UserTransfer> userMono);
     Mono<String> updateProfilePhoto(String authenticationId, Mono<String> profilePhotoUrlMono);
-    Mono<MyUser> getUserByAuthenticationId(String authenticationId);
+  //  Mono<MyUser> getUserByAuthenticationId(String authenticationId);
     Flux<MyUser> findMatchingName(String firstName, String lastName);
     Mono<String> activateUser(String authenticationId);
     Mono<String> deleteUser(String authentiationId);
+    Mono<Map<String, Object>> getUserByAuthenticationId(String authenticationId);
 }

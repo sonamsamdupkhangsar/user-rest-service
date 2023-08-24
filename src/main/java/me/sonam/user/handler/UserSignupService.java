@@ -15,6 +15,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -182,12 +184,12 @@ public class UserSignupService implements UserService {
         );
     }
 
-    @Override
+   /* @Override
     public Mono<MyUser> getUserByAuthenticationId(String authenticationId) {
         LOG.info("find user with id: {}", authenticationId);
 
         return userRepository.findByAuthenticationId(authenticationId);
-    }
+    }*/
 
     @Override
     public Flux<MyUser> findMatchingName(String firstName, String lastName) {
@@ -212,6 +214,24 @@ public class UserSignupService implements UserService {
                 .switchIfEmpty(Mono.error(new UserException("user is active, cannot delete")))
                 .flatMap(myUser ->   userRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
                 .thenReturn("deleted: " + authenticationId);
+    }
+
+    @Override
+    public Mono<Map<String, Object>> getUserByAuthenticationId(String authenticationId) {
+        LOG.info("get user information for authenticationId: {}", authenticationId);
+
+        return userRepository.findByAuthenticationId(authenticationId).map(myUser -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("firstName", myUser.getFirstName());
+            map.put("lastName", myUser.getLastName());
+            map.put("email", myUser.getEmail());
+            map.put("profilePhoto", myUser.getProfilePhoto());
+            DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+            if (myUser.getBirthDate() != null) {
+                map.put("dateOfBirth", dateFormat.format(myUser.getBirthDate()));
+            }
+            return map;
+        });
     }
 
 
