@@ -25,6 +25,11 @@ spring:
     url: r2dbc:h2:mem:///contentitem?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     name: sa
     password:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9001
 
 POSTGRES_USERNAME: dusername
 POSTGRES_DBNAME: dbname
@@ -35,14 +40,16 @@ authentication-rest-service:
   root: http://localhost:{port}/authentications
   authentications: /authentications
 
+# this is used for getting accesstoken by header filter in jwt-validator (ReactiveRequestContextHolder.class)
+auth-server:
+  root: http://localhost:9001
+  oauth2token:
+    path: /oauth2/token
+    params: ?grant_type=client_credentials
+
 account-rest-service:
   root: http://localhost:{port}/accounts
   accounts: /accounts
-
-jwt-service:
-  root: http://localhost:{port}
-  public-key-id: /jwts/publickeys/{keyId}
-  accesstoken: /jwts/accesstoken
 
 endpoint:
   user:
@@ -70,12 +77,13 @@ permitpath:
 jwtrequest:
   - in:  /users
     out: /authentications
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /users
     out: /accounts/(.)*/(.)*
-    jwt: request
-
-hmacKey:
-  clientId: user-rest-service
-  algorithm: HmacMD5
-  secretKey: mysecret
+    accessToken:
+      option: request
+      scopes: message.read message.write
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==

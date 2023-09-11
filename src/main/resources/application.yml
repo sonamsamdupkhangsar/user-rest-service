@@ -2,8 +2,8 @@ logging:
   level:
     root: error
     me:
-      sonam: debug
-
+      sonam:
+        security: debug
 info:
   app:
     name: Springboot me.sonam.account.Application
@@ -27,6 +27,11 @@ spring:
     password: ${POSTGRES_PASSWORD}
     properties:
       sslMode:  ${DB_SSLMODE}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${ISSUER_URL}
 
 authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE}
@@ -36,10 +41,11 @@ account-rest-service:
   root: ${ACCOUNT_REST_SERVICE}
   accounts: /accounts
 
-jwt-service:
-  root: ${JWT_REST_SERVICE}
-  public-key-id: /jwts/publickeys/{keyId}
-  accesstoken: /jwts/accesstoken
+auth-server:
+  root: http://authorization-server
+  oauth2token:
+    path: /oauth2/token
+    params: ?grant_type=client_credentials
 
 eureka:
   client:
@@ -55,12 +61,17 @@ permitpath:
 jwtrequest:
   - in: /users
     out: /authentications
-    jwt: request
+    accessToken:
+      option: request
+      scopes: message.read
+      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
   - in: /users
     out: /accounts/(.)*/(.)*
-    jwt: request
+    accessToken:
+      option: request
+      scopes: ${REQUEST_SCOPES}
+      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
 
-hmacKey:
-  clientId: ${HMAC_CLIENTID}
-  algorithm: ${HMAC_ALGORITHM}
-  secretKey: ${HMAC_SECRET}
+token:
+  audiences: ${OAUTH_CLIENTS}
+  issuerUri: ${ISSUER_URL}

@@ -1,6 +1,7 @@
 package me.sonam.user.handler;
 
 
+import jakarta.annotation.PostConstruct;
 import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
 import me.sonam.user.repo.UserRepository;
 import me.sonam.user.repo.entity.MyUser;
@@ -13,7 +14,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.PostConstruct;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,13 +29,13 @@ public class UserSignupService implements UserService {
     @Autowired
     private UserRepository userRepository;
 
+    private WebClient.Builder webClientBuilder;
+
     @Value("${account-rest-service.root}${account-rest-service.accounts}")
     private String accountEp;
 
     @Value("${authentication-rest-service.root}${authentication-rest-service.authentications}")
     private String authenticationEp;
-
-    private WebClient.Builder webClientBuilder;
 
     @Autowired
     private ReactiveRequestContextHolder reactiveRequestContextHolder;
@@ -41,9 +43,10 @@ public class UserSignupService implements UserService {
     public UserSignupService(WebClient.Builder webClientBuilder) {
         this.webClientBuilder = webClientBuilder;
     }
+
     @PostConstruct
     public void setWebClient() {
-        webClientBuilder.filter(reactiveRequestContextHolder.headerFilter());
+        webClientBuilder = webClientBuilder.filter(reactiveRequestContextHolder.headerFilter());
     }
 
     /**
@@ -180,12 +183,12 @@ public class UserSignupService implements UserService {
         );
     }
 
-    @Override
+   /* @Override
     public Mono<MyUser> getUserByAuthenticationId(String authenticationId) {
         LOG.info("find user with id: {}", authenticationId);
 
         return userRepository.findByAuthenticationId(authenticationId);
-    }
+    }*/
 
     @Override
     public Flux<MyUser> findMatchingName(String firstName, String lastName) {
@@ -212,8 +215,26 @@ public class UserSignupService implements UserService {
                 .thenReturn("deleted: " + authenticationId);
     }
 
+    @Override
+    public Mono<Map<String, Object>> getUserByAuthenticationId(String authenticationId) {
+        LOG.info("get user information for authenticationId: {}", authenticationId);
 
-    private Mono<String>/*<? extends String>*/ callDeleteAccountCheck(String email) {
+        return userRepository.findByAuthenticationId(authenticationId).map(myUser -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("firstName", myUser.getFirstName());
+            map.put("lastName", myUser.getLastName());
+            map.put("email", myUser.getEmail());
+            map.put("profilePhoto", myUser.getProfilePhoto());
+            DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+            if (myUser.getBirthDate() != null) {
+                map.put("dateOfBirth", dateFormat.format(myUser.getBirthDate()));
+            }
+            return map;
+        });
+    }
+
+
+    private Mono<? extends String> callDeleteAccountCheck(String email) {
         LOG.info("call delete account check");
         final StringBuilder stringBuilder = new StringBuilder(accountEp).append("/email/").append(email);
         LOG.info("accountEp: {}", stringBuilder.toString());

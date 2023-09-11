@@ -18,13 +18,14 @@ eureka:
 
 DEFAULT_ZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
 
-# jwt-rest-service on port 8081 local server
-JWT_REST_SERVICE: http://jwt-rest-service
-APPLICATION_REST_SERVICE: http://application-rest-service
 ACCOUNT_REST_SERVICE: http://account-rest-service
 AUTHENTICATION_REST_SERVICE: http://authentication-rest-service
 
-hmacKey:
-  clientId: user-rest-service
-  algorithm: HmacMD5
-  secretKey: mysecret
+# ISSUER_URL here is used for pulling the public certs from authorization-server for token validation
+#ISSUER_URL:  http://10.0.0.28:9001
+#ISSUER_URL: http://authorization-server:9001
+ISSUER_URL: http://my-server:9001
+
+REQUEST_SCOPES: message.read message.write
+BASE64_CLIENT_ID_SECRET: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+OAUTH_CLIENTS: oauth-client

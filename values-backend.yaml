@@ -84,13 +84,15 @@ envs:
   - name: EUREKA_HOST
     value: discovery-service.sonam.cloud
   - name: AUTHENTICATION_REST_SERVICE
-    value: http://authentication-rest-service-mychart.backend.svc.cluster.local:80
-  - name: JWT_REST_SERVICE
-    value: http://jwt-rest-service-mychart.backend.svc.cluster.local:80
+    value: http://authentication-rest-service
   - name: ACCOUNT_REST_SERVICE
-    value: http://account-rest-service-mychart.backend.svc.cluster.local:80
+    value: http://account-rest-service
   - name: DEFAULT_ZONE
     value: https://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
+  - name: ISSUER_URL
+    value: http://authorization-server:9001
+  - name: OAUTH_CLIENTS
+    value: oauth-client
 
 health:
   liveness:
@@ -113,11 +115,9 @@ secretFiles:
         name: EUREKA_USER
       - key: password
         name: EUREKA_PASSWORD
-  - file: user-rest-service
+  - file: service-service-client-credential-flow-secret
     keys:
-      - key: hmac.clientId
-        name: HMAC_CLIENTID
-      - key: hmac.algorithm
-        name: HMAC_ALGORITHM
-      - key: hmac.secret
-        name: HMAC_SECRET
+      - key: base64EncodedClientIdSecret
+        name: BASE64_CLIENT_ID_SECRET
+      - key: scopes
+        name: REQUEST_SCOPES
