@@ -23,6 +23,8 @@ public class UserHandler {
 
     public Mono<ServerResponse> signupUser(ServerRequest serverRequest) {
         LOG.info("signup user");
+        LOG.info("printing myname header value {}", serverRequest.headers().firstHeader("myname"));
+
        return userService.signupUser(serverRequest.bodyToMono(UserTransfer.class))
                 .flatMap(s ->  ServerResponse.created(URI.create("/users/"))
                         .contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))

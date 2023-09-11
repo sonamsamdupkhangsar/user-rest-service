@@ -46,8 +46,8 @@ import static org.mockito.Mockito.when;
  * returning a mocked response.  See {@link Router} for endpoints.
  */
 @EnableAutoConfiguration
-@ExtendWith(SpringExtension.class)
-@SpringBootTest( webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+//@ExtendWith(SpringExtension.class)
+@SpringBootTest(classes = {Application.class}, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ExtendWith(MockitoExtension.class)
 public class UserEndpointMockWebServerTest {
     private static final Logger LOG = LoggerFactory.getLogger(UserEndpointMockWebServerTest.class);

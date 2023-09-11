@@ -71,7 +71,7 @@ eureka:
 permitpath:
   - path: /users
     httpMethods: POST
-  - path: /api/health/*
+  - path: /users/api/health/*
     httpMethods: GET
 
 jwtrequest:

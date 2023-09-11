@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
@@ -235,7 +234,7 @@ public class UserSignupService implements UserService {
     }
 
 
-    private Mono<String>/*<? extends String>*/ callDeleteAccountCheck(String email) {
+    private Mono<? extends String> callDeleteAccountCheck(String email) {
         LOG.info("call delete account check");
         final StringBuilder stringBuilder = new StringBuilder(accountEp).append("/email/").append(email);
         LOG.info("accountEp: {}", stringBuilder.toString());

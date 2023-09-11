@@ -25,14 +25,14 @@ public class LivenessReadinesslRestServiceIntegTest {
   @Test
   public void readiness() {
     LOG.info("check readiness endpoint");
-    client.get().uri("/api/health/readiness")
+    client.get().uri("/users/api/health/readiness")
             .exchange().expectStatus().isOk();
   }
 
   @Test
   public void liveness() {
     LOG.info("check liveness endpoint");
-    client.get().uri("/api/health/liveness")
+    client.get().uri("/users/api/health/liveness")
             .exchange().expectStatus().isOk();
   }
 }
