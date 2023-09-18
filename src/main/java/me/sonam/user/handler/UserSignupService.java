@@ -221,6 +221,7 @@ public class UserSignupService implements UserService {
 
         return userRepository.findByAuthenticationId(authenticationId).map(myUser -> {
             Map<String, Object> map = new HashMap<>();
+            map.put("id", myUser.getId().toString());
             map.put("firstName", myUser.getFirstName());
             map.put("lastName", myUser.getLastName());
             map.put("email", myUser.getEmail());
