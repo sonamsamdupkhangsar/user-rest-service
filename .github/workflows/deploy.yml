@@ -22,14 +22,6 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
 
-      - name: Publish package
-        uses: gradle/gradle-build-action@749f47bda3e44aa060e82d7b3ef7e40d953bd629
-        with:
-          arguments: publish
-        env:
-          USERNAME: ${{ github.actor }}
-          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
       - name: Publish Pacts
         run: USERNAME=${{github.actor}} PERSONAL_ACCESS_TOKEN=${{secrets.PERSONAL_ACCESS_TOKEN}} pactbrokerurl=${{ secrets.PACTBROKER_URL }} pactbrokerusername=${{ secrets.PACTBROKER_USERNAME }}  pactbrokerpassword=${{ secrets.PACTBROKER_PASSWORD }} ./gradlew clean build pactPublish
 
