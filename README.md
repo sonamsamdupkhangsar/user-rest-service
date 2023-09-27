@@ -5,24 +5,10 @@ This service exposes a user signup api.  Please check the [workflow](#signup-use
 ## Run locally using profile
 Use the following to run local profile which will pick up properties defined in the `application-local.yml` :
 
-```
-mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local"
-```
 To run another instance on another port use :
-```
-mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local --server.port=9001"
-```
+
 Or you can do something like following too to specify the db server properties:
 
-```
-mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=8084 \
-    --POSTGRES_USERNAME=test \
-    --POSTGRES_PASSWORD=test \
-    --POSTGRES_DBNAME=user \
-    --POSTGRES_SERVICE=localhost:5432
-    --DB_SSLMODE=disable
-    --eureka.client.enabled=false"                       
-```
  
  
 ## Build Docker image
