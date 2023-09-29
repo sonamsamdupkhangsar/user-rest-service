@@ -32,6 +32,9 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${ISSUER_URL}
+  cloud:
+    kubernetes:
+      enabled: false  #default disabled
 
 authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE}
