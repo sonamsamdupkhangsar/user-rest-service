@@ -10,8 +10,3 @@ spring:
 eureka:
   client:
       enabled: false
-
-#        args: ["-Dspring.profiles.active=kubernetes",
-#  "-Dspring.cloud.kubernetes.discovery.discovery-server-url
-#  =http://spring-cloud-kubernetes-discoveryserver.default.svc.cluster.local",
-#"-Dspring.cloud.kubernetes.discovery.enabled=true", "org.springframework.boot.loader.JarLauncher"]
