@@ -3,7 +3,8 @@ logging:
     root: error
     me:
       sonam:
-        security: debug
+        user: debug
+
 info:
   app:
     name: Springboot me.sonam.account.Application
