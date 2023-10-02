@@ -2,8 +2,7 @@ logging:
   level:
     root: error
     me:
-      sonam:
-        user: trace
+      sonam: trace
 
 info:
   app:
