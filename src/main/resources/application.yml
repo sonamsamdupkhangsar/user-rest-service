@@ -3,7 +3,7 @@ logging:
     root: error
     me:
       sonam:
-        user: info
+        user: trace
 
 info:
   app:
