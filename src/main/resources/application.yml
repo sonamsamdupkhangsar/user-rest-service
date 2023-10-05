@@ -2,8 +2,8 @@ logging:
   level:
     root: error
     me:
-      sonam:
-        security: debug
+      sonam: trace
+
 info:
   app:
     name: Springboot me.sonam.account.Application
@@ -42,15 +42,10 @@ account-rest-service:
   accounts: /accounts
 
 auth-server:
-  root: http://authorization-server
+  root: http://authorization-server/issuer
   oauth2token:
     path: /oauth2/token
     params: ?grant_type=client_credentials
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: ${DEFAULT_ZONE}
 
 permitpath:
   - path: /users
@@ -64,7 +59,7 @@ jwtrequest:
     accessToken:
       option: request
       scopes: message.read
-      base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /users
     out: /accounts/(.)*/(.)*
     accessToken:

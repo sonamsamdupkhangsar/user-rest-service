@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Mono;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,6 +27,9 @@ import java.util.Map;
  */
 public class UserSignupService implements UserService {
     private static final Logger LOG = LoggerFactory.getLogger(UserSignupService.class);
+
+    @Autowired
+    private DiscoveryClient discoveryClient;
 
     @Autowired
     private UserRepository userRepository;
@@ -47,6 +52,10 @@ public class UserSignupService implements UserService {
     @PostConstruct
     public void setWebClient() {
         webClientBuilder = webClientBuilder.filter(reactiveRequestContextHolder.headerFilter());
+        List<String> serviceList = discoveryClient.getServices();
+        LOG.info("printing services of size: {}", serviceList.size());
+
+        serviceList.forEach(s -> LOG.info("Found service: {}", s));
     }
 
     /**

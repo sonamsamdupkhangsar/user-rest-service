@@ -15,8 +15,8 @@ EUREKA_PASSWORD: test
 eureka:
   client:
     enabled: true
-
-DEFAULT_ZONE: http://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
+    serviceUrl:
+      defaultZone: http://${EUREKA_USER}:${EUREKA_PASSWORD}@${EUREKA_HOST}/eureka
 
 ACCOUNT_REST_SERVICE: http://account-rest-service
 AUTHENTICATION_REST_SERVICE: http://authentication-rest-service
@@ -26,3 +26,8 @@ ISSUER_URL: http://api-gateway:9001/issuer
 REQUEST_SCOPES: message.read message.write
 BASE64_CLIENT_ID_SECRET: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
 OAUTH_CLIENTS: oauth-client
+
+spring:
+  cloud:
+    kubernetes:
+      enabled: false
