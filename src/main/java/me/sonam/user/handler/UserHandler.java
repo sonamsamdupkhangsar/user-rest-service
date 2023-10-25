@@ -89,7 +89,7 @@ public class UserHandler {
                     LOG.error("get user by authid failed", throwable);
 
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(throwable.getMessage());
+                            .bodyValue(Map.of("error", throwable.getMessage()));
                 });
     }
 

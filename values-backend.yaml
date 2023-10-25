@@ -88,7 +88,7 @@ envs:
   - name: ISSUER_URL
     value: https://authorization.sonam.cloud/issuer
   - name: OAUTH_CLIENTS
-    value: oauth-client
+    value: oauth-client,nextjs-client
 
 health:
   liveness:
