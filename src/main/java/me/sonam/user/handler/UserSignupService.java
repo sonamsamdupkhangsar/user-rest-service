@@ -228,7 +228,9 @@ public class UserSignupService implements UserService {
     public Mono<Map<String, Object>> getUserByAuthenticationId(String authenticationId) {
         LOG.info("get user information for authenticationId: {}", authenticationId);
 
-        return userRepository.findByAuthenticationId(authenticationId).map(myUser -> {
+        return userRepository.findByAuthenticationId(authenticationId)
+                .switchIfEmpty(Mono.error(new SignupException("user not found with authenticationId: "+
+                        authenticationId))).map(myUser -> {
             Map<String, Object> map = new HashMap<>();
             map.put("id", myUser.getId().toString());
             map.put("firstName", myUser.getFirstName());

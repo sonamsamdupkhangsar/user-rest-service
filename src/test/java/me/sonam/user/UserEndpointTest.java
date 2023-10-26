@@ -128,11 +128,24 @@ public class UserEndpointTest {
 
         StepVerifier.create(myUserFlux)
                 .assertNext(myUser -> {
-                    LOG.info("asserting found user by authId");
+                    LOG.info("asserting found user by authId: {}", myUser);
                     assertThat(myUser.getLastName()).isEqualTo("thecat");
                     assertThat(myUser.getEmail()).isEqualTo("dommy@cat.email");
                 })
                 .verifyComplete();
+
+        Flux<Map> result = webTestClient.get().uri("/users/dummy-123")
+                .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest()
+                .returnResult(Map.class).getResponseBody();
+
+        StepVerifier.create(result)
+                .assertNext(map -> {
+                    LOG.info("user not found {}", map.get("error"));
+
+                })
+                .verifyComplete();
+
+
     }
 
     @Test
