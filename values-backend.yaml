@@ -85,9 +85,9 @@ envs:
     value: http://authentication-rest-service
   - name: ACCOUNT_REST_SERVICE
     value: http://account-rest-service
-  - name: ISSUER_URL
+  - name: ISSUER_URI
     value: https://authorization.sonam.cloud/issuer
-  - name: OAUTH_CLIENTS
+  - name: OAUTH_AUDIENCES
     value: oauth-client,nextjs-client
 
 health:

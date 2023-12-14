@@ -73,7 +73,31 @@ public class UserSignupService implements UserService {
     public Mono<String> signupUser(Mono<UserTransfer> userMono) {
         LOG.info("signup user");
 
-        return userMono.flatMap(userTransfer ->
+        return userMono.flatMap(userTransfer -> {
+            LOG.info("checking if userTransfer fields are empty: {}", userTransfer);
+           if (userTransfer.getFirstName().trim().isEmpty()) {
+               LOG.error("first name is emtpy");
+               return Mono.error(new UserException("first name cannot be empty"));
+           }
+           if (userTransfer.getLastName().trim().isEmpty()) {
+               LOG.error("last name is emtpy");
+               return Mono.error(new UserException("last name cannot be empty"));
+           }
+           if (userTransfer.getEmail().trim().isEmpty()) {
+               LOG.error("email is emtpy");
+               return Mono.error(new UserException("email cannot be empty"));
+           }
+           if (userTransfer.getAuthenticationId().trim().isEmpty()) {
+               LOG.error("authenticationId is emtpy");
+               return Mono.error(new UserException("username cannot be empty"));
+           }
+           if (userTransfer.getPassword().trim().isEmpty()) {
+               LOG.error("password is emtpy");
+               return Mono.error(new UserException("password needs to be entered"));
+           }
+           return Mono.just(userTransfer);
+        }).//thenReturn("User sign up success, checkemail");  //
+                flatMap(userTransfer ->
                         userRepository.existsByAuthenticationIdAndActiveTrue(userTransfer.getAuthenticationId())
                                 .filter(aBoolean -> !aBoolean)
                         .switchIfEmpty(Mono.error(new SignupException("User is already active with authenticationId")))
@@ -119,12 +143,11 @@ public class UserSignupService implements UserService {
                             });
                         })
                         .flatMap(s -> {
-                            LOG.info("create Account record with webrequest on endpoint: {}", accountEp);
-
                             StringBuilder stringBuilder = new StringBuilder(accountEp).append("/")
                                     .append(userTransfer.getAuthenticationId())
                                     .append("/").append(userTransfer.getEmail());
 
+                            LOG.info("create Account record with webrequest on endpoint: {}", stringBuilder);
                             WebClient.ResponseSpec spec = webClientBuilder.build().post().uri(stringBuilder.toString()).retrieve();
 
                             return spec.bodyToMono(Map.class).map(map -> {
