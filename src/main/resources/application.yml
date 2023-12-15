@@ -2,7 +2,7 @@ logging:
   level:
     root: error
     me:
-      sonam: trace
+      sonam: info
 
 info:
   app:
@@ -31,7 +31,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${ISSUER_URL}
+          issuer-uri: ${ISSUER_URI}
+          audiences: ${OAUTH_AUDIENCES}
 
 authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE}
@@ -66,7 +67,3 @@ jwtrequest:
       option: request
       scopes: ${REQUEST_SCOPES}
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
-
-token:
-  audiences: ${OAUTH_CLIENTS}
-  issuerUri: ${ISSUER_URL}

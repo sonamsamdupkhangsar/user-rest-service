@@ -59,4 +59,15 @@ public class UserTransfer {
     public void setEmail(String email) {
         this.email = email;
     }
+
+    @Override
+    public String toString() {
+        return "UserTransfer{" +
+                "firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", authenticationId='" + authenticationId + '\'' +
+                ", password='" + password + '\'' +
+                '}';
+    }
 }

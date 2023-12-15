@@ -21,11 +21,13 @@ eureka:
 ACCOUNT_REST_SERVICE: http://account-rest-service
 AUTHENTICATION_REST_SERVICE: http://authentication-rest-service
 
-ISSUER_URL: http://api-gateway:9001/issuer
+ISSUER_URI: http://api-gateway:8080/issuer
+JWT_SET_URI: http://api-gateway:8080/issuer/.well-known/jwks.json
+OAUTH_AUDIENCES: oauth-client
 
 REQUEST_SCOPES: message.read message.write
 BASE64_CLIENT_ID_SECRET: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
-OAUTH_CLIENTS: oauth-client
+
 
 spring:
   cloud:
