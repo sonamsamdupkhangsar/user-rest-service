@@ -111,7 +111,7 @@ secretFiles:
         name: BASE64_CLIENT_ID_SECRET
       - key: scopes
         name: REQUEST_SCOPES
-  - file: user-rest-service
+  - file: newrelic-secret
     keys:
-      - key: newrelic.licensekey
+      - key: newrelic.license_key
         name: NEW_RELIC_LICENSE_KEY
