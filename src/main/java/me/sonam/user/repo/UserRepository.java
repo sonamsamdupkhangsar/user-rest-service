@@ -8,9 +8,11 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
+    Flux<MyUser> findByIdIn(List<UUID> ids);
     Mono<MyUser> findByEmail(String email);
     Mono<Boolean> existsByEmailAndIdNot(String email, UUID id);
     Mono<Boolean> existsByEmail(String email);

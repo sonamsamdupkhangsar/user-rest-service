@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * This will add a user entry and call authentication service to create
@@ -100,13 +101,13 @@ public class UserSignupService implements UserService {
                 flatMap(userTransfer ->
                         userRepository.existsByAuthenticationIdAndActiveTrue(userTransfer.getAuthenticationId())
                                 .filter(aBoolean -> !aBoolean)
-                        .switchIfEmpty(Mono.error(new SignupException("User is already active with authenticationId")))
+                        .switchIfEmpty(Mono.error(new SignupException("User is already active with that username (authenticationId)")))
                         .flatMap(aBoolean -> userRepository.existsByAuthenticationIdAndUserAuthAccountCreatedTrue(userTransfer.getAuthenticationId()))
                         .filter(aBoolean -> {
                             LOG.info("aBoolean for findByAuthenticationIdAndUserAuthAccountCreatedTrue is {}", aBoolean);
 
                             return !aBoolean;
-                        }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that id, check to activate it by email")))
+                        }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that username, check to activate it by email")))
                                 .flatMap(aBoolean -> userRepository.existsByEmailAndActiveTrue(userTransfer.getEmail()))
                                 .filter(aBoolean -> !aBoolean)
                                 .switchIfEmpty(Mono.error(new SignupException("User account is active for that email")))
@@ -254,18 +255,44 @@ public class UserSignupService implements UserService {
         return userRepository.findByAuthenticationId(authenticationId)
                 .switchIfEmpty(Mono.error(new SignupException("user not found with authenticationId: "+
                         authenticationId))).map(myUser -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", myUser.getId().toString());
-            map.put("firstName", myUser.getFirstName());
-            map.put("lastName", myUser.getLastName());
-            map.put("email", myUser.getEmail());
-            map.put("profilePhoto", myUser.getProfilePhoto());
-            DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
-            if (myUser.getBirthDate() != null) {
-                map.put("dateOfBirth", dateFormat.format(myUser.getBirthDate()));
-            }
-            return map;
-        });
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", myUser.getId().toString());
+                    map.put("firstName", myUser.getFirstName());
+                    map.put("lastName", myUser.getLastName());
+                    map.put("email", myUser.getEmail());
+                    map.put("profilePhoto", myUser.getProfilePhoto());
+                    map.put("authenticationId", myUser.getAuthenticationId());
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                    if (myUser.getBirthDate() != null) {
+                        map.put("dateOfBirth", dateFormat.format(myUser.getBirthDate()));
+                    }
+                    return map;
+                });
+    }
+
+    @Override
+    public Mono<User> getUserById(UUID id) {
+        LOG.info("get user by id: {}", id);
+
+        return userRepository.findById(id).switchIfEmpty(Mono.error(new UserException("no user with id: "+ id)))
+                .map(myUser -> {
+                    LOG.info("found myUser: {}", myUser);
+                    User user = new User(myUser.getId(), myUser.getFirstName(),
+                            myUser.getLastName(), myUser.getEmail(), myUser.getAuthenticationId(), myUser.getActive(),
+                            myUser.getUserAuthAccountCreated());
+                    LOG.info("user to return: {}", user);
+                    return user;
+                });
+
+    }
+
+    @Override
+    public Mono<List<User>> getBatchOfUserById(List<UUID> uuids) {
+        LOG.info("get user by batch of ids");
+
+        return userRepository.findByIdIn(uuids).map(myUser -> new User(myUser.getId(), myUser.getFirstName(), myUser.getLastName(),
+                myUser.getEmail(), myUser.getAuthenticationId(), myUser.getActive(),
+                myUser.getUserAuthAccountCreated())).collectList();
     }
 
 

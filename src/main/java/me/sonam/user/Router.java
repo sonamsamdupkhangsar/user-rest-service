@@ -25,8 +25,10 @@ public class Router {
                         handler::update)
                 .andRoute(GET("/users/names/{firstName}/{lastName}").and(accept(MediaType.APPLICATION_JSON)),
                 handler::findMatchingFirstNameAndLastName)
-                //.andRoute(GET("/users/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
-                //        handler::getUserByAuthId)
+                .andRoute(GET("/users/ids/{id}").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::getBatchOfUserById)
+                .andRoute(GET("/users/id/{id}").and(accept(MediaType.APPLICATION_JSON)),
+                        handler::getUserById)
                 .andRoute(GET("/users/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)),
                         handler::getUserByAuthId)
 
