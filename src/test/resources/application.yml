@@ -45,7 +45,7 @@ auth-server:
   root: http://localhost:9001
   oauth2token:
     path: /oauth2/token
-    params: ?grant_type=client_credentials
+    grantType: client_credentials
 
 account-rest-service:
   root: http://localhost:{port}/accounts

@@ -100,7 +100,7 @@ public class UserHandler {
         return userService.getUserById(id)
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
-                    LOG.error("get user by id failed", throwable);
+                    LOG.error("get user by id failed: {}", throwable.getMessage());
 
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(Map.of("error", "no user found with id"));
@@ -115,10 +115,10 @@ public class UserHandler {
     public Mono<ServerResponse> getBatchOfUserById(ServerRequest serverRequest) {
         LOG.info("authenticate user");
 
-        List<UUID> uuidList = Arrays.stream(serverRequest.pathVariable("id").split(",")).map(UUID::fromString).toList();
+        List<UUID> uuidList = Arrays.stream(serverRequest.pathVariable("ids").split(",")).map(UUID::fromString).toList();
 
         return userService.getBatchOfUserById(uuidList)
-                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .flatMap(userList -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(userList))
                 .onErrorResume(throwable -> {
                     LOG.error("get user by authid failed", throwable);
 
