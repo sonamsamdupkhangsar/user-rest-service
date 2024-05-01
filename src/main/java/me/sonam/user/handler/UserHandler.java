@@ -95,7 +95,14 @@ public class UserHandler {
 
     public Mono<ServerResponse> getUserById(ServerRequest serverRequest) {
         LOG.info("get user by id");
-        UUID id = UUID.fromString(serverRequest.pathVariable("id"));
+        UUID id;
+        try {
+             id = UUID.fromString(serverRequest.pathVariable("id"));
+        }
+        catch (Exception e) {
+            LOG.error("id is not a UUID type, error: {}", e.getMessage());
+            return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON).bodyValue(Map.of("error", "id should be a UUID type"));
+        }
 
         return userService.getUserById(id)
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))

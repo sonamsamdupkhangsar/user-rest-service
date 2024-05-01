@@ -800,7 +800,7 @@ public class UserEndpointMockWebServerTest {
                 .verifyComplete();
 
         LOG.info("activate user authId: {}", id);
-        EntityExchangeResult<String> result = webTestClient.put().uri("/users/activate/"+authenticationId)
+        EntityExchangeResult<String> result = webTestClient.put().uri("/users/"+authenticationId+"/active")
                 .headers(addJwt(jwt)).exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());

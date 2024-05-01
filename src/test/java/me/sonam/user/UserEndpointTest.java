@@ -134,7 +134,7 @@ public class UserEndpointTest {
 
         LOG.info("get user by auth id");
 
-        Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/"+authenticationId)
+        Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/authentication-id/"+authenticationId)
                 .headers(addJwt(jwt)).exchange().expectStatus().isOk()
                 .returnResult(MyUser.class).getResponseBody();
 
@@ -198,7 +198,7 @@ public class UserEndpointTest {
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
 
-        Flux<String> myUserFlux = webTestClient.put().uri("/users/profilephoto")
+        Flux<String> myUserFlux = webTestClient.put().uri("/users/profile-photo")
                 .bodyValue("http://spaces.sonam.us/myapp/app/someimage.png")
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
@@ -304,7 +304,7 @@ public class UserEndpointTest {
         LOG.info("get user by id");
         assertThat(myUser2.getId()).isNotNull();
 
-        Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/id/"+myUser2.getId())
+        Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/"+myUser2.getId())
                 .headers(addJwt(jwt)).exchange().expectStatus().isOk()
                 .returnResult(MyUser.class).getResponseBody();
 
