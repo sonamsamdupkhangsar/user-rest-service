@@ -24,6 +24,16 @@ public class MyUser implements Persistable<UUID> {
     private Boolean active;
     private Boolean userAuthAccountCreated;
 
+    public Boolean getSearchable() {
+        return searchable;
+    }
+
+    public void setSearchable(Boolean searchable) {
+        this.searchable = searchable;
+    }
+
+    private Boolean searchable;
+
     public Boolean getActive() {
         return active;
     }

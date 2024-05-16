@@ -183,9 +183,11 @@ public class UserSignupService implements UserService {
     public Mono<String> updateUser(String authenticationId, Mono<UserTransfer> userMono) {
         LOG.info("update user fields for authenticationId: {}", authenticationId);
 
-        return userMono.flatMap(userTransfer ->
-                     userRepository.findByAuthenticationId(authenticationId).flatMap(myUser ->
-                            userRepository.existsByEmailAndIdNot(userTransfer.getEmail(), myUser.getId())
+        return userMono.flatMap(userTransfer -> {
+            LOG.info("userTransfer: {}", userTransfer);
+                     return userRepository.findByAuthenticationId(userTransfer.getAuthenticationId())
+                             .flatMap(myUser ->
+                                userRepository.existsByEmailAndIdNot(userTransfer.getEmail(), myUser.getId())
                                     .filter(aBoolean -> {
                                         LOG.info("boolean: {}", aBoolean);
                                         if (aBoolean == true) {
@@ -197,13 +199,14 @@ public class UserSignupService implements UserService {
                                     .switchIfEmpty(Mono.error(new SignupException("email: email already used")))
                                     .flatMap(aBoolean -> {
                                         LOG.info("update name and email for authId: {}", authenticationId);
-                                        return userRepository.updateFirstNameAndLastNameAndEmailByAuthenticationId(
+                                        return userRepository.updateFirstNameAndLastNameAndEmailAndSearchableByAuthenticationId(
                                                 userTransfer.getFirstName(), userTransfer.getLastName(), userTransfer.getEmail()
-                                                , authenticationId
+                                                , userTransfer.isSearchable(), userTransfer.getAuthenticationId()
                                         );
 
                                     })
-                                    .thenReturn("user firstname, lastname and email updated")));
+                                    .thenReturn("user firstname, lastname and email updated"));
+    });
     }
 
     @Override
@@ -280,7 +283,8 @@ public class UserSignupService implements UserService {
                     LOG.info("found myUser: {}", myUser);
                     User user = new User(myUser.getId(), myUser.getFirstName(),
                             myUser.getLastName(), myUser.getEmail(), myUser.getAuthenticationId(), myUser.getActive(),
-                            myUser.getUserAuthAccountCreated());
+                            myUser.getUserAuthAccountCreated(), myUser.getSearchable());
+
                     LOG.info("user to return: {}", user);
                     return user;
                 });
@@ -293,7 +297,7 @@ public class UserSignupService implements UserService {
 
         return userRepository.findByIdIn(uuids).map(myUser -> new User(myUser.getId(), myUser.getFirstName(), myUser.getLastName(),
                 myUser.getEmail(), myUser.getAuthenticationId(), myUser.getActive(),
-                myUser.getUserAuthAccountCreated())).collectList();
+                myUser.getUserAuthAccountCreated(), myUser.getSearchable())).collectList();
     }
 
 

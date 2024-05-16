@@ -100,6 +100,7 @@ public class UserEndpointTest {
         userTransfer.setFirstName("Josey");
         userTransfer.setLastName("Cat");
         userTransfer.setEmail("josey.cat@@cat.emmail");
+        userTransfer.setAuthenticationId(authenticationId);
 
         LOG.info("update user fields with jwt in auth bearer token");
         EntityExchangeResult<String> result = webTestClient.put().uri("/users")

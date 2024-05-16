@@ -11,11 +11,12 @@ public class User {
     private String authenticationId;
     private Boolean active;
     private Boolean userAuthAccountCreated;
+    private Boolean searchable;
 
     public User() {
     }
 
-    public User(UUID id, String firstName, String lastName, String email, String authenticationId, Boolean active, Boolean userAuthAccountCreated) {
+    public User(UUID id, String firstName, String lastName, String email, String authenticationId, Boolean active, Boolean userAuthAccountCreated, Boolean searchable) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -23,6 +24,7 @@ public class User {
         this.authenticationId = authenticationId;
         this.active = active;
         this.userAuthAccountCreated = userAuthAccountCreated;
+        this.searchable = searchable;
     }
 
     @Override
@@ -36,6 +38,14 @@ public class User {
     @Override
     public int hashCode() {
         return Objects.hash(id, firstName, lastName, email, authenticationId, active, userAuthAccountCreated);
+    }
+
+    public Boolean getSearchable() {
+        return searchable;
+    }
+
+    public void setSearchable(Boolean searchable) {
+        this.searchable = searchable;
     }
 
     public UUID getId() {
@@ -104,6 +114,7 @@ public class User {
                 ", authenticationId='" + authenticationId + '\'' +
                 ", active=" + active +
                 ", userAuthAccountCreated=" + userAuthAccountCreated +
+                ", searchable=" + searchable +
                 '}';
     }
 }
