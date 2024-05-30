@@ -1,6 +1,6 @@
 logging:
   level:
-    root: error
+    root: debug
     me:
       sonam: info
 
@@ -32,7 +32,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${ISSUER_URI}
-          audiences: ${OAUTH_AUDIENCES}
+#          audiences: ${OAUTH_AUDIENCES}
 
 authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE}
