@@ -79,18 +79,8 @@ postgres:
   dbname: user
 
 envs:
-  - name: DB_SSLMODE
-    value: REQUIRE
-  - name: AUTHENTICATION_REST_SERVICE
-    value: http://authentication-rest-service
-  - name: ACCOUNT_REST_SERVICE
-    value: http://account-rest-service
-  - name: ISSUER_URI
-    value: https://authorization.sonam.cloud/issuer
   - name: OAUTH_AUDIENCES
     value: oauth-client,nextjs-client
-  - name: NEW_RELIC_ENABLED
-    value: false
 
 health:
   liveness:
