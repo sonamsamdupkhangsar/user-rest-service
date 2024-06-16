@@ -130,7 +130,15 @@ public class UserEndpointTest {
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
         MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", authenticationId);
+        userRepository.save(myUser2).subscribe();
 
+        // should get an error because the searchable is not true
+        webTestClient.get().uri("/users/authentication-id/" + authenticationId)
+                .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest()
+                .returnResult(MyUser.class).getResponseBody();
+
+        myUser2.setSearchable(true);
+        myUser2.setNewAccount(false);
         userRepository.save(myUser2).subscribe();
 
         LOG.info("get user by auth id");
@@ -138,6 +146,7 @@ public class UserEndpointTest {
         Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/authentication-id/"+authenticationId)
                 .headers(addJwt(jwt)).exchange().expectStatus().isOk()
                 .returnResult(MyUser.class).getResponseBody();
+
 
         StepVerifier.create(myUserFlux)
                 .assertNext(myUser -> {

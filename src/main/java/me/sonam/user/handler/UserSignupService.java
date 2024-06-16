@@ -258,7 +258,10 @@ public class UserSignupService implements UserService {
 
         return userRepository.findByAuthenticationId(authenticationId)
                 .switchIfEmpty(Mono.error(new SignupException("user not found with authenticationId: "+
-                        authenticationId))).map(myUser -> {
+                        authenticationId)))
+                .filter(myUser -> myUser.getSearchable() != null && myUser.getSearchable())
+                .switchIfEmpty(Mono.error(new UserException("user searchable is turned off")))
+                .map(myUser -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("id", myUser.getId().toString());
                     map.put("firstName", myUser.getFirstName());
@@ -273,6 +276,29 @@ public class UserSignupService implements UserService {
                     return map;
                 });
     }
+
+    @Override
+    public Mono<Map<String, Object>> getUserForOidcUserInfo(UUID userId) {
+        LOG.info("get user information for userId: {}", userId);
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new SignupException("user not found with userId: "+
+                        userId))).map(myUser -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", myUser.getId().toString());
+                    map.put("firstName", myUser.getFirstName());
+                    map.put("lastName", myUser.getLastName());
+                    map.put("email", myUser.getEmail());
+                    map.put("profilePhoto", myUser.getProfilePhoto());
+                    map.put("authenticationId", myUser.getAuthenticationId());
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                    if (myUser.getBirthDate() != null) {
+                        map.put("dateOfBirth", dateFormat.format(myUser.getBirthDate()));
+                    }
+                    return map;
+                });
+    }
+
 
     @Override
     public Mono<User> getUserById(UUID id) {

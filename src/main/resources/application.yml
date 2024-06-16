@@ -32,7 +32,6 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${ISSUER_URI}
-#          audiences: ${OAUTH_AUDIENCES}
 
 authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE}

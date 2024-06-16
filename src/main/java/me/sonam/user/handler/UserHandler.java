@@ -86,7 +86,7 @@ public class UserHandler {
         return userService.getUserByAuthenticationId(serverRequest.pathVariable(AUTHENTICATION_ID))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
-                    LOG.error("get user by authid failed", throwable);
+                    LOG.error("get user by authid failed, {}", throwable.getMessage());
 
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(Map.of("error", throwable.getMessage()));
