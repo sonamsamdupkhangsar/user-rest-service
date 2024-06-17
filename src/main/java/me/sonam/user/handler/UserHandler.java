@@ -93,6 +93,19 @@ public class UserHandler {
                 });
     }
 
+    public Mono<ServerResponse> getUserByAuthIdProfileSearch(ServerRequest serverRequest) {
+        LOG.info("get user by authId for profileSearch");
+
+        return userService.getUserByAuthenticationIdForProfileSearch(serverRequest.pathVariable(AUTHENTICATION_ID))
+                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {
+                    LOG.error("get user by authid failed, {}", throwable.getMessage());
+
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(Map.of("error", throwable.getMessage()));
+                });
+    }
+
     public Mono<ServerResponse> getUserById(ServerRequest serverRequest) {
         LOG.info("get user by id");
         UUID id;

@@ -133,7 +133,7 @@ public class UserEndpointTest {
         userRepository.save(myUser2).subscribe();
 
         // should get an error because the searchable is not true
-        webTestClient.get().uri("/users/authentication-id/" + authenticationId)
+        webTestClient.get().uri("/users/profile/authentication-id/" + authenticationId)
                 .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest()
                 .returnResult(MyUser.class).getResponseBody();
 
@@ -143,7 +143,7 @@ public class UserEndpointTest {
 
         LOG.info("get user by auth id");
 
-        Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/authentication-id/"+authenticationId)
+        Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/profile/authentication-id/"+authenticationId)
                 .headers(addJwt(jwt)).exchange().expectStatus().isOk()
                 .returnResult(MyUser.class).getResponseBody();
 
@@ -156,7 +156,7 @@ public class UserEndpointTest {
                 })
                 .verifyComplete();
 
-        Flux<Map> result = webTestClient.get().uri("/users/dummy-123")
+        Flux<Map> result = webTestClient.get().uri("/users/profile/authentication-id/dummy-123")
                 .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest()
                 .returnResult(Map.class).getResponseBody();
 

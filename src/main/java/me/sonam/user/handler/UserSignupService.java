@@ -259,6 +259,30 @@ public class UserSignupService implements UserService {
         return userRepository.findByAuthenticationId(authenticationId)
                 .switchIfEmpty(Mono.error(new SignupException("user not found with authenticationId: "+
                         authenticationId)))
+                .switchIfEmpty(Mono.error(new UserException("user searchable is turned off")))
+                .map(myUser -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", myUser.getId().toString());
+                    map.put("firstName", myUser.getFirstName());
+                    map.put("lastName", myUser.getLastName());
+                    map.put("email", myUser.getEmail());
+                    map.put("profilePhoto", myUser.getProfilePhoto());
+                    map.put("authenticationId", myUser.getAuthenticationId());
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                    if (myUser.getBirthDate() != null) {
+                        map.put("dateOfBirth", dateFormat.format(myUser.getBirthDate()));
+                    }
+                    return map;
+                });
+    }
+
+    @Override
+    public Mono<Map<String, Object>> getUserByAuthenticationIdForProfileSearch(String authenticationId) {
+        LOG.info("profile search user information for authenticationId: {}", authenticationId);
+
+        return userRepository.findByAuthenticationId(authenticationId)
+                .switchIfEmpty(Mono.error(new SignupException("user not found with authenticationId: "+
+                        authenticationId)))
                 .filter(myUser -> myUser.getSearchable() != null && myUser.getSearchable())
                 .switchIfEmpty(Mono.error(new UserException("user searchable is turned off")))
                 .map(myUser -> {
