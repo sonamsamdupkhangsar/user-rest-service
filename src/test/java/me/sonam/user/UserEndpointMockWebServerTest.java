@@ -477,7 +477,7 @@ public class UserEndpointMockWebServerTest {
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User account has already been created for that id, check to activate it by email");
+        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User account has already been created for that username, check to activate it by email");
         LOG.info("mockWebServer: {}", mockWebServer.getRequestCount());
 
         StepVerifier.create(userRepository.existsByAuthenticationId(authenticationId))
@@ -544,7 +544,7 @@ public class UserEndpointMockWebServerTest {
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User is already active with authenticationId");
+        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User is already active with that username (authenticationId)");
         LOG.info("mockWebServer: {}", mockWebServer.getRequestCount());
 
         StepVerifier.create(userRepository.existsByAuthenticationId(authenticationId))
@@ -685,7 +685,7 @@ public class UserEndpointMockWebServerTest {
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User account has already been created for that id, check to activate it by email");
+        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User account has already been created for that username, check to activate it by email");
     }
 
     @Test
@@ -705,7 +705,7 @@ public class UserEndpointMockWebServerTest {
                 .exchange().expectStatus().isBadRequest().expectBody(Map.class).returnResult();
 
         LOG.info("assert result contains authId: {}", result.getResponseBody());
-        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User is already active with authenticationId");
+        assertThat(result.getResponseBody().get("error")).isEqualTo("user signup failed with error: User is already active with that username (authenticationId)");
     }
 
     @Test
@@ -800,7 +800,7 @@ public class UserEndpointMockWebServerTest {
                 .verifyComplete();
 
         LOG.info("activate user authId: {}", id);
-        EntityExchangeResult<String> result = webTestClient.put().uri("/users/activate/"+authenticationId)
+        EntityExchangeResult<String> result = webTestClient.put().uri("/users/"+authenticationId+"/active")
                 .headers(addJwt(jwt)).exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
         LOG.info("response: {}", result.getResponseBody());

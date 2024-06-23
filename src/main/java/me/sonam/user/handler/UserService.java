@@ -1,10 +1,11 @@
 package me.sonam.user.handler;
 
+import me.sonam.user.handler.carrier.User;
 import me.sonam.user.repo.entity.MyUser;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -20,4 +21,8 @@ public interface UserService {
     Mono<String> activateUser(String authenticationId);
     Mono<String> deleteUser(String authentiationId);
     Mono<Map<String, Object>> getUserByAuthenticationId(String authenticationId);
+    Mono<Map<String, Object>> getUserByAuthenticationIdForProfileSearch(String authenticationId);
+    Mono<Map<String, Object>> getUserForOidcUserInfo(UUID userId);
+    Mono<User> getUserById(UUID id);
+    Mono<List<User>> getBatchOfUserById(List<UUID> uuids);
 }

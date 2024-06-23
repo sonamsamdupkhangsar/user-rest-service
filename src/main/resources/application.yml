@@ -1,6 +1,6 @@
 logging:
   level:
-    root: error
+    root: warn
     me:
       sonam: info
 
@@ -32,7 +32,6 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${ISSUER_URI}
-          audiences: ${OAUTH_AUDIENCES}
 
 authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE}
@@ -46,7 +45,7 @@ auth-server:
   root: http://authorization-server/issuer
   oauth2token:
     path: /oauth2/token
-    params: ?grant_type=client_credentials
+    grantType: client_credentials
 
 permitpath:
   - path: /users

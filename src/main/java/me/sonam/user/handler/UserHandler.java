@@ -3,6 +3,7 @@ package me.sonam.user.handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -11,8 +12,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class UserHandler {
@@ -31,7 +31,7 @@ public class UserHandler {
                 .onErrorResume(throwable -> {
                     LOG.error("signup user failed {}", throwable.getMessage());
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(getMap(Pair.of("error", "user signup failed with error: " + throwable.getMessage())));
+                            .bodyValue(Map.of("error", "user signup failed with error: " + throwable.getMessage()));
                 });
     }
 
@@ -81,10 +81,64 @@ public class UserHandler {
      * @return
      */
     public Mono<ServerResponse> getUserByAuthId(ServerRequest serverRequest) {
-        LOG.info("authenticate user");
+        LOG.info("get user by authId");
 
         return userService.getUserByAuthenticationId(serverRequest.pathVariable(AUTHENTICATION_ID))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {
+                    LOG.error("get user by authid failed, {}", throwable.getMessage());
+
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(Map.of("error", throwable.getMessage()));
+                });
+    }
+
+    public Mono<ServerResponse> getUserByAuthIdProfileSearch(ServerRequest serverRequest) {
+        LOG.info("get user by authId for profileSearch");
+
+        return userService.getUserByAuthenticationIdForProfileSearch(serverRequest.pathVariable(AUTHENTICATION_ID))
+                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {
+                    LOG.error("get user by authid failed, {}", throwable.getMessage());
+
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(Map.of("error", throwable.getMessage()));
+                });
+    }
+
+    public Mono<ServerResponse> getUserById(ServerRequest serverRequest) {
+        LOG.info("get user by id");
+        UUID id;
+        try {
+             id = UUID.fromString(serverRequest.pathVariable("id"));
+        }
+        catch (Exception e) {
+            LOG.error("id is not a UUID type, error: {}", e.getMessage());
+            return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON).bodyValue(Map.of("error", "id should be a UUID type"));
+        }
+
+        return userService.getUserById(id)
+                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {
+                    LOG.error("get user by id failed: {}", throwable.getMessage());
+
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(Map.of("error", "no user found with id"));
+                });
+    }
+
+    /**
+     * allow a user to get user id
+     * @param serverRequest
+     * @return
+     */
+    public Mono<ServerResponse> getBatchOfUserById(ServerRequest serverRequest) {
+        LOG.info("authenticate user");
+
+        List<UUID> uuidList = Arrays.stream(serverRequest.pathVariable("ids").split(",")).map(UUID::fromString).toList();
+
+        return userService.getBatchOfUserById(uuidList)
+                .flatMap(userList -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(userList))
                 .onErrorResume(throwable -> {
                     LOG.error("get user by authid failed", throwable);
 

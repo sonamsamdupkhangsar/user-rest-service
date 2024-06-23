@@ -79,14 +79,6 @@ postgres:
   dbname: user
 
 envs:
-  - name: DB_SSLMODE
-    value: REQUIRE
-  - name: AUTHENTICATION_REST_SERVICE
-    value: http://authentication-rest-service
-  - name: ACCOUNT_REST_SERVICE
-    value: http://account-rest-service
-  - name: ISSUER_URI
-    value: https://authorization.sonam.cloud/issuer
   - name: OAUTH_AUDIENCES
     value: oauth-client,nextjs-client
 
@@ -111,3 +103,7 @@ secretFiles:
         name: BASE64_CLIENT_ID_SECRET
       - key: scopes
         name: REQUEST_SCOPES
+  - file: newrelic-secret
+    keys:
+      - key: newrelic.license_key
+        name: NEW_RELIC_LICENSE_KEY

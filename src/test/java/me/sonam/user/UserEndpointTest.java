@@ -1,6 +1,12 @@
 package me.sonam.user;
 
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.TypeRef;
 import me.sonam.user.handler.UserTransfer;
+import me.sonam.user.handler.carrier.User;
 import me.sonam.user.repo.UserRepository;
 import me.sonam.user.repo.entity.MyUser;
 import org.junit.jupiter.api.AfterEach;
@@ -15,6 +21,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
@@ -24,8 +31,13 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 
@@ -88,6 +100,7 @@ public class UserEndpointTest {
         userTransfer.setFirstName("Josey");
         userTransfer.setLastName("Cat");
         userTransfer.setEmail("josey.cat@@cat.emmail");
+        userTransfer.setAuthenticationId(authenticationId);
 
         LOG.info("update user fields with jwt in auth bearer token");
         EntityExchangeResult<String> result = webTestClient.put().uri("/users")
@@ -117,14 +130,23 @@ public class UserEndpointTest {
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
         MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", authenticationId);
+        userRepository.save(myUser2).subscribe();
 
+        // should get an error because the searchable is not true
+        webTestClient.get().uri("/users/profile/authentication-id/" + authenticationId)
+                .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest()
+                .returnResult(MyUser.class).getResponseBody();
+
+        myUser2.setSearchable(true);
+        myUser2.setNewAccount(false);
         userRepository.save(myUser2).subscribe();
 
         LOG.info("get user by auth id");
 
-        Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/"+authenticationId)
+        Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/profile/authentication-id/"+authenticationId)
                 .headers(addJwt(jwt)).exchange().expectStatus().isOk()
                 .returnResult(MyUser.class).getResponseBody();
+
 
         StepVerifier.create(myUserFlux)
                 .assertNext(myUser -> {
@@ -134,7 +156,7 @@ public class UserEndpointTest {
                 })
                 .verifyComplete();
 
-        Flux<Map> result = webTestClient.get().uri("/users/dummy-123")
+        Flux<Map> result = webTestClient.get().uri("/users/profile/authentication-id/dummy-123")
                 .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest()
                 .returnResult(Map.class).getResponseBody();
 
@@ -144,8 +166,6 @@ public class UserEndpointTest {
 
                 })
                 .verifyComplete();
-
-
     }
 
     @Test
@@ -188,7 +208,7 @@ public class UserEndpointTest {
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
 
-        Flux<String> myUserFlux = webTestClient.put().uri("/users/profilephoto")
+        Flux<String> myUserFlux = webTestClient.put().uri("/users/profile-photo")
                 .bodyValue("http://spaces.sonam.us/myapp/app/someimage.png")
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk()
@@ -196,6 +216,125 @@ public class UserEndpointTest {
 
         StepVerifier.create(myUserFlux)
                 .assertNext(s -> { LOG.info("string response is {}", s); assertThat(s).isEqualTo("photo updated"); })
+                .verifyComplete();
+    }
+
+    /**
+     * this will test the endpoint /users/ids/id get batch of usres by id
+     */
+    @Test
+    public void getUsersByIds() {
+        LOG.info("get batch of users by ids");
+
+        final String authenticationId = "dommy@cat.email";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
+        MyUser myUser1 = new MyUser("Sonam", "thecat", "dommy@cat.email", "sonam");
+        userRepository.save(myUser1).subscribe();
+
+        MyUser myUser2 = new MyUser("Tenzing", "Passang", "tenzing@cat.email", "tenzing");
+        userRepository.save(myUser2).subscribe();
+
+        MyUser myUser3 = new MyUser("John", "Wix", "john@cat.email", "john");
+        userRepository.save(myUser3).subscribe();
+
+        LOG.info("get users by their user.id");
+
+        assertThat(myUser1.getId()).isNotNull();
+        assertThat(myUser2.getId()).isNotNull();
+        assertThat(myUser3.getId()).isNotNull();
+
+        List<UUID> idsList = List.of(myUser1.getId(), myUser2.getId(), myUser3.getId());
+        String idsCsv = idsList.stream().map(uuid -> uuid + ",").collect(Collectors.joining());
+        LOG.info("idsCsv without ,: {}", idsCsv);
+        if (idsCsv.endsWith(",")) {
+            int lastIndexOfExtraComma = idsCsv.lastIndexOf(",");
+            LOG.info("lastIndexOfExtraComma: {}", lastIndexOfExtraComma);
+
+            idsCsv = idsCsv.substring(0, lastIndexOfExtraComma);
+
+        }
+        LOG.info("idsCsv: {}", idsCsv);
+
+        Mono<String> stringMono = webTestClient.get().uri("/users/ids/"+idsCsv)
+                .headers(addJwt(jwt)).exchange().expectStatus().isOk()
+                .returnResult(String.class).getResponseBody().single();
+
+        Mono<Collection<User>> collectionMono = stringMono.flatMap(s -> {
+            LOG.info("string is {}", s);
+            ObjectMapper objectMapper = new ObjectMapper();
+            Collection<User> userCollection = null;
+            try {
+                userCollection = objectMapper.readValue(s, new TypeReference<Collection<User>>() {});
+            } catch (JsonProcessingException e) {
+                LOG.error("error on objectMapper", e);
+                throw new RuntimeException(e);
+            }
+            return Mono.just(userCollection);
+        });
+
+        StepVerifier.create(collectionMono)
+                .assertNext(users -> {
+                    assertThat(users.size()).isEqualTo(3);
+                    List<UUID> returnedUserIds = users.stream().map(User::getId).toList();
+                    assertThat(idsList.containsAll(returnedUserIds)).isTrue();
+                    LOG.info("assert the idsList contains all the ids returned, idsList {} vs returnedUserIds: {},",
+                            idsList, returnedUserIds);
+
+                    users.forEach(user -> {
+                        assertThat(user.getId()).isNotNull();
+                        assertThat(user.getFirstName()).isNotNull();
+                        assertThat(user.getLastName()).isNotNull();
+                        assertThat(user.getActive()).isNotNull();
+                        assertThat(user.getUserAuthAccountCreated()).isNotNull();
+                    });
+                })
+                .verifyComplete();
+
+        LOG.info("test completed");
+    }
+
+
+    /**
+     * get user by user.id
+     */
+    @Test
+    public void getUserById() {
+        LOG.info("make rest call to save user and create authentication record");
+
+        final String authenticationId = "dommy@cat.email";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
+        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", authenticationId);
+
+        userRepository.save(myUser2).subscribe();
+
+        LOG.info("get user by id");
+        assertThat(myUser2.getId()).isNotNull();
+
+        Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/"+myUser2.getId())
+                .headers(addJwt(jwt)).exchange().expectStatus().isOk()
+                .returnResult(MyUser.class).getResponseBody();
+
+        StepVerifier.create(myUserFlux)
+                .assertNext(myUser -> {
+                    LOG.info("asserting found user by id: {}", myUser);
+                    assertThat(myUser.getLastName()).isEqualTo("thecat");
+                    assertThat(myUser.getEmail()).isEqualTo("dommy@cat.email");
+                })
+                .verifyComplete();
+
+        Flux<Map> result = webTestClient.get().uri("/users/dummy-123")
+                .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest()
+                .returnResult(Map.class).getResponseBody();
+
+        StepVerifier.create(result)
+                .assertNext(map -> {
+                    LOG.info("user not found {}", map.get("error"));
+
+                })
                 .verifyComplete();
     }
 

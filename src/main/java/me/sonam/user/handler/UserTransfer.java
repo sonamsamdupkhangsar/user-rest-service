@@ -9,6 +9,7 @@ public class UserTransfer {
     private String email;
     private String authenticationId;
     private String password;
+    private boolean searchable;
 
     public UserTransfer() {
 
@@ -60,6 +61,14 @@ public class UserTransfer {
         this.email = email;
     }
 
+    public boolean isSearchable() {
+        return searchable;
+    }
+
+    public void setSearchable(boolean searchable) {
+        this.searchable = searchable;
+    }
+
     @Override
     public String toString() {
         return "UserTransfer{" +
@@ -68,6 +77,7 @@ public class UserTransfer {
                 ", email='" + email + '\'' +
                 ", authenticationId='" + authenticationId + '\'' +
                 ", password='" + password + '\'' +
+                ", searchable='" + searchable + '\'' +
                 '}';
     }
 }

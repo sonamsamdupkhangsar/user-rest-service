@@ -10,3 +10,10 @@ spring:
 eureka:
   client:
       enabled: false
+
+DB_SSLMODE: REQUIRE
+
+ACCOUNT_REST_SERVICE: http://account-rest-service
+AUTHENTICATION_REST_SERVICE: http://authentication-rest-service
+ISSUER_URI: https://authorization.sonam.cloud/issuer
+NEW_RELIC_ENABLED: false

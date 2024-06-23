@@ -3,6 +3,7 @@ package me.sonam.user.handler;
 
 import jakarta.annotation.PostConstruct;
 import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
+import me.sonam.user.handler.carrier.User;
 import me.sonam.user.repo.UserRepository;
 import me.sonam.user.repo.entity.MyUser;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * This will add a user entry and call authentication service to create
@@ -100,13 +102,13 @@ public class UserSignupService implements UserService {
                 flatMap(userTransfer ->
                         userRepository.existsByAuthenticationIdAndActiveTrue(userTransfer.getAuthenticationId())
                                 .filter(aBoolean -> !aBoolean)
-                        .switchIfEmpty(Mono.error(new SignupException("User is already active with authenticationId")))
+                        .switchIfEmpty(Mono.error(new SignupException("User is already active with that username (authenticationId)")))
                         .flatMap(aBoolean -> userRepository.existsByAuthenticationIdAndUserAuthAccountCreatedTrue(userTransfer.getAuthenticationId()))
                         .filter(aBoolean -> {
                             LOG.info("aBoolean for findByAuthenticationIdAndUserAuthAccountCreatedTrue is {}", aBoolean);
 
                             return !aBoolean;
-                        }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that id, check to activate it by email")))
+                        }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that username, check to activate it by email")))
                                 .flatMap(aBoolean -> userRepository.existsByEmailAndActiveTrue(userTransfer.getEmail()))
                                 .filter(aBoolean -> !aBoolean)
                                 .switchIfEmpty(Mono.error(new SignupException("User account is active for that email")))
@@ -181,9 +183,11 @@ public class UserSignupService implements UserService {
     public Mono<String> updateUser(String authenticationId, Mono<UserTransfer> userMono) {
         LOG.info("update user fields for authenticationId: {}", authenticationId);
 
-        return userMono.flatMap(userTransfer ->
-                     userRepository.findByAuthenticationId(authenticationId).flatMap(myUser ->
-                            userRepository.existsByEmailAndIdNot(userTransfer.getEmail(), myUser.getId())
+        return userMono.flatMap(userTransfer -> {
+            LOG.info("userTransfer: {}", userTransfer);
+                     return userRepository.findByAuthenticationId(userTransfer.getAuthenticationId())
+                             .flatMap(myUser ->
+                                userRepository.existsByEmailAndIdNot(userTransfer.getEmail(), myUser.getId())
                                     .filter(aBoolean -> {
                                         LOG.info("boolean: {}", aBoolean);
                                         if (aBoolean == true) {
@@ -195,13 +199,14 @@ public class UserSignupService implements UserService {
                                     .switchIfEmpty(Mono.error(new SignupException("email: email already used")))
                                     .flatMap(aBoolean -> {
                                         LOG.info("update name and email for authId: {}", authenticationId);
-                                        return userRepository.updateFirstNameAndLastNameAndEmailByAuthenticationId(
+                                        return userRepository.updateFirstNameAndLastNameAndEmailAndSearchableByAuthenticationId(
                                                 userTransfer.getFirstName(), userTransfer.getLastName(), userTransfer.getEmail()
-                                                , authenticationId
+                                                , userTransfer.isSearchable(), userTransfer.getAuthenticationId()
                                         );
 
                                     })
-                                    .thenReturn("user firstname, lastname and email updated")));
+                                    .thenReturn("user firstname, lastname and email updated"));
+    });
     }
 
     @Override
@@ -253,19 +258,96 @@ public class UserSignupService implements UserService {
 
         return userRepository.findByAuthenticationId(authenticationId)
                 .switchIfEmpty(Mono.error(new SignupException("user not found with authenticationId: "+
-                        authenticationId))).map(myUser -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", myUser.getId().toString());
-            map.put("firstName", myUser.getFirstName());
-            map.put("lastName", myUser.getLastName());
-            map.put("email", myUser.getEmail());
-            map.put("profilePhoto", myUser.getProfilePhoto());
-            DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
-            if (myUser.getBirthDate() != null) {
-                map.put("dateOfBirth", dateFormat.format(myUser.getBirthDate()));
-            }
-            return map;
-        });
+                        authenticationId)))
+                .switchIfEmpty(Mono.error(new UserException("user searchable is turned off")))
+                .map(myUser -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", myUser.getId().toString());
+                    map.put("firstName", myUser.getFirstName());
+                    map.put("lastName", myUser.getLastName());
+                    map.put("email", myUser.getEmail());
+                    map.put("profilePhoto", myUser.getProfilePhoto());
+                    map.put("authenticationId", myUser.getAuthenticationId());
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                    if (myUser.getBirthDate() != null) {
+                        map.put("dateOfBirth", dateFormat.format(myUser.getBirthDate()));
+                    }
+                    return map;
+                });
+    }
+
+    @Override
+    public Mono<Map<String, Object>> getUserByAuthenticationIdForProfileSearch(String authenticationId) {
+        LOG.info("profile search user information for authenticationId: {}", authenticationId);
+
+        return userRepository.findByAuthenticationId(authenticationId)
+                .switchIfEmpty(Mono.error(new SignupException("user not found with authenticationId: "+
+                        authenticationId)))
+                .filter(myUser -> myUser.getSearchable() != null && myUser.getSearchable())
+                .switchIfEmpty(Mono.error(new UserException("user searchable is turned off")))
+                .map(myUser -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", myUser.getId().toString());
+                    map.put("firstName", myUser.getFirstName());
+                    map.put("lastName", myUser.getLastName());
+                    map.put("email", myUser.getEmail());
+                    map.put("profilePhoto", myUser.getProfilePhoto());
+                    map.put("authenticationId", myUser.getAuthenticationId());
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                    if (myUser.getBirthDate() != null) {
+                        map.put("dateOfBirth", dateFormat.format(myUser.getBirthDate()));
+                    }
+                    return map;
+                });
+    }
+
+    @Override
+    public Mono<Map<String, Object>> getUserForOidcUserInfo(UUID userId) {
+        LOG.info("get user information for userId: {}", userId);
+
+        return userRepository.findById(userId)
+                .switchIfEmpty(Mono.error(new SignupException("user not found with userId: "+
+                        userId))).map(myUser -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", myUser.getId().toString());
+                    map.put("firstName", myUser.getFirstName());
+                    map.put("lastName", myUser.getLastName());
+                    map.put("email", myUser.getEmail());
+                    map.put("profilePhoto", myUser.getProfilePhoto());
+                    map.put("authenticationId", myUser.getAuthenticationId());
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+                    if (myUser.getBirthDate() != null) {
+                        map.put("dateOfBirth", dateFormat.format(myUser.getBirthDate()));
+                    }
+                    return map;
+                });
+    }
+
+
+    @Override
+    public Mono<User> getUserById(UUID id) {
+        LOG.info("get user by id: {}", id);
+
+        return userRepository.findById(id).switchIfEmpty(Mono.error(new UserException("no user with id: "+ id)))
+                .map(myUser -> {
+                    LOG.info("found myUser: {}", myUser);
+                    User user = new User(myUser.getId(), myUser.getFirstName(),
+                            myUser.getLastName(), myUser.getEmail(), myUser.getAuthenticationId(), myUser.getActive(),
+                            myUser.getUserAuthAccountCreated(), myUser.getSearchable());
+
+                    LOG.info("user to return: {}", user);
+                    return user;
+                });
+
+    }
+
+    @Override
+    public Mono<List<User>> getBatchOfUserById(List<UUID> uuids) {
+        LOG.info("get user by batch of ids");
+
+        return userRepository.findByIdIn(uuids).map(myUser -> new User(myUser.getId(), myUser.getFirstName(), myUser.getLastName(),
+                myUser.getEmail(), myUser.getAuthenticationId(), myUser.getActive(),
+                myUser.getUserAuthAccountCreated(), myUser.getSearchable())).collectList();
     }
 
 
