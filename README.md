@@ -2,6 +2,7 @@
 This is user-rest-service for managing user data.
 This service exposes a user signup api.  Please check the [workflow](#signup-user-workflow) diagrams below to see the service interaction.
 
+
 ## Run locally using profile
 Use the following to run local profile which will pick up properties defined in the `application-local.yml` :
 
