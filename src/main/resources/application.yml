@@ -53,7 +53,7 @@ permitpath:
   - path: /users/api/health/*
     httpMethods: GET
 
-jwtrequest:
+requestFilters:
   - in: /users
     out: /authentications
     accessToken:

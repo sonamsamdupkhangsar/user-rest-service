@@ -16,13 +16,13 @@ public interface UserService {
     Mono<String> signupUser(Mono<UserTransfer> userMono);
     Mono<String> updateUser(String authenticationId, Mono<UserTransfer> userMono);
     Mono<String> updateProfilePhoto(String authenticationId, Mono<String> profilePhotoUrlMono);
-  //  Mono<MyUser> getUserByAuthenticationId(String authenticationId);
     Flux<MyUser> findMatchingName(String firstName, String lastName);
     Mono<String> activateUser(String authenticationId);
-    Mono<String> deleteUser(String authentiationId);
     Mono<Map<String, Object>> getUserByAuthenticationId(String authenticationId);
     Mono<Map<String, Object>> getUserByAuthenticationIdForProfileSearch(String authenticationId);
     Mono<Map<String, Object>> getUserForOidcUserInfo(UUID userId);
     Mono<User> getUserById(UUID id);
     Mono<List<User>> getBatchOfUserById(List<UUID> uuids);
+    Mono<String> deleteMyAccount();
+
 }

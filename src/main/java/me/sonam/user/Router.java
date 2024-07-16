@@ -29,6 +29,6 @@ public class Router {
                 .andRoute(GET("/users/profile/authentication-id/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)), handler::getUserByAuthIdProfileSearch)
                 .andRoute(PUT("/users/profile-photo").and(accept(MediaType.APPLICATION_JSON)), handler::updateProfilePhoto)
                 .andRoute(PUT("/users/{authenticationId}/active").and(accept(MediaType.APPLICATION_JSON)), handler::activateUser)
-                .andRoute(DELETE("/users").and(accept(MediaType.APPLICATION_JSON)), handler::deleteUser);
+                .andRoute(DELETE("/users/delete-my-info").and(accept(MediaType.APPLICATION_JSON)), handler::deleteMyAccount);
     }
 }

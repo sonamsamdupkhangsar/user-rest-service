@@ -6,11 +6,14 @@ import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
 import me.sonam.user.handler.carrier.User;
 import me.sonam.user.repo.UserRepository;
 import me.sonam.user.repo.entity.MyUser;
+import me.sonam.user.webclient.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
@@ -47,8 +50,21 @@ public class UserSignupService implements UserService {
     @Autowired
     private ReactiveRequestContextHolder reactiveRequestContextHolder;
 
-    public UserSignupService(WebClient.Builder webClientBuilder) {
+    private final AccountWebClient accountWebClient;
+    private final AuthenticationWebClient authenticationWebClient;
+    private final OrganizationWebClient organizationWebClient;
+    private final RoleWebClient roleWebClient;
+    private final TokenMediatorWebClient tokenMediatorWebClient;
+
+    public UserSignupService(WebClient.Builder webClientBuilder, AccountWebClient accountWebClient,
+                             AuthenticationWebClient authenticationWebClient, OrganizationWebClient organizationWebClient,
+                             RoleWebClient roleWebClient, TokenMediatorWebClient tokenMediatorWebClient) {
         this.webClientBuilder = webClientBuilder;
+        this.accountWebClient = accountWebClient;
+        this.authenticationWebClient = authenticationWebClient;
+        this.organizationWebClient = organizationWebClient;
+        this.roleWebClient = roleWebClient;
+        this.tokenMediatorWebClient = tokenMediatorWebClient;
     }
 
     @PostConstruct
@@ -142,10 +158,11 @@ public class UserSignupService implements UserService {
                                 LOG.info("rollback userRepository by deleting authenticationId");
                                 return userRepository.deleteByAuthenticationId(userTransfer.getAuthenticationId()).then(
                                     Mono.error(new SignupException("Authentication api call failed with error: " + throwable.getMessage())));
-                            });
+                            }).thenReturn(myUser);
                         })
-                        .flatMap(s -> {
+                        .flatMap(myUser -> {
                             StringBuilder stringBuilder = new StringBuilder(accountEp).append("/")
+                                    .append(myUser.getId()).append("/")
                                     .append(userTransfer.getAuthenticationId())
                                     .append("/").append(userTransfer.getEmail());
 
@@ -241,7 +258,7 @@ public class UserSignupService implements UserService {
                 .thenReturn("activated: "+authenticationId);
     }
 
-    @Override
+   /* @Override
     public Mono<String> deleteUser(String authenticationId) {
         LOG.info("delete user if it's active status is false");
 
@@ -250,6 +267,33 @@ public class UserSignupService implements UserService {
                 .switchIfEmpty(Mono.error(new UserException("user is active, cannot delete")))
                 .flatMap(myUser ->   userRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
                 .thenReturn("deleted: " + authenticationId);
+    }*/
+
+    public Mono<String> deleteMyAccount() {
+        LOG.info("delete my account");
+
+        return ReactiveSecurityContextHolder.getContext().flatMap(securityContext -> {
+            LOG.info("principal: {}", securityContext.getAuthentication().getPrincipal());
+            org.springframework.security.core.Authentication authentication = securityContext.getAuthentication();
+
+            LOG.info("authentication: {}", authentication);
+            LOG.info("authentication.principal: {}", authentication.getPrincipal());
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            String userIdString = jwt.getClaim("userId");
+            LOG.info("delete user data for userId: {}", userIdString);
+
+            UUID userId = UUID.fromString(userIdString);
+
+            return userRepository.findById(userId)
+                    .switchIfEmpty(Mono.error(new UserException("no user found with userId: " + userId)))
+                    .flatMap(myUser -> userRepository.deleteById(userId).then())
+                    .flatMap(unused -> accountWebClient.deleteMyAccount() )
+                    .then(authenticationWebClient.deleteMyAccount())
+                    .then(organizationWebClient.deleteMyAccount())
+                    .then(roleWebClient.deleteMyAccount())
+                    .then(tokenMediatorWebClient.deleteMyAccount())
+                    .thenReturn("delete my account success for user id: " + userId);
+        });
     }
 
     @Override

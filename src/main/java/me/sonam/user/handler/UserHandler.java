@@ -160,7 +160,7 @@ public class UserHandler {
                 });
     }
 
-    public Mono<ServerResponse> deleteUser(ServerRequest serverRequest) {
+   /* public Mono<ServerResponse> deleteUser(ServerRequest serverRequest) {
         LOG.info("delete user");
 
         return serverRequest.principal().flatMap(principal -> userService.deleteUser(principal.getName())
@@ -171,6 +171,18 @@ public class UserHandler {
                             .bodyValue(throwable.getMessage());
                 })
         );
+    }
+*/
+    public Mono<ServerResponse> deleteMyAccount(ServerRequest serverRequest) {
+        LOG.info("delete my account");
+
+        return userService.deleteMyAccount()
+                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {
+                    LOG.error("delete user failed", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
     }
 
     @SafeVarargs
