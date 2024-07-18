@@ -2,7 +2,10 @@ package me.sonam.user.config;
 
 import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
 import me.sonam.user.handler.UserSignupService;
-import me.sonam.user.webclient.*;
+import me.sonam.user.webclient.AccountWebClient;
+import me.sonam.user.webclient.AuthenticationWebClient;
+import me.sonam.user.webclient.OrganizationWebClient;
+import me.sonam.user.webclient.RoleWebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,20 +20,17 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WebClientConfig {
     private static final Logger LOG = LoggerFactory.getLogger(WebClientConfig.class);
 
-    @Value("${account-rest-service.accountDelete}")
+    @Value("${account-rest-service.delete}")
     private String deleteMyAccountEndpoint;
 
-    @Value("${authentication-rest-service.accountDelete}")
+    @Value("${authentication-rest-service.delete}")
     private String deleteMyAuthenticationEndpoint;
 
-    @Value("${organization-rest-service.organizationDelete}")
+    @Value("${organization-rest-service.delete}")
     private String deleteMyOrganizationEndpoint;
 
-    @Value("${role-rest-service.roleDelete}")
+    @Value("${role-rest-service.delete}")
     private String deleteMyRoleEndpoint;
-
-    @Value("${tokenMediator-rest-service.tokenDelete}")
-    private String deleteMyTokenMediatorEndpoint;
 
     @LoadBalanced
     @Bean
@@ -54,7 +54,7 @@ public class WebClientConfig {
     public UserSignupService userSignupService() {
         return new UserSignupService(webClientBuilder(), accountWebClient(),
                 authenticationWebClient(), organizationWebClient(),
-                roleWebClient(), tokenMediatorWebClient());
+                roleWebClient());
     }
 
     @Bean
@@ -76,11 +76,5 @@ public class WebClientConfig {
     public RoleWebClient roleWebClient() {
         return new RoleWebClient(webClientBuilder(), deleteMyRoleEndpoint);
     }
-
-    @Bean
-    public TokenMediatorWebClient tokenMediatorWebClient() {
-        return new TokenMediatorWebClient(webClientBuilder(), deleteMyTokenMediatorEndpoint);
-    }
-
 
 }

@@ -36,10 +36,6 @@ POSTGRES_DBNAME: dbname
 POSTGRES_SERVICE: dservice
 POSTGRES_PASSWORD: dpassword
 
-authentication-rest-service:
-  root: http://localhost:{port}/authentications
-  authentications: /authentications
-
 # this is used for getting accesstoken by header filter in jwt-validator (ReactiveRequestContextHolder.class)
 auth-server:
   root: http://localhost:9001
@@ -47,9 +43,22 @@ auth-server:
     path: /oauth2/token
     grantType: client_credentials
 
+authentication-rest-service:
+  root: http://localhost:{port}
+  context: ${authentication-rest-service.root}/authentications
+
 account-rest-service:
-  root: http://localhost:{port}/accounts
-  accounts: /accounts
+  root: http://localhost:{port}
+  context: /accounts
+
+organization-rest-service:
+  root: http://localhost:{port}
+  context: ${organization-rest-service.root}/organizations
+
+role-rest-service:
+  root: http://localhost:{port}
+  context: ${role-rest-service.root}/roles
+
 
 endpoint:
   user:
@@ -74,7 +83,7 @@ permitpath:
   - path: /users/api/health/*
     httpMethods: GET
 
-jwtrequest:
+requestFilters:
   - in:  /users
     out: /authentications
     accessToken:

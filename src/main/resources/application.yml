@@ -36,10 +36,22 @@ spring:
 authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE}
   authentications: /authentications
+  delete: ${authentication-rest-service.authentications}
 
 account-rest-service:
   root: ${ACCOUNT_REST_SERVICE}
-  accounts: /accounts
+  accounts: ${account-rest-service.root}/accounts
+  delete: ${account-rest-service.accounts}
+
+organization-rest-service:
+  root: ${ORGANIZATION_REST_SERVICE}
+  context: ${organization-rest-service.root}/organizations
+  delete: ${organization-rest-service.context}
+
+role-rest-service:
+  root: ${ROLE_REST_SERVICE}
+  context: ${role-rest-service.root}/roles
+  delete: ${role-rest-service.context}
 
 auth-server:
   root: http://authorization-server/issuer

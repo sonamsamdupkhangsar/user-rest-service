@@ -41,10 +41,10 @@ public class UserSignupService implements UserService {
 
     private WebClient.Builder webClientBuilder;
 
-    @Value("${account-rest-service.root}${account-rest-service.accounts}")
+    @Value("${account-rest-service.context}")
     private String accountEp;
 
-    @Value("${authentication-rest-service.root}${authentication-rest-service.authentications}")
+    @Value("${authentication-rest-service.context}")
     private String authenticationEp;
 
     @Autowired
@@ -54,17 +54,15 @@ public class UserSignupService implements UserService {
     private final AuthenticationWebClient authenticationWebClient;
     private final OrganizationWebClient organizationWebClient;
     private final RoleWebClient roleWebClient;
-    private final TokenMediatorWebClient tokenMediatorWebClient;
 
     public UserSignupService(WebClient.Builder webClientBuilder, AccountWebClient accountWebClient,
                              AuthenticationWebClient authenticationWebClient, OrganizationWebClient organizationWebClient,
-                             RoleWebClient roleWebClient, TokenMediatorWebClient tokenMediatorWebClient) {
+                             RoleWebClient roleWebClient) {
         this.webClientBuilder = webClientBuilder;
         this.accountWebClient = accountWebClient;
         this.authenticationWebClient = authenticationWebClient;
         this.organizationWebClient = organizationWebClient;
         this.roleWebClient = roleWebClient;
-        this.tokenMediatorWebClient = tokenMediatorWebClient;
     }
 
     @PostConstruct
@@ -147,6 +145,8 @@ public class UserSignupService implements UserService {
                             payloadMap.put("authenticationId", userTransfer.getAuthenticationId());
                             payloadMap.put("password", userTransfer.getPassword());
                             payloadMap.put("userId", myUser.getId().toString());
+                            LOG.info("payloadMap: {}", payloadMap);
+
                             WebClient.ResponseSpec responseSpec = webClientBuilder.build().post().uri(authenticationEp).bodyValue(payloadMap).retrieve();
 
                             return responseSpec.bodyToMono(Map.class).map(map -> {
@@ -291,7 +291,6 @@ public class UserSignupService implements UserService {
                     .then(authenticationWebClient.deleteMyAccount())
                     .then(organizationWebClient.deleteMyAccount())
                     .then(roleWebClient.deleteMyAccount())
-                    .then(tokenMediatorWebClient.deleteMyAccount())
                     .thenReturn("delete my account success for user id: " + userId);
         });
     }
