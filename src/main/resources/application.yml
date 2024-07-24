@@ -35,11 +35,19 @@ spring:
 
 authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE}
-  authentications: /authentications
+  context: ${authentication-rest-service.root}/authentications
 
 account-rest-service:
   root: ${ACCOUNT_REST_SERVICE}
-  accounts: /accounts
+  context: ${account-rest-service.root}/accounts
+
+organization-rest-service:
+  root: ${ORGANIZATION_REST_SERVICE}
+  context: ${organization-rest-service.root}/organizations
+
+role-rest-service:
+  root: ${ROLE_REST_SERVICE}
+  context: ${role-rest-service.root}/roles
 
 auth-server:
   root: http://authorization-server/issuer
@@ -53,15 +61,22 @@ permitpath:
   - path: /users/api/health/*
     httpMethods: GET
 
-jwtrequest:
+requestFilters:
   - in: /users
     out: /authentications
+    httMethods: delete
+    accessToken:
+      option: forward
+  - in: /users
+    out: /authentications
+    httpMethods: post
     accessToken:
       option: request
       scopes: message.read
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /users
     out: /accounts/(.)*/(.)*
+    httpMethods: delete, post
     accessToken:
       option: request
       scopes: ${REQUEST_SCOPES}

@@ -173,6 +173,18 @@ public class UserHandler {
         );
     }
 
+    public Mono<ServerResponse> deleteMyAccount(ServerRequest serverRequest) {
+        LOG.info("delete my account");
+
+        return userService.deleteMyAccount()
+                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {
+                    LOG.error("delete user failed", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
+    }
+
     @SafeVarargs
     public static Map<String, String> getMap(Pair<String, String>... pairs){
         Map<String, String> map = new HashMap<>();
