@@ -21,16 +21,16 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class WebClientConfig {
     private static final Logger LOG = LoggerFactory.getLogger(WebClientConfig.class);
-    @Value("${account-rest-service.delete}")
+    @Value("${account-rest-service.context}")
     private String deleteMyAccountEndpoint;
 
-    @Value("${authentication-rest-service.delete}")
+    @Value("${authentication-rest-service.context}")
     private String deleteMyAuthenticationEndpoint;
 
-    @Value("${organization-rest-service.delete}")
+    @Value("${organization-rest-service.context}")
     private String deleteMyOrganizationEndpoint;
 
-    @Value("${role-rest-service.delete}")
+    @Value("${role-rest-service.context}")
     private String deleteMyRoleEndpoint;
 
     @Autowired
