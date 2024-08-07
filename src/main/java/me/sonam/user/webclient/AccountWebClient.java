@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.UUID;
 
 public class AccountWebClient {
     private static final Logger LOG = LoggerFactory.getLogger(AccountWebClient.class);
@@ -29,8 +30,8 @@ public class AccountWebClient {
         this.userRepository = userRepository;
     }
 
-    public Mono<String> createAccount(String authenticationId, String email) {
-        StringBuilder stringBuilder = new StringBuilder(accountEndpoint).append("/")
+    public Mono<String> createAccount(String authenticationId, UUID userId, String email) {
+        StringBuilder stringBuilder = new StringBuilder(accountEndpoint).append("/").append(userId).append("/")
                 .append(authenticationId)
                 .append("/").append(email);
 
@@ -42,7 +43,8 @@ public class AccountWebClient {
         }).then(userRepository.updatedUserAuthAccountCreatedTrue(authenticationId))
                 .thenReturn("account created")
                 .onErrorResume(throwable -> {
-                    LOG.error("account rest call failed: {}", throwable.getMessage());
+                    LOG.debug("exception occured when calling create account endpoint", throwable);
+                    LOG.error("create account rest call failed: {}", throwable.getMessage());
                     if (throwable instanceof WebClientResponseException webClientResponseException) {
                     LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
 
@@ -77,7 +79,7 @@ public class AccountWebClient {
     }
 
     public Mono<String> deleteMyAccount() {
-        LOG.info("delete my account accounts endpoint: {}", accountEndpoint);
+        LOG.info("delete my account endpoint: {}", accountEndpoint);
         WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(accountEndpoint)
                 .retrieve();
         return responseSpec.bodyToMono(String.class);

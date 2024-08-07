@@ -144,8 +144,8 @@ public class UserSignupService implements UserService {
                         .flatMap(myUser -> userRepository.save(myUser))
 
                         .flatMap(myUser ->
-                            authenticationWebClient.create(userTransfer.getAuthenticationId(), userTransfer.getPassword(), myUser.getId()))
-                        .then(accountWebClient.createAccount(userTransfer.getAuthenticationId(), userTransfer.getEmail()))
+                            authenticationWebClient.create(userTransfer.getAuthenticationId(), userTransfer.getPassword(), myUser.getId())
+                        .then(accountWebClient.createAccount(userTransfer.getAuthenticationId(), myUser.getId(), userTransfer.getEmail())))
                         .thenReturn("user signup succcessful")
         );
     }

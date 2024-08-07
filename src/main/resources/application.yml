@@ -64,34 +64,34 @@ permitpath:
 requestFilters:
   - in: /users
     out: /authentications
-    httMethods: delete
+    inHttpMethods: delete
     accessToken:
       option: forward
   - in: /users
     out: /accounts
-    httpMethods: delete
+    inHttpMethods: delete
     accessToken:
       option: forward
   - in: /users
     out: /organizations
-    httpMethods: delete
+    inHttpMethods: delete
     accessToken:
       option: forward
   - in: /users
     out: /roles
-    httpMethods: delete
+    inHttpMethods: delete
     accessToken:
       option: forward
   - in: /users
     out: /authentications
-    httpMethods: post
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /users
     out: /accounts/email/.*, /accounts/signupUser/.*, /accounts/.*/.*
-    httpMethods: delete, post
+    inHttpMethods: delete, post
     accessToken:
       option: request
       scopes: ${REQUEST_SCOPES}
