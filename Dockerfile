@@ -10,7 +10,7 @@ RUN --mount=type=secret,id=USERNAME --mount=type=secret,id=PERSONAL_ACCESS_TOKEN
      ./gradlew clean build
 RUN  mkdir -p build/dependency && (cd build/dependency; jar -xf ../libs/user-rest-service-1.0-SNAPSHOT.jar)
 
-FROM eclipse-temurin:17-jdk-alpine
+FROM eclipse-temurin:21-jdk-alpine
 VOLUME /tmp
 ARG DEPENDENCY=/workspace/app/build/dependency
 
