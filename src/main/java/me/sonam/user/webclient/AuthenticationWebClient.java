@@ -49,6 +49,14 @@ public class AuthenticationWebClient {
         });
     }
 
+    public Mono<Map<String, String>> deleteByAuthenticationId(String authenticationId) {
+        String deleteByAuthenticationIdEndpoint = authenticationEndpoint+"/"+authenticationId;
+        LOG.info("delete authentication by authenticationId endpoint: {}", deleteByAuthenticationIdEndpoint);
+        WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(deleteByAuthenticationIdEndpoint)
+                .retrieve();
+        return responseSpec.bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {});
+    }
+
     public Mono<String> deleteMyAccount() {
         LOG.info("delete my authentication account endpoint: {}", authenticationEndpoint);
         WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(authenticationEndpoint)

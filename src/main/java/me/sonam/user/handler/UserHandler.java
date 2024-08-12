@@ -29,6 +29,7 @@ public class UserHandler {
                 .flatMap(s ->  ServerResponse.created(URI.create("/users/"))
                         .contentType(MediaType.APPLICATION_JSON).bodyValue(getMap(Pair.of("message", s))))
                 .onErrorResume(throwable -> {
+                    LOG.debug("exception occurred in signupUser", throwable);
                     LOG.error("signup user failed {}", throwable.getMessage());
                     return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                             .bodyValue(Map.of("error", "user signup failed with error: " + throwable.getMessage()));

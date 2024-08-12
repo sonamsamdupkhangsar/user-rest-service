@@ -111,8 +111,9 @@ requestFilters:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+  # during signup
   - in: /users
-    out: /accounts/email/.*, /accounts/signupUser/.*, /accounts/.*/.*
+    out: /accounts/email/.*, /accounts/signupUser/.*, /authentications/.*, /accounts/.*/.*
     inHttpMethods: delete, post
     accessToken:
       option: request

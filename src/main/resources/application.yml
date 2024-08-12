@@ -90,7 +90,7 @@ requestFilters:
       scopes: message.read
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
   - in: /users
-    out: /accounts/email/.*, /accounts/signupUser/.*, /accounts/.*/.*
+    out: /accounts/email/.*, /accounts/signupUser/.*, /authentications/.* ,/accounts/.*/.*
     inHttpMethods: delete, post
     accessToken:
       option: request

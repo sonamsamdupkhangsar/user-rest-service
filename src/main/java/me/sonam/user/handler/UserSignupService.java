@@ -136,13 +136,13 @@ public class UserSignupService implements UserService {
                                     return !aBoolean;
                                 }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that email, check to activate it by email")))
                                 .flatMap(aBoolean -> accountWebClient.deleteAccountByEmail(userTransfer.getEmail()))
+                                .flatMap(s -> authenticationWebClient.deleteByAuthenticationId(userTransfer.getAuthenticationId()))
                                 .flatMap(string -> userRepository.deleteByAuthenticationIdAndUserAuthAccountCreatedFalse(userTransfer.getAuthenticationId()))
-                                //just delete rows with email and acccount created is in false - meaning not fully created
+                                //just delete rows with email and account created is in false - meaning not fully created
                                 .flatMap(rows -> userRepository.deleteByEmailAndUserAuthAccountCreatedFalse(userTransfer.getEmail()))
                                 .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
                             userTransfer.getEmail(), userTransfer.getAuthenticationId())))
                         .flatMap(myUser -> userRepository.save(myUser))
-
                         .flatMap(myUser ->
                             authenticationWebClient.create(userTransfer.getAuthenticationId(), userTransfer.getPassword(), myUser.getId())
                         .then(accountWebClient.createAccount(userTransfer.getAuthenticationId(), myUser.getId(), userTransfer.getEmail())))
