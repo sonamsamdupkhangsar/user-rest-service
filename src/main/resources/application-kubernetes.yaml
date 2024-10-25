@@ -15,5 +15,8 @@ DB_SSLMODE: REQUIRE
 
 ACCOUNT_REST_SERVICE: http://account-rest-service
 AUTHENTICATION_REST_SERVICE: http://authentication-rest-service
+ORGANIZATION_REST_SERVICE: http://organization-rest-service
+ROLE_REST_SERVICE: http://role-rest-service
+
 ISSUER_URI: https://authorization.sonam.cloud/issuer
 NEW_RELIC_ENABLED: false

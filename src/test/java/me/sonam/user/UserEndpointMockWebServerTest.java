@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
@@ -37,6 +38,9 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity;
+import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication;
 
 /**
  * This will test the User signup endpoint
@@ -68,6 +72,19 @@ public class UserEndpointMockWebServerTest {
 
     @MockBean
     ReactiveJwtDecoder jwtDecoder;
+
+    @Autowired
+    ApplicationContext context;
+
+    @org.junit.jupiter.api.BeforeEach
+    public void setup() {
+        this.webTestClient = WebTestClient
+                .bindToApplicationContext(this.context)
+                // add Spring Security test Support
+                .apply(springSecurity())
+                .configureClient()
+                .build();
+    }
 
     final String clientCredentialResponse = "{" +
             "    \"access_token\": \"eyJraWQiOiJhNzZhN2I0My00YTAzLTQ2MzAtYjVlMi0wMTUzMGRlYzk0MGUiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJwcml2YXRlLWNsaWVudCIsImF1ZCI6InByaXZhdGUtY2xpZW50IiwibmJmIjoxNjg3MTA0NjY1LCJzY29wZSI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl0sImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMSIsImV4cCI6MTY4NzEwNDk2NSwiaWF0IjoxNjg3MTA0NjY1LCJhdXRob3JpdGllcyI6WyJtZXNzYWdlLnJlYWQiLCJtZXNzYWdlLndyaXRlIl19.Wx03Q96TR17gL-BCsG6jPxpdt3P-UkcFAuE6pYmZLl5o9v1ag9XR7MX71pfJcIhjmoog8DUTJXrq-ZB-IxIbMhIGmIHIw57FfnbBzbA8mjyBYQOLFOh9imLygtO4r9uip3UR0Ut_YfKMMi-vPfeKzVDgvaj6N08YNp3HNoAnRYrEJLZLPp1CUQSqIHEsGXn2Sny6fYOmR3aX-LcSz9MQuyDDr5AQcC0fbcpJva6aSPvlvliYABxfldDfpnC-i90F6azoxJn7pu3wTC7sjtvS0mt0fQ2NTDYXFTtHm4Bsn5MjZbOruih39XNsLUnp4EHpAh6Bb9OKk3LSBE6ZLXaaqQ\"," +
@@ -113,6 +130,8 @@ public class UserEndpointMockWebServerTest {
     static void properties(DynamicPropertyRegistry r) throws IOException {
         r.add("authentication-rest-service.root", () -> "http://localhost:"+mockWebServer.getPort());
         r.add("account-rest-service.root", () -> "http://localhost:"+mockWebServer.getPort());
+        r.add("organization-rest-service.root", () -> "http://localhost:"+mockWebServer.getPort());
+        r.add("role-rest-service.root", () -> "http://localhost:"+mockWebServer.getPort());
         r.add("auth-server.root", () -> "http://localhost:"+ mockWebServer.getPort());
     }
 
@@ -126,6 +145,7 @@ public class UserEndpointMockWebServerTest {
         final String authenticationId = "signupUser";
         final String email = "signupUser@some1.company";
 
+        //1
         LOG.info("try to POST with the same email/authId");
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
@@ -135,15 +155,28 @@ public class UserEndpointMockWebServerTest {
         //Http 500 will throw a Exception in the webclient call, exectuing the onError block
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
 
+
+        //3
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
+
+        //4
+        final String authDeleted = "{\"message\": \"deleted Authentication with authenticationId: " + authenticationId+" completed\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(authDeleted));
+
+        //5
+
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
         final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
+        //6
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
                 .setResponseCode(201).setBody(authenticationCreatedResponse));
 
+        //7
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
+        //8
         final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
                 .setResponseCode(201).setBody(accountCreatedResponse));
@@ -168,6 +201,14 @@ public class UserEndpointMockWebServerTest {
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("DELETE");
         assertThat(request.getPath()).startsWith("/accounts");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/authentications/"+authenticationId);
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
@@ -201,6 +242,7 @@ public class UserEndpointMockWebServerTest {
         final String email = "signupUser@some1.company";
 
         LOG.info("try to POST with the same email/authId");
+        //1
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         //2
@@ -211,10 +253,17 @@ public class UserEndpointMockWebServerTest {
         //3
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
+        //4
+        final String authDeleted = "{\"message\": \"deleted Authentication with authenticationId: " + authenticationId+" completed\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(authDeleted));
+
+        //5
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
+
         final String authMessage = "Authentication api call failed with error: " + authenticationId;
         final String authenticationCreatedResponse = " {\"error\":\""+ authMessage +"\"}";
 
-        //4
+        //6
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
                 .setResponseCode(400).setBody(authenticationCreatedResponse));
 
@@ -236,6 +285,14 @@ public class UserEndpointMockWebServerTest {
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("DELETE");
         assertThat(request.getPath()).startsWith("/accounts");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/authentications/"+authenticationId);
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
@@ -266,16 +323,26 @@ public class UserEndpointMockWebServerTest {
         //Http 500 will throw a Exception in the webclient call, exectuing the onError block
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(500).setBody(msg));
 
+        //3
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
+
+        //4
+        final String authDeleted = "{\"message\": \"deleted Authentication with authenticationId: " + authenticationId+" completed\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(authDeleted));
+
+        //5
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
         final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
         final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
 
+        //6
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
                 .setResponseCode(201).setBody(authenticationCreatedResponse));
-
+        //7
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
+        //8
         final String accountCreatedResponse = "{\"message\":\"Account create failed\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
                 .setResponseCode(400).setBody(accountCreatedResponse));
@@ -301,6 +368,15 @@ public class UserEndpointMockWebServerTest {
         LOG.info("path: {}", request.getPath());
         assertThat(request.getMethod()).isEqualTo("DELETE");
         assertThat(request.getPath()).startsWith("/accounts");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
+
+        request = mockWebServer.takeRequest();
+        LOG.info("path: {}", request.getPath());
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/authentications/"+authenticationId);
 
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("POST");
@@ -352,17 +428,25 @@ public class UserEndpointMockWebServerTest {
         //3
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
-        final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
-        final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
         //4
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
-                .setResponseCode(201).setBody(authenticationCreatedResponse));
+        final String authDeleted = "{\"message\": \"deleted Authentication with authenticationId: " + authenticationId+" completed\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(authDeleted));
+
 
         //5
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
-        final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
+        final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
+        final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
         //6
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(201).setBody(authenticationCreatedResponse));
+
+        //7
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
+
+        final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
+        //8
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
                 .setResponseCode(201).setBody(accountCreatedResponse));
         LOG.info("make rest call to save user and create authentication record");
@@ -371,6 +455,7 @@ public class UserEndpointMockWebServerTest {
                 authenticationId, "pass");
 
         EntityExchangeResult<Map> result = webTestClient.post().uri("/users")
+
                 .bodyValue(userTransfer)
                 .exchange().expectStatus().isCreated().expectBody(Map.class).returnResult();
 
@@ -387,6 +472,16 @@ public class UserEndpointMockWebServerTest {
         LOG.info("path: {}", request.getPath());
         assertThat(request.getMethod()).isEqualTo("DELETE");
         assertThat(request.getPath()).startsWith("/accounts");
+        LOG.info("response: {}", result.getResponseBody());
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
+
+        request = mockWebServer.takeRequest();
+        LOG.info("path: {}", request.getPath());
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/authentications/"+authenticationId);
         LOG.info("response: {}", result.getResponseBody());
 
         request = mockWebServer.takeRequest();
@@ -585,18 +680,25 @@ public class UserEndpointMockWebServerTest {
         //3
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
-        final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
-        final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
-
         //4
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
-                .setResponseCode(201).setBody(authenticationCreatedResponse));
+        final String authDeleted = "{\"message\": \"deleted Authentication with authenticationId: " + authenticationId+" completed\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(authDeleted));
 
         //5
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
-        final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
+        final String authMessage = "Authentication created successfully for authenticationId: " + authenticationId;
+        final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
+
         //6
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
+                .setResponseCode(201).setBody(authenticationCreatedResponse));
+
+        //7
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
+
+        final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
+        //8
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
                 .setResponseCode(201).setBody(accountCreatedResponse));
         LOG.info("make rest call to save user and create authentication record");
@@ -623,6 +725,16 @@ public class UserEndpointMockWebServerTest {
         LOG.info("path: {}", request.getPath());
         assertThat(request.getMethod()).isEqualTo("DELETE");
         assertThat(request.getPath()).startsWith("/accounts");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
+
+        request = mockWebServer.takeRequest();
+        //2
+        LOG.info("path: {}", request.getPath());
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/authentications/"+authenticationId);
 
         LOG.info("response: {}", result.getResponseBody());
 
@@ -715,6 +827,7 @@ public class UserEndpointMockWebServerTest {
         UserTransfer userTransfer = new UserTransfer("firstname", "lastname", "12yakApiKey",
                 authenticationId, "pass");
 
+        //1
         LOG.info("try to POST with the same email/authId");
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
         //2
@@ -724,15 +837,26 @@ public class UserEndpointMockWebServerTest {
 
         //3
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
+
+        //4
+        final String authDeleted = "{\"message\": \"deleted Authentication with authenticationId: " + authenticationId+" completed\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(authDeleted));
+
+
+        //5
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
         final String authMessage = "Authentication created successfully for authenticationId: " + userTransfer.getAuthenticationId();
         final String authenticationCreatedResponse = " {\"message\":\""+ authMessage +"\"}";
 
+        //6
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
                 .setResponseCode(201).setBody(authenticationCreatedResponse));
 
+        //7
         LOG.info("add the same token again as another account webservice is called after the Authentication one");
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(clientCredentialResponse));
 
+        //8
         final String accountCreatedResponse = " {\"message\":\"Account created successfully.  Check email for activating account\"}";
         mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json")
                 .setResponseCode(201).setBody(accountCreatedResponse));
@@ -750,6 +874,14 @@ public class UserEndpointMockWebServerTest {
         request = mockWebServer.takeRequest();
         assertThat(request.getMethod()).isEqualTo("DELETE");
         assertThat(request.getPath()).startsWith("/accounts");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("POST");
+        assertThat(request.getPath()).startsWith("/oauth2/token");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/authentications/"+authenticationId);
 
 
         request = mockWebServer.takeRequest();
@@ -816,6 +948,74 @@ public class UserEndpointMockWebServerTest {
     }
 
     @Test
+    public void deleteMyInfo() throws InterruptedException {
+        UUID id = UUID.randomUUID();
+        final String authenticationId = "deleteUserWhenUserFalse";
+
+        MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId);
+        assertThat(myUser.getId()).isNotNull();
+
+        Jwt jwt = jwt(authenticationId, myUser.getId());
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
+        Mono<MyUser> userMono = userRepository.save(myUser);
+        userMono.subscribe(user1 -> LOG.info("save user first"));
+
+        userMono.as(StepVerifier::create).assertNext(myUser1 -> {
+            LOG.info("assert active is false");
+            assertThat(myUser1.getActive()).isFalse();
+        });
+
+        userRepository.findByAuthenticationId(authenticationId).as(StepVerifier::create).
+                assertNext(myUser1 -> {
+                    LOG.info("assert active is false");
+                    assertThat(myUser1.getActive()).isFalse();
+                })
+                .verifyComplete();
+
+        final String msg1 = "{\"message\": \"deleted account\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(msg1));
+
+        final String msg2 = "{\"message\": \"deleted authentication\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(msg2));
+
+        final String msg3 = "{\"message\": \"deleted organization\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(msg3));
+
+        final String msg4 = "{\"message\": \"deleted role\"}";
+        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(msg4));
+        final String jwtString= "eyJraWQiOiJlOGQ3MjIzMC1iMDgwLTRhZjEtODFkOC0zMzE3NmNhMTM5ODIiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI3NzI1ZjZmZC1kMzk2LTQwYWYtOTg4Ni1jYTg4YzZlOGZjZDgiLCJhdWQiOiI3NzI1ZjZmZC1kMzk2LTQwYWYtOTg4Ni1jYTg4YzZlOGZjZDgiLCJuYmYiOjE3MTQ3NTY2ODIsImlzcyI6Imh0dHA6Ly9teS1zZXJ2ZXI6OTAwMSIsImV4cCI6MTcxNDc1Njk4MiwiaWF0IjoxNzE0NzU2NjgyLCJqdGkiOiI0NDBlZDY0My00MzdkLTRjOTMtYTZkMi1jNzYxNjFlNDRlZjUifQ.fjqgoczZbbmcnvYpVN4yakpbplp7EkDyxslvar5nXBFa6mgIFcZa29fwIKfcie3oUMQ8MDWxayak5PZ_QIuHwTvKSWHs0WL91ljf-GT1sPi1b4gDKf0rJOwi0ClcoTCRIx9-WGR6t2BBR1Rk6RGF2MW7xKw8M-RMac2A2mPEPJqoh4Pky1KgxhZpEXixegpAdQIvBgc0KBZeQme-ZzTYugB8EPUmGpMlfd-zX_vcR1ijxi8e-LRRJMqmGkc9GXfrH7MOKNQ_nu6pc6Gish2v_iuUEcpPHXrfqzGb9IHCLvfuLSaTDcYKYjQaEUAp-1uDW8-5posjiUV2eBiU48ajYg";
+
+        LOG.info("activate user authId: {}", id);
+        EntityExchangeResult<String> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).delete().uri("/users")
+                .headers(httpHeaders -> httpHeaders.setBearerAuth(jwtString))
+                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+
+        LOG.info("response: {}", result.getResponseBody());
+        assertThat(result.getResponseBody()).isEqualTo("delete my account success for user id: "+myUser.getId());
+
+        userRepository.existsByAuthenticationId(authenticationId).subscribe(aBoolean -> LOG.info("exists should be false: {}", aBoolean));
+
+        RecordedRequest request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/accounts");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/authentications");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/organizations");
+
+        request = mockWebServer.takeRequest();
+        assertThat(request.getMethod()).isEqualTo("DELETE");
+        assertThat(request.getPath()).startsWith("/roles");
+
+
+    }
+
+    //@Test
     public void deleteUserWhenUserFalse() {
         UUID id = UUID.randomUUID();
         final String authenticationId = "deleteUserWhenUserFalse";
@@ -849,7 +1049,7 @@ public class UserEndpointMockWebServerTest {
         userRepository.existsByAuthenticationId(authenticationId).subscribe(aBoolean -> LOG.info("exists should be false: {}", aBoolean));
     }
 
-    @Test
+    //@Test
     public void deleteUserWhenUserActive() throws InterruptedException {
         final String authenticationId = "deleteUserWhenUserFalse";
         Jwt jwt = jwt(authenticationId);
@@ -885,7 +1085,10 @@ public class UserEndpointMockWebServerTest {
 
         userRepository.existsByAuthenticationId(authenticationId).subscribe(aBoolean -> LOG.info("exists should be true: {}", aBoolean));
     }
-
+    private Jwt jwt(String subjectName, UUID userId) {
+        return new Jwt("token", null, null,
+                Map.of("alg", "none"), Map.of("sub", subjectName, "userId", userId.toString()));
+    }
     private Jwt jwt(String subjectName) {
         return new Jwt("token", null, null,
                 Map.of("alg", "none"), Map.of("sub", subjectName));

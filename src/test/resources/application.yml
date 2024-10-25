@@ -2,7 +2,8 @@ logging:
   level:
     root: error
     me:
-      sonam: debug
+      sonam: info
+      security: info
 info:
   app:
     name: Springboot me.sonam.account.Application
@@ -36,10 +37,6 @@ POSTGRES_DBNAME: dbname
 POSTGRES_SERVICE: dservice
 POSTGRES_PASSWORD: dpassword
 
-authentication-rest-service:
-  root: http://localhost:{port}/authentications
-  authentications: /authentications
-
 # this is used for getting accesstoken by header filter in jwt-validator (ReactiveRequestContextHolder.class)
 auth-server:
   root: http://localhost:9001
@@ -47,9 +44,21 @@ auth-server:
     path: /oauth2/token
     grantType: client_credentials
 
+authentication-rest-service:
+  root: http://localhost:{port}
+  context: ${authentication-rest-service.root}/authentications
+
 account-rest-service:
-  root: http://localhost:{port}/accounts
-  accounts: /accounts
+  root: http://localhost:{port}
+  context: ${account-rest-service.root}/accounts
+
+organization-rest-service:
+  root: http://localhost:{port}
+  context: ${organization-rest-service.root}/organizations
+
+role-rest-service:
+  root: http://localhost:{port}
+  context: ${role-rest-service.root}/roles
 
 endpoint:
   user:
@@ -74,15 +83,38 @@ permitpath:
   - path: /users/api/health/*
     httpMethods: GET
 
-jwtrequest:
+requestFilters:
+  - in: /users
+    out: /authentications
+    inHttpMethods: delete
+    accessToken:
+      option: forward
+  - in: /users
+    out: /accounts
+    inHttpMethods: delete
+    accessToken:
+      option: forward
+  - in: /users
+    out: /organizations
+    inHttpMethods: delete
+    accessToken:
+      option: forward
+  - in: /users
+    out: /roles
+    inHttpMethods: delete
+    accessToken:
+      option: forward
   - in:  /users
     out: /authentications
+    inHttpMethods: post
     accessToken:
       option: request
       scopes: message.read message.write
       base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
+  # during signup
   - in: /users
-    out: /accounts/(.)*/(.)*
+    out: /accounts/email/.*, /accounts/signupUser/.*, /authentications/.*, /accounts/.*/.*
+    inHttpMethods: delete, post
     accessToken:
       option: request
       scopes: message.read message.write

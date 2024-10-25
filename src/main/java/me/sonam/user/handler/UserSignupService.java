@@ -6,16 +6,24 @@ import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
 import me.sonam.user.handler.carrier.User;
 import me.sonam.user.repo.UserRepository;
 import me.sonam.user.repo.entity.MyUser;
+import me.sonam.user.webclient.AccountWebClient;
+import me.sonam.user.webclient.AuthenticationWebClient;
+import me.sonam.user.webclient.OrganizationWebClient;
+import me.sonam.user.webclient.RoleWebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
@@ -36,24 +44,34 @@ public class UserSignupService implements UserService {
     @Autowired
     private UserRepository userRepository;
 
-    private WebClient.Builder webClientBuilder;
+ //   private WebClient.Builder webClientBuilder;
 
-    @Value("${account-rest-service.root}${account-rest-service.accounts}")
+    @Value("${account-rest-service.context}")
+
     private String accountEp;
 
-    @Value("${authentication-rest-service.root}${authentication-rest-service.authentications}")
+    @Value("${authentication-rest-service.context}")
     private String authenticationEp;
 
-    @Autowired
-    private ReactiveRequestContextHolder reactiveRequestContextHolder;
+   // @Autowired
+   // private ReactiveRequestContextHolder reactiveRequestContextHolder;
+    private final AccountWebClient accountWebClient;
+    private final AuthenticationWebClient authenticationWebClient;
+    private final OrganizationWebClient organizationWebClient;
+    private final RoleWebClient roleWebClient;
 
-    public UserSignupService(WebClient.Builder webClientBuilder) {
-        this.webClientBuilder = webClientBuilder;
+    public UserSignupService(AccountWebClient accountWebClient,
+                             AuthenticationWebClient authenticationWebClient, OrganizationWebClient organizationWebClient,
+                             RoleWebClient roleWebClient) {
+        this.accountWebClient = accountWebClient;
+        this.authenticationWebClient = authenticationWebClient;
+        this.organizationWebClient = organizationWebClient;
+        this.roleWebClient = roleWebClient;
     }
 
     @PostConstruct
     public void setWebClient() {
-        webClientBuilder = webClientBuilder.filter(reactiveRequestContextHolder.headerFilter());
+        //webClientBuilder = webClientBuilder.filter(reactiveRequestContextHolder.headerFilter());
         List<String> serviceList = discoveryClient.getServices();
         LOG.info("printing services of size: {}", serviceList.size());
 
@@ -117,65 +135,18 @@ public class UserSignupService implements UserService {
                                     LOG.info("emailExistsAndUserAuthAccountCreated is {}", aBoolean);
                                     return !aBoolean;
                                 }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that email, check to activate it by email")))
-                                .flatMap(aBoolean -> callDeleteAccountCheck(userTransfer.getEmail()))
+                                .flatMap(aBoolean -> accountWebClient.deleteAccountByEmail(userTransfer.getEmail()))
+                                .flatMap(s -> authenticationWebClient.deleteByAuthenticationId(userTransfer.getAuthenticationId()))
                                 .flatMap(string -> userRepository.deleteByAuthenticationIdAndUserAuthAccountCreatedFalse(userTransfer.getAuthenticationId()))
-                                //just delete rows with email and acccount created is in false - meaning not fully created
+                                //just delete rows with email and account created is in false - meaning not fully created
                                 .flatMap(rows -> userRepository.deleteByEmailAndUserAuthAccountCreatedFalse(userTransfer.getEmail()))
                                 .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
                             userTransfer.getEmail(), userTransfer.getAuthenticationId())))
                         .flatMap(myUser -> userRepository.save(myUser))
-                        .flatMap(myUser -> {
-                            LOG.info("create Authentication record with webrequest on endpoint: {}", authenticationEp);
-
-                            Map<String, String> payloadMap = new HashMap<>();
-                            payloadMap.put("authenticationId", userTransfer.getAuthenticationId());
-                            payloadMap.put("password", userTransfer.getPassword());
-                            payloadMap.put("userId", myUser.getId().toString());
-                            WebClient.ResponseSpec responseSpec = webClientBuilder.build().post().uri(authenticationEp).bodyValue(payloadMap).retrieve();
-
-                            return responseSpec.bodyToMono(Map.class).map(map -> {
-                                LOG.info("got back authenticationId from service call: {}", map.get("message"));
-                                return map.get("message");
-                            }).onErrorResume(throwable -> {
-                                LOG.error("authentication rest call failed: {}", throwable.getMessage());
-
-                                LOG.info("rollback userRepository by deleting authenticationId");
-                                return userRepository.deleteByAuthenticationId(userTransfer.getAuthenticationId()).then(
-                                    Mono.error(new SignupException("Authentication api call failed with error: " + throwable.getMessage())));
-                            });
-                        })
-                        .flatMap(s -> {
-                            StringBuilder stringBuilder = new StringBuilder(accountEp).append("/")
-                                    .append(userTransfer.getAuthenticationId())
-                                    .append("/").append(userTransfer.getEmail());
-
-                            LOG.info("create Account record with webrequest on endpoint: {}", stringBuilder);
-                            WebClient.ResponseSpec spec = webClientBuilder.build().post().uri(stringBuilder.toString()).retrieve();
-
-                            return spec.bodyToMono(Map.class).map(map -> {
-                                LOG.info("account has been created with response: {}", map.get("message"));
-
-                                return userRepository.updatedUserAuthAccountCreatedTrue(
-                                        userTransfer.getAuthenticationId())
-                                       .subscribe(integer -> LOG.info("update UserAuthAccountCreatedTrue"));
-
-                            }).onErrorResume(throwable -> {
-                                LOG.error("account rest call failed: {}", throwable.getMessage());
-                                if (throwable instanceof WebClientResponseException) {
-                                    WebClientResponseException webClientResponseException = (WebClientResponseException) throwable;
-                                    LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
-
-                                    return userRepository.deleteByAuthenticationId(userTransfer.getAuthenticationId())
-                                                    .then(
-                                            Mono.error(new SignupException("Account api call failed with error: " +
-                                                    webClientResponseException.getResponseBodyAsString())));
-                                }
-                                else {
-                                    return Mono.error(new SignupException("Account api call failed with error: " +throwable.getMessage()));
-                                }
-
-                            });
-                        }).thenReturn("user signup succcessful")
+                        .flatMap(myUser ->
+                            authenticationWebClient.create(userTransfer.getAuthenticationId(), userTransfer.getPassword(), myUser.getId())
+                        .then(accountWebClient.createAccount(userTransfer.getAuthenticationId(), myUser.getId(), userTransfer.getEmail())))
+                        .thenReturn("user signup succcessful")
         );
     }
 
@@ -250,6 +221,40 @@ public class UserSignupService implements UserService {
                 .switchIfEmpty(Mono.error(new UserException("user is active, cannot delete")))
                 .flatMap(myUser ->   userRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
                 .thenReturn("deleted: " + authenticationId);
+    }
+
+    @Override
+    public Mono<String> deleteMyAccount() {
+        LOG.info("delete my account");
+
+        return ReactiveSecurityContextHolder.getContext().flatMap(securityContext -> {
+            LOG.info("principal: {}", securityContext.getAuthentication().getPrincipal());
+            org.springframework.security.core.Authentication authentication = securityContext.getAuthentication();
+
+            LOG.info("authentication: {}", authentication);
+            LOG.info("authentication.principal: {}", authentication.getPrincipal());
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            String userIdString = jwt.getClaim("userId");
+            LOG.info("delete user data for userId: {}", userIdString);
+
+            UUID userId = UUID.fromString(userIdString);
+
+            return userRepository.findById(userId)
+                    .switchIfEmpty(Mono.error(new UserException("no user found with userId: " + userId)))
+                    .flatMap(myUser -> {
+                        LOG.info("delete user from repository {}", myUser.getId());
+                        return userRepository.deleteById(userId).thenReturn(Mono.just("user deleted by id"));
+                    })
+
+                    .flatMap(unused -> {
+                        //LOG.info("delete account {}", unused);
+                        return accountWebClient.deleteMyAccount();
+                    })
+                    .then(authenticationWebClient.deleteMyAccount())
+                    .then(organizationWebClient.deleteMyAccount())
+                    .then(roleWebClient.deleteMyAccount())
+                    .thenReturn("delete my account success for user id: " + userId);
+        });
     }
 
     @Override
@@ -351,22 +356,5 @@ public class UserSignupService implements UserService {
     }
 
 
-    private Mono<? extends String> callDeleteAccountCheck(String email) {
-        LOG.info("call delete account check");
-        final StringBuilder stringBuilder = new StringBuilder(accountEp).append("/email/").append(email);
-        LOG.info("accountEp: {}", stringBuilder.toString());
 
-        WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(stringBuilder.toString()).retrieve();
-
-        return responseSpec.bodyToMono(Map.class).map(map -> {
-            LOG.info("got back response from account deletion service call: {}", map.get("message"));
-            return map.get("message");
-        }).onErrorResume(throwable -> {
-            LOG.error("account deletion rest call failed: {}", throwable.getMessage());
-            //return Mono.just(true);
-            //return Mono.just("account deletion not needed");
-            return Mono.just(true);
-        }).then(Mono.just("done calling account delete check"));//.then(Mono.error(new SignupException("a user with this email already exists")));
-
-    }
 }
