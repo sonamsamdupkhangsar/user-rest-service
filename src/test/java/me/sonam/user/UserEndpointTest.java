@@ -100,6 +100,8 @@ public class UserEndpointTest {
         userTransfer.setFirstName("Josey");
         userTransfer.setLastName("Cat");
         userTransfer.setEmail("josey.cat@@cat.emmail");
+        userTransfer.setProfilePhotoFileKey( "videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg");
+        userTransfer.setThumbnailFileKey("videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg");
         userTransfer.setAuthenticationId(authenticationId);
 
         LOG.info("update user fields with jwt in auth bearer token");
@@ -114,9 +116,13 @@ public class UserEndpointTest {
         userRepository.findByAuthenticationId("dave").as(StepVerifier::create)
                 .expectNextMatches(myUser -> {
                     LOG.info("do expectNextMatches");
-                   return myUser.getEmail().equals("josey.cat@@cat.emmail");
-                }
-                )
+                            LOG.info("profilePhotoFileKey: {}", myUser.getProfilePhotoFileKey());
+                            LOG.info("thumbnailFileKey: {}", myUser.getThumbnailFileKey());
+                   return myUser.getEmail().equals("josey.cat@@cat.emmail")
+                       &&     myUser.getProfilePhotoFileKey().equals("videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg")
+                                    && myUser.getThumbnailFileKey().equals("videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg");
+
+                })
                 .expectComplete().verify();
 
     }
@@ -194,28 +200,6 @@ public class UserEndpointTest {
 
         StepVerifier.create(myUserFlux)
                 .expectNextCount(2)
-                .verifyComplete();
-    }
-
-    @Test
-    public void updateProfilePhoto() {
-        LOG.info("test find by firstName and lastName matching");
-        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
-
-        userRepository.save(myUser).subscribe();
-        final String authenticationId = "dommy@cat.email";
-        Jwt jwt = jwt(authenticationId);
-        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
-
-
-        Flux<String> myUserFlux = webTestClient.put().uri("/users/profile-photo")
-                .bodyValue("http://spaces.sonam.us/myapp/app/someimage.png")
-                .headers(addJwt(jwt))
-                .exchange().expectStatus().isOk()
-                .returnResult(String.class).getResponseBody();
-
-        StepVerifier.create(myUserFlux)
-                .assertNext(s -> { LOG.info("string response is {}", s); assertThat(s).isEqualTo("photo updated"); })
                 .verifyComplete();
     }
 

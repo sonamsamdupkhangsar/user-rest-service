@@ -23,28 +23,12 @@ public class MyUser implements Persistable<UUID> {
     private String authenticationId;
     private Boolean active;
     private Boolean userAuthAccountCreated;
-
-    public Boolean getSearchable() {
-        return searchable;
-    }
-
-    public void setSearchable(Boolean searchable) {
-        this.searchable = searchable;
-    }
-
+    private String thumbnailFileKey;
+    private String profilePhotoFileKey;
     private Boolean searchable;
-
-    public Boolean getActive() {
-        return active;
-    }
-
-    public void setActive(Boolean active) {
-        this.active = active;
-    }
 
     // these can be populated after login
     private LocalDate birthDate;
-    private String profilePhoto; //will contain the full url to the profilephoto
     private UUID genderId;
 
     @Transient
@@ -62,6 +46,24 @@ public class MyUser implements Persistable<UUID> {
         this.active = false;
         this.userAuthAccountCreated = false;
         this.newAccount = true;
+    }
+
+    public MyUser(UUID id, String firstName, String lastName, String email, String authenticationId, Boolean active,
+                  Boolean userAuthAccountCreated, String thumbnailFileKey, String profilePhotoFileKey,
+                  Boolean searchable, LocalDate birthDate, UUID genderId, boolean newAccount) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.authenticationId = authenticationId;
+        this.active = active;
+        this.userAuthAccountCreated = userAuthAccountCreated;
+        this.thumbnailFileKey = thumbnailFileKey;
+        this.profilePhotoFileKey = profilePhotoFileKey;
+        this.searchable = searchable;
+        this.birthDate = birthDate;
+        this.genderId = genderId;
+        this.newAccount = newAccount;
     }
 
     public UUID getId() {
@@ -89,10 +91,6 @@ public class MyUser implements Persistable<UUID> {
         return birthDate;
     }
 
-    public String getProfilePhoto() {
-        return profilePhoto;
-    }
-
     public UUID getGenderId() {
         return genderId;
     }
@@ -117,6 +115,35 @@ public class MyUser implements Persistable<UUID> {
         return this.userAuthAccountCreated;
     }
 
+    public String getThumbnailFileKey() {
+        return thumbnailFileKey;
+    }
+
+    public void setThumbnailFileKey(String thumbnailFileKey) {
+        this.thumbnailFileKey = thumbnailFileKey;
+    }
+
+    public String getProfilePhotoFileKey() {
+        return profilePhotoFileKey;
+    }
+
+    public void setProfilePhotoFileKey(String profilePhotoFileKey) {
+        this.profilePhotoFileKey = profilePhotoFileKey;
+    }
+    public Boolean getSearchable() {
+        return searchable;
+    }
+
+    public void setSearchable(Boolean searchable) {
+        this.searchable = searchable;
+    }
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
     @Override
     public String toString() {
         return "User{" +
@@ -125,9 +152,10 @@ public class MyUser implements Persistable<UUID> {
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
                 ", birthDate=" + birthDate +
-                ", profilePhoto='" + profilePhoto + '\'' +
                 ", genderId=" + genderId +
                 ", newAccount=" + newAccount +
+                ", profilePhotoFileKey=" + profilePhotoFileKey +
+                ", thumbnailFileKey=" + thumbnailFileKey +
                 '}';
     }
 

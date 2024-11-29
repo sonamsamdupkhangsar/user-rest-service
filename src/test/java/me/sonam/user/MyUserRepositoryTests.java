@@ -68,14 +68,20 @@ public class MyUserRepositoryTests {
         userRepository.save(myUser2).subscribe();
 
         LOG.info("update that user now");
-        Mono<Integer> mono = userRepository.updateFirstNameAndLastNameAndEmailAndSearchableByAuthenticationId(
-                "John", "InTibet", "dommy@cat.email", false,"dommy@cat.email");
+        Mono<Integer> mono = userRepository.updateByAuthenticationId(
+                "John", "InTibet", "dommy@cat.email", false,
+                "videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg",
+                "videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg",
+                "dommy@cat.email");
 
         userRepository.findAll().subscribe(myUser1 -> LOG.info("found user: {}", myUser1));
 
         LOG.info("update that user now");
-        userRepository.updateFirstNameAndLastNameAndEmailAndSearchableByAuthenticationId(
-                "John", "InTibet", "dog@cat.email", false,"dommy@cat.email")
+        userRepository.updateByAuthenticationId(
+                "John", "InTibet", "dog@cat.email", false,
+                        "videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg",
+                        "videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg",
+                        "dommy@cat.email")
                .log().subscribe();
 
         userRepository.findByAuthenticationId("dommy@cat.email")

@@ -12,6 +12,8 @@ public class User {
     private Boolean active;
     private Boolean userAuthAccountCreated;
     private Boolean searchable;
+    private String thumbnailFileKey;
+    private String profilePhotoFileKey;
 
     public User() {
     }
@@ -104,6 +106,22 @@ public class User {
         this.userAuthAccountCreated = userAuthAccountCreated;
     }
 
+    public String getThumbnailFileKey() {
+        return thumbnailFileKey;
+    }
+
+    public void setThumbnailFileKey(String thumbnailFileKey) {
+        this.thumbnailFileKey = thumbnailFileKey;
+    }
+
+    public String getProfilePhotoFileKey() {
+        return profilePhotoFileKey;
+    }
+
+    public void setProfilePhotoFileKey(String profilePhotoFileKey) {
+        this.profilePhotoFileKey = profilePhotoFileKey;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -115,6 +133,8 @@ public class User {
                 ", active=" + active +
                 ", userAuthAccountCreated=" + userAuthAccountCreated +
                 ", searchable=" + searchable +
+                ", profilePhotoFileKey='" + profilePhotoFileKey + '\'' +
+                ", thumbnailFileKey='" + thumbnailFileKey + '\'' +
                 '}';
     }
 }

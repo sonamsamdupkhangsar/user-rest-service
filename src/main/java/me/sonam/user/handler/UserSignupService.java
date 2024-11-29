@@ -154,7 +154,7 @@ public class UserSignupService implements UserService {
     public Mono<String> updateUser(String authenticationId, Mono<UserTransfer> userMono) {
         LOG.info("update user fields for authenticationId: {}", authenticationId);
 
-        return userMono.flatMap(userTransfer -> {
+       return userMono.flatMap(userTransfer -> {
             LOG.info("userTransfer: {}", userTransfer);
                      return userRepository.findByAuthenticationId(userTransfer.getAuthenticationId())
                              .flatMap(myUser ->
@@ -170,25 +170,16 @@ public class UserSignupService implements UserService {
                                     .switchIfEmpty(Mono.error(new SignupException("email: email already used")))
                                     .flatMap(aBoolean -> {
                                         LOG.info("update name and email for authId: {}", authenticationId);
-                                        return userRepository.updateFirstNameAndLastNameAndEmailAndSearchableByAuthenticationId(
-                                                userTransfer.getFirstName(), userTransfer.getLastName(), userTransfer.getEmail()
-                                                , userTransfer.isSearchable(), userTransfer.getAuthenticationId()
-                                        );
+
+                                        return userRepository.updateByAuthenticationId(userTransfer.getFirstName(), userTransfer.getLastName(),
+                                                userTransfer.getEmail(),  userTransfer.isSearchable(),
+                                                 userTransfer.getProfilePhotoFileKey(),
+                                                userTransfer.getThumbnailFileKey(), userTransfer.getAuthenticationId());
+
 
                                     })
                                     .thenReturn("user firstname, lastname and email updated"));
     });
-    }
-
-    @Override
-    public Mono<String> updateProfilePhoto(String authenticationId, Mono<String> profilePhotoUrlMono) {
-        LOG.info("update profile photo url");
-        return profilePhotoUrlMono.flatMap(profilePhotoUrl ->
-                {
-                    LOG.info("url: {}", profilePhotoUrl);
-                    return userRepository.updateProfilePhoto(profilePhotoUrl, authenticationId).then(Mono.just("photo updated"));
-                }
-        );
     }
 
    /* @Override
@@ -271,7 +262,7 @@ public class UserSignupService implements UserService {
                     map.put("firstName", myUser.getFirstName());
                     map.put("lastName", myUser.getLastName());
                     map.put("email", myUser.getEmail());
-                    map.put("profilePhoto", myUser.getProfilePhoto());
+                    map.put("profilePhoto", myUser.getThumbnailFileKey());
                     map.put("authenticationId", myUser.getAuthenticationId());
                     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
                     if (myUser.getBirthDate() != null) {
@@ -296,7 +287,7 @@ public class UserSignupService implements UserService {
                     map.put("firstName", myUser.getFirstName());
                     map.put("lastName", myUser.getLastName());
                     map.put("email", myUser.getEmail());
-                    map.put("profilePhoto", myUser.getProfilePhoto());
+                    map.put("profilePhoto", myUser.getThumbnailFileKey());
                     map.put("authenticationId", myUser.getAuthenticationId());
                     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
                     if (myUser.getBirthDate() != null) {
@@ -318,7 +309,7 @@ public class UserSignupService implements UserService {
                     map.put("firstName", myUser.getFirstName());
                     map.put("lastName", myUser.getLastName());
                     map.put("email", myUser.getEmail());
-                    map.put("profilePhoto", myUser.getProfilePhoto());
+                    map.put("profilePhoto", myUser.getThumbnailFileKey());
                     map.put("authenticationId", myUser.getAuthenticationId());
                     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
                     if (myUser.getBirthDate() != null) {

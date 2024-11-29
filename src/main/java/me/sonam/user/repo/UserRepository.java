@@ -39,8 +39,24 @@ public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
             @Param("searchable")boolean searchable,
             @Param("authenticationId") String authenticationId);
 
-    @Query("update My_User mu set mu.profile_photo= :profilePhoto where mu.authentication_id= :authenticationId")
-    Mono<Integer> updateProfilePhoto(@Param("profilePhoto") String profielPhoto, @Param("authenticationId")
+    @Query("update My_User set first_Name= :firstName, last_Name= :lastName, email= :email, searchable = :searchable, " +
+            " profile_photo_file_key= :profilePhotoFileKey, thumbnail_file_key= :thumbnailFileKey " +
+            " where authentication_Id= :authenticationId")
+    Mono<Integer> updateByAuthenticationId(
+            @Param("firstName")String firstName,
+            @Param("lastName") String lastName,
+            @Param("email") String email,
+            @Param("searchable")boolean searchable,
+            @Param("profilePhotoFileKey") String profilePhotoFileKey,
+            @Param("thumbnailFileKey") String thumbnailFileKey,
+            @Param("authenticationId") String authenticationId);
+
+
+    @Query("update My_User mu set mu.profile_photo_file_key= :profilePhotoFileKey, mu.thumbnail_file_key= :thumbnailFileKey " +
+            "where mu.authentication_id= :authenticationId")
+    Mono<Integer> updateProfilePhoto( @Param("profilePhotoFileKey") String profilePhotoFileKey,
+                                      @Param("thumbnailFileKey") String thumbnailFileKey
+                                , @Param("authenticationId")
                                     String authenticationId);
 
     @Query("update My_user set active=true where authentication_Id= :authenticationId")
