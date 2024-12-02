@@ -68,20 +68,23 @@ public class MyUserRepositoryTests {
         userRepository.save(myUser2).subscribe();
 
         LOG.info("update that user now");
+        String profileJsonb ="{"+
+                "\"profilePhotoUrl\": \"https://sonam.cloud/user-rest-service/videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg'\"," +
+                "\"profilePhotoAcl\": \"private\"," +
+                "\"profilePhotoFileKey\": \"videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg\", "+
+                "\"thumbnailUrl\": \"https://sonam.cloud/user-rest-service/videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg\","+
+                "\"thumbnailAcl\": \"public\"}";
+
         Mono<Integer> mono = userRepository.updateByAuthenticationId(
                 "John", "InTibet", "dommy@cat.email", false,
-                "videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg",
-                "videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg",
-                "dommy@cat.email");
+                profileJsonb, "dommy@cat.email");
 
         userRepository.findAll().subscribe(myUser1 -> LOG.info("found user: {}", myUser1));
 
         LOG.info("update that user now");
         userRepository.updateByAuthenticationId(
                 "John", "InTibet", "dog@cat.email", false,
-                        "videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg",
-                        "videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg",
-                        "dommy@cat.email")
+                        profileJsonb, "dommy@cat.email")
                .log().subscribe();
 
         userRepository.findByAuthenticationId("dommy@cat.email")

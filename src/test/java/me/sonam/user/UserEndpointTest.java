@@ -4,24 +4,21 @@ package me.sonam.user;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.TypeRef;
+import com.google.gson.*;
 import me.sonam.user.handler.UserTransfer;
 import me.sonam.user.handler.carrier.User;
 import me.sonam.user.repo.UserRepository;
 import me.sonam.user.repo.entity.MyUser;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
@@ -31,10 +28,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -100,8 +94,22 @@ public class UserEndpointTest {
         userTransfer.setFirstName("Josey");
         userTransfer.setLastName("Cat");
         userTransfer.setEmail("josey.cat@@cat.emmail");
-        userTransfer.setProfilePhotoFileKey( "videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg");
-        userTransfer.setThumbnailFileKey("videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg");
+
+        /*String profileJsonb = "{" +
+                "\"profilePhotoUrl\": \"https://sonam.cloud/user-rest-service/videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg'\"," +
+                "\"profilePhotoAcl\": \"private\"," +
+                "\"profilePhotoFileKey\": \"videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg\", "+
+                "\"thumbnailUrl\": \"https://sonam.cloud/user-rest-service/videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg\","+
+                "\"thumbnailAcl\": \"public\"}";*/
+
+        JsonObject jsonObject = getJsonObject();
+        ObjectMapper objectMapper = new ObjectMapper();
+        TypeReference<HashMap<String, String>> tr = new TypeReference<HashMap<String, String>>() {};
+
+        LOG.info("jsonObject.toString: {}", jsonObject.toString());
+        final Map<String, String> map = objectMapper.readValue(jsonObject.toString(), tr);
+
+        userTransfer.setProfilePhoto(jsonObject.toString());
         userTransfer.setAuthenticationId(authenticationId);
 
         LOG.info("update user fields with jwt in auth bearer token");
@@ -113,20 +121,69 @@ public class UserEndpointTest {
 
         LOG.info("result: {}", result.getResponseBody());
 
+
         userRepository.findByAuthenticationId("dave").as(StepVerifier::create)
                 .expectNextMatches(myUser -> {
                     LOG.info("do expectNextMatches");
-                            LOG.info("profilePhotoFileKey: {}", myUser.getProfilePhotoFileKey());
-                            LOG.info("thumbnailFileKey: {}", myUser.getThumbnailFileKey());
-                   return myUser.getEmail().equals("josey.cat@@cat.emmail")
-                       &&     myUser.getProfilePhotoFileKey().equals("videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg")
-                                    && myUser.getThumbnailFileKey().equals("videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg");
+                            LOG.info("profilePhoto: '{}'", myUser.getProfilePhoto());
+                try {
+                    final String myJson = myUser.getProfilePhoto();
+                    LOG.info("myJson: {}", myJson);
+                    JsonElement jsonElement = JsonParser.parseString(myJson);
+                    LOG.info("jsonElement: {}", jsonElement.getAsString());
+                    LOG.info("json.instance of {}", jsonElement.getClass() );
+
+                    JsonObject jsonObject2 = null;
+                    if (jsonElement.isJsonPrimitive()) {
+                        JsonPrimitive jsonPrimitive = jsonElement.getAsJsonPrimitive();
+                        // Get the primitive value (string, number, boolean)
+                        LOG.info("2- is a json primitive: {}", jsonPrimitive);
+                        LOG.info("2- string: {}", jsonPrimitive.getAsString());
+                        JsonElement jsonElement2 = JsonParser.parseString(jsonPrimitive.getAsString());
+                        LOG.info("2- jsonObject?: {}", jsonElement2.isJsonObject());
+
+                        jsonObject2 = jsonElement2.getAsJsonObject();
+                    }
+                    LOG.info("2- jsonObject from db: {}", jsonObject2);
+                    LOG.info("2- jsonbject equals jsonObject db: {}", jsonObject.equals(jsonObject2));
+
+                    return myUser.getEmail().equals("josey.cat@@cat.emmail") && jsonObject2 != null && jsonObject2.equals(jsonObject);
+                }
+                catch (Exception e) {
+                    LOG.error("failed to create a objectmapper", e);
+                }
+                return false;
 
                 })
                 .expectComplete().verify();
 
     }
-    
+
+    @Test
+    public void jsonTest(){
+        //String json = "{\"name\": \"John\", \"age\": 30, \"city\": \"New York\"}";
+        String json = "{\"profilePhotoUrl\":\"https://sonam.cloud/user-rest-service/videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg\",\"profilePhotoAcl\":\"private\",\"profilePhotoFileKey\":\"videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg\",\"thumbnailUrl\":\"https://sonam.cloud/user-rest-service/videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg\",\"thumbnailAcl\":\"public\"}";
+
+        JsonElement jsonElement = JsonParser.parseString(json);
+
+        if (jsonElement.isJsonObject()) {
+            JsonObject jsonObject = jsonElement.getAsJsonObject();
+            String name = jsonObject.get("profilePhotoUrl").getAsString();
+            LOG.info("profilePhotoUrl: {}", name);
+        } else {
+            LOG.info("Not a JSON object");
+        }
+    }
+    private static @NotNull JsonObject getJsonObject() {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("profilePhotoUrl", "https://sonam.cloud/user-rest-service/videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg");
+        jsonObject.addProperty("profilePhotoAcl", "private");
+        jsonObject.addProperty("profilePhotoFileKey", "videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg");
+        jsonObject.addProperty("thumbnailUrl", "https://sonam.cloud/user-rest-service/videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg");
+        jsonObject.addProperty("thumbnailAcl", "public");
+        return jsonObject;
+    }
+
     @Test
     public void getUserByAuthId() {
         LOG.info("make rest call to save user and create authentication record");

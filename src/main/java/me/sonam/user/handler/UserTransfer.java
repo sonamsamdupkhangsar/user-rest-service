@@ -10,8 +10,7 @@ public class UserTransfer {
     private String authenticationId;
     private String password;
     private boolean searchable;
-    private String thumbnailFileKey;
-    private String profilePhotoFileKey;
+    private String profilePhoto;
     public UserTransfer() {
 
     }
@@ -70,20 +69,12 @@ public class UserTransfer {
         this.searchable = searchable;
     }
 
-    public String getThumbnailFileKey() {
-        return thumbnailFileKey;
+    public String getProfilePhoto() {
+        return profilePhoto;
     }
 
-    public void setThumbnailFileKey(String thumbnailFileKey) {
-        this.thumbnailFileKey = thumbnailFileKey;
-    }
-
-    public String getProfilePhotoFileKey() {
-        return profilePhotoFileKey;
-    }
-
-    public void setProfilePhotoFileKey(String profilePhotoFileKey) {
-        this.profilePhotoFileKey = profilePhotoFileKey;
+    public void setProfilePhoto(String profilePhoto) {
+        this.profilePhoto = profilePhoto;
     }
 
     @Override
@@ -95,8 +86,7 @@ public class UserTransfer {
                 ", authenticationId='" + authenticationId + '\'' +
                 ", password='" + password + '\'' +
                 ", searchable='" + searchable + '\'' +
-                ", profilePhotoFileKey='" + profilePhotoFileKey + '\'' +
-                ", thumbnailFileKey='" + thumbnailFileKey + '\'' +
+                ", profilePhoto='" + profilePhoto + '\'' +
                 '}';
     }
 }

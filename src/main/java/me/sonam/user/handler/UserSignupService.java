@@ -2,7 +2,6 @@ package me.sonam.user.handler;
 
 
 import jakarta.annotation.PostConstruct;
-import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
 import me.sonam.user.handler.carrier.User;
 import me.sonam.user.repo.UserRepository;
 import me.sonam.user.repo.entity.MyUser;
@@ -17,13 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
@@ -173,8 +168,7 @@ public class UserSignupService implements UserService {
 
                                         return userRepository.updateByAuthenticationId(userTransfer.getFirstName(), userTransfer.getLastName(),
                                                 userTransfer.getEmail(),  userTransfer.isSearchable(),
-                                                 userTransfer.getProfilePhotoFileKey(),
-                                                userTransfer.getThumbnailFileKey(), userTransfer.getAuthenticationId());
+                                                 userTransfer.getProfilePhoto(), userTransfer.getAuthenticationId());
 
 
                                     })
@@ -262,7 +256,7 @@ public class UserSignupService implements UserService {
                     map.put("firstName", myUser.getFirstName());
                     map.put("lastName", myUser.getLastName());
                     map.put("email", myUser.getEmail());
-                    map.put("profilePhoto", myUser.getThumbnailFileKey());
+                    map.put("profilePhoto", myUser.getProfilePhoto());
                     map.put("authenticationId", myUser.getAuthenticationId());
                     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
                     if (myUser.getBirthDate() != null) {
@@ -287,7 +281,7 @@ public class UserSignupService implements UserService {
                     map.put("firstName", myUser.getFirstName());
                     map.put("lastName", myUser.getLastName());
                     map.put("email", myUser.getEmail());
-                    map.put("profilePhoto", myUser.getThumbnailFileKey());
+                    map.put("profilePhoto", myUser.getProfilePhoto());
                     map.put("authenticationId", myUser.getAuthenticationId());
                     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
                     if (myUser.getBirthDate() != null) {
@@ -309,7 +303,7 @@ public class UserSignupService implements UserService {
                     map.put("firstName", myUser.getFirstName());
                     map.put("lastName", myUser.getLastName());
                     map.put("email", myUser.getEmail());
-                    map.put("profilePhoto", myUser.getThumbnailFileKey());
+                    map.put("profilePhoto", myUser.getProfilePhoto());
                     map.put("authenticationId", myUser.getAuthenticationId());
                     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
                     if (myUser.getBirthDate() != null) {

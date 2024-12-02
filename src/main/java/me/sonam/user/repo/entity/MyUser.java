@@ -23,8 +23,7 @@ public class MyUser implements Persistable<UUID> {
     private String authenticationId;
     private Boolean active;
     private Boolean userAuthAccountCreated;
-    private String thumbnailFileKey;
-    private String profilePhotoFileKey;
+    private String profilePhoto;
     private Boolean searchable;
 
     // these can be populated after login
@@ -49,7 +48,7 @@ public class MyUser implements Persistable<UUID> {
     }
 
     public MyUser(UUID id, String firstName, String lastName, String email, String authenticationId, Boolean active,
-                  Boolean userAuthAccountCreated, String thumbnailFileKey, String profilePhotoFileKey,
+                  Boolean userAuthAccountCreated, String profilePhoto,
                   Boolean searchable, LocalDate birthDate, UUID genderId, boolean newAccount) {
         this.id = id;
         this.firstName = firstName;
@@ -58,8 +57,7 @@ public class MyUser implements Persistable<UUID> {
         this.authenticationId = authenticationId;
         this.active = active;
         this.userAuthAccountCreated = userAuthAccountCreated;
-        this.thumbnailFileKey = thumbnailFileKey;
-        this.profilePhotoFileKey = profilePhotoFileKey;
+        this.profilePhoto = profilePhoto;
         this.searchable = searchable;
         this.birthDate = birthDate;
         this.genderId = genderId;
@@ -115,21 +113,10 @@ public class MyUser implements Persistable<UUID> {
         return this.userAuthAccountCreated;
     }
 
-    public String getThumbnailFileKey() {
-        return thumbnailFileKey;
+    public String getProfilePhoto() {
+        return profilePhoto;
     }
 
-    public void setThumbnailFileKey(String thumbnailFileKey) {
-        this.thumbnailFileKey = thumbnailFileKey;
-    }
-
-    public String getProfilePhotoFileKey() {
-        return profilePhotoFileKey;
-    }
-
-    public void setProfilePhotoFileKey(String profilePhotoFileKey) {
-        this.profilePhotoFileKey = profilePhotoFileKey;
-    }
     public Boolean getSearchable() {
         return searchable;
     }
@@ -154,8 +141,7 @@ public class MyUser implements Persistable<UUID> {
                 ", birthDate=" + birthDate +
                 ", genderId=" + genderId +
                 ", newAccount=" + newAccount +
-                ", profilePhotoFileKey=" + profilePhotoFileKey +
-                ", thumbnailFileKey=" + thumbnailFileKey +
+                ", profilePhoto=" + profilePhoto +
                 '}';
     }
 
