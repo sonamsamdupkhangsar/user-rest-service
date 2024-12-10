@@ -95,12 +95,50 @@ public class UserEndpointTest {
         userTransfer.setLastName("Cat");
         userTransfer.setEmail("josey.cat@@cat.emmail");
 
-        /*String profileJsonb = "{" +
-                "\"profilePhotoUrl\": \"https://sonam.cloud/user-rest-service/videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg'\"," +
-                "\"profilePhotoAcl\": \"private\"," +
-                "\"profilePhotoFileKey\": \"videos/2024-11-22/2024-11-22T08:15:40.314460.jpeg\", "+
-                "\"thumbnailUrl\": \"https://sonam.cloud/user-rest-service/videos/2024-11-22/thumbnail/2024-11-22T08:15:40.314460.jpeg\","+
-                "\"thumbnailAcl\": \"public\"}";*/
+        userTransfer.setAuthenticationId(authenticationId);
+
+        LOG.info("update user fields with jwt in auth bearer token");
+        EntityExchangeResult<String> result = webTestClient.put().uri("/users")
+                .bodyValue(userTransfer)
+                .headers(addJwt(jwt))
+                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
+
+        LOG.info("result: {}", result.getResponseBody());
+
+
+        userRepository.findByAuthenticationId("dave").as(StepVerifier::create)
+                .expectNextMatches(myUser -> {
+                    LOG.info("do expectNextMatches");
+                            LOG.info("profilePhoto: '{}'", myUser.getProfilePhoto());
+
+
+                    return myUser.getEmail().equals("josey.cat@@cat.emmail");
+
+
+
+                })
+                .expectComplete().verify();
+
+    }
+
+    @Test
+    public void updateProfilePhoto() throws InterruptedException, IOException {
+        LOG.info("make rest call to save user and create authentication record");
+
+        final String authenticationId = "dave";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
+        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email",
+                authenticationId);
+
+        userRepository.save(myUser2).subscribe();
+
+        UserTransfer userTransfer = new UserTransfer();
+
+        userTransfer.setFirstName("Josey");
+        userTransfer.setLastName("Cat");
+        userTransfer.setEmail("josey@cat.email");
 
         JsonObject jsonObject = getJsonObject();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -113,9 +151,8 @@ public class UserEndpointTest {
         userTransfer.setAuthenticationId(authenticationId);
 
         LOG.info("update user fields with jwt in auth bearer token");
-        EntityExchangeResult<String> result = webTestClient.put().uri("/users")
+        EntityExchangeResult<String> result = webTestClient.put().uri("/users/photo")
                 .bodyValue(userTransfer)
-                //.headers(httpHeaders -> httpHeaders.set("authId", "dommy@cat.email"))
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 
@@ -125,34 +162,40 @@ public class UserEndpointTest {
         userRepository.findByAuthenticationId("dave").as(StepVerifier::create)
                 .expectNextMatches(myUser -> {
                     LOG.info("do expectNextMatches");
-                            LOG.info("profilePhoto: '{}'", myUser.getProfilePhoto());
-                try {
-                    final String myJson = myUser.getProfilePhoto();
-                    LOG.info("myJson: {}", myJson);
-                    JsonElement jsonElement = JsonParser.parseString(myJson);
-                    LOG.info("jsonElement: {}", jsonElement.getAsString());
-                    LOG.info("json.instance of {}", jsonElement.getClass() );
+                    LOG.info("profilePhoto: '{}'", myUser.getProfilePhoto());
+                    try {
+                        final String myJson = myUser.getProfilePhoto();
+                        LOG.info("myJson: {}", myJson);
+                        JsonElement jsonElement = JsonParser.parseString(myJson);
+                        LOG.info("jsonElement: {}", jsonElement.getAsString());
+                        LOG.info("json.instance of {}", jsonElement.getClass() );
 
-                    JsonObject jsonObject2 = null;
-                    if (jsonElement.isJsonPrimitive()) {
-                        JsonPrimitive jsonPrimitive = jsonElement.getAsJsonPrimitive();
-                        // Get the primitive value (string, number, boolean)
-                        LOG.info("2- is a json primitive: {}", jsonPrimitive);
-                        LOG.info("2- string: {}", jsonPrimitive.getAsString());
-                        JsonElement jsonElement2 = JsonParser.parseString(jsonPrimitive.getAsString());
-                        LOG.info("2- jsonObject?: {}", jsonElement2.isJsonObject());
+                        JsonObject jsonObject2 = null;
+                        if (jsonElement.isJsonPrimitive()) {
+                            JsonPrimitive jsonPrimitive = jsonElement.getAsJsonPrimitive();
+                            // Get the primitive value (string, number, boolean)
+                            LOG.info("2- is a json primitive: {}", jsonPrimitive);
+                            LOG.info("2- string: {}", jsonPrimitive.getAsString());
+                            JsonElement jsonElement2 = JsonParser.parseString(jsonPrimitive.getAsString());
+                            LOG.info("2- jsonObject?: {}", jsonElement2.isJsonObject());
 
-                        jsonObject2 = jsonElement2.getAsJsonObject();
+                            jsonObject2 = jsonElement2.getAsJsonObject();
+                        }
+                        LOG.info("2- jsonObject from db: {}", jsonObject2);
+                        LOG.info("2- jsonbject equals jsonObject db: {}", jsonObject.equals(jsonObject2));
+
+                        LOG.info("myUser.email: {}, myUser {}", myUser.getEmail(), myUser);
+
+                        boolean userEquals = myUser.getEmail().equals(myUser2.getEmail()) &&
+                                myUser.getFirstName().equals(myUser2.getFirstName()) &&
+                                myUser.getLastName().equals(myUser2.getLastName());
+                        LOG.info("userEquals: {}", userEquals);
+                        return userEquals && jsonObject2 != null && jsonObject2.equals(jsonObject);
                     }
-                    LOG.info("2- jsonObject from db: {}", jsonObject2);
-                    LOG.info("2- jsonbject equals jsonObject db: {}", jsonObject.equals(jsonObject2));
-
-                    return myUser.getEmail().equals("josey.cat@@cat.emmail") && jsonObject2 != null && jsonObject2.equals(jsonObject);
-                }
-                catch (Exception e) {
-                    LOG.error("failed to create a objectmapper", e);
-                }
-                return false;
+                    catch (Exception e) {
+                        LOG.error("failed to create a objectmapper", e);
+                    }
+                    return false;
 
                 })
                 .expectComplete().verify();

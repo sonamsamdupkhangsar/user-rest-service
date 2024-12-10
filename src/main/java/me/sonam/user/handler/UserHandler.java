@@ -40,6 +40,20 @@ public class UserHandler {
                 });
     }
 
+    public Mono<ServerResponse> updateProfilePhoto(ServerRequest serverRequest) {
+
+        return serverRequest.principal().flatMap(principal ->
+                userService.updateProfilePhoto(principal.getName(), serverRequest.bodyToMono(UserTransfer.class))
+                        .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                        .onErrorResume(throwable -> {
+                            LOG.info("profile photo update failed: ", throwable);
+                            return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                                    .bodyValue(throwable.getMessage());
+                        })
+        );
+    }
+
+
     public Mono<ServerResponse> update(ServerRequest serverRequest) {
 
         return serverRequest.principal().flatMap(principal ->

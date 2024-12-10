@@ -22,6 +22,7 @@ public class Router {
         return RouterFunctions
                 .route(POST("/users").and(accept(MediaType.APPLICATION_JSON)), handler::signupUser)
                 .andRoute(PUT("/users").and(accept(MediaType.APPLICATION_JSON)), handler::update)
+                .andRoute(PUT("/users/photo").and(accept(MediaType.APPLICATION_JSON)), handler::updateProfilePhoto)
                 .andRoute(GET("/users/names/{firstName}/{lastName}").and(accept(MediaType.APPLICATION_JSON)), handler::findMatchingFirstNameAndLastName)
                 .andRoute(GET("/users/ids/{ids}").and(accept(MediaType.APPLICATION_JSON)), handler::getBatchOfUserById)
                 .andRoute(GET("/users/{id}").and(accept(MediaType.APPLICATION_JSON)), handler::getUserById)

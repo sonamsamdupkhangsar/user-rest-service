@@ -77,14 +77,14 @@ public class MyUserRepositoryTests {
 
         Mono<Integer> mono = userRepository.updateByAuthenticationId(
                 "John", "InTibet", "dommy@cat.email", false,
-                profileJsonb, "dommy@cat.email");
+                 "dommy@cat.email");
 
         userRepository.findAll().subscribe(myUser1 -> LOG.info("found user: {}", myUser1));
 
         LOG.info("update that user now");
         userRepository.updateByAuthenticationId(
                 "John", "InTibet", "dog@cat.email", false,
-                        profileJsonb, "dommy@cat.email")
+                         "dommy@cat.email")
                .log().subscribe();
 
         userRepository.findByAuthenticationId("dommy@cat.email")
