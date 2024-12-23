@@ -2,10 +2,10 @@ package me.sonam.user.handler;
 
 
 import jakarta.annotation.PostConstruct;
-import me.sonam.security.headerfilter.ReactiveRequestContextHolder;
 import me.sonam.user.handler.carrier.User;
 import me.sonam.user.repo.UserRepository;
 import me.sonam.user.repo.entity.MyUser;
+import me.sonam.user.util.ProfilePhotoUrl;
 import me.sonam.user.webclient.AccountWebClient;
 import me.sonam.user.webclient.AuthenticationWebClient;
 import me.sonam.user.webclient.OrganizationWebClient;
@@ -17,13 +17,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
@@ -150,11 +146,45 @@ public class UserSignupService implements UserService {
         );
     }
 
+    /**
+     * this will only update the user profilePhoto property.
+     * @param authenticationId
+     * @param userMono
+     * @return
+     */
+    @Override
+    public Mono<String> updateProfilePhoto(String authenticationId, Mono<UserTransfer> userMono) {
+        LOG.info("update user fields for authenticationId: {}", authenticationId);
+
+        return userMono.flatMap(userTransfer -> {
+            LOG.info("userTransfer: {}", userTransfer);
+            return userRepository.findByAuthenticationId(userTransfer.getAuthenticationId())
+                 .switchIfEmpty(Mono.error(new SignupException("email: email already used")))
+
+                    .flatMap(myUser -> {
+                                LOG.info("update profile photo for authenticationId: {}", userTransfer.getAuthenticationId());
+
+                                return userRepository.updateProfilePhotoByAuthenticationId(
+                                        userTransfer.getProfilePhoto(), userTransfer.getAuthenticationId());
+
+
+                            })
+                            .thenReturn("profilePhoto property updated");
+        });
+    }
+
+    /**
+     * this will update the user firstname, lastname email.  It will not update the profilePhoto property as there
+     * is another endpoint to handle this.
+     * @param authenticationId
+     * @param userMono
+     * @return
+     */
     @Override
     public Mono<String> updateUser(String authenticationId, Mono<UserTransfer> userMono) {
         LOG.info("update user fields for authenticationId: {}", authenticationId);
 
-        return userMono.flatMap(userTransfer -> {
+       return userMono.flatMap(userTransfer -> {
             LOG.info("userTransfer: {}", userTransfer);
                      return userRepository.findByAuthenticationId(userTransfer.getAuthenticationId())
                              .flatMap(myUser ->
@@ -170,25 +200,15 @@ public class UserSignupService implements UserService {
                                     .switchIfEmpty(Mono.error(new SignupException("email: email already used")))
                                     .flatMap(aBoolean -> {
                                         LOG.info("update name and email for authId: {}", authenticationId);
-                                        return userRepository.updateFirstNameAndLastNameAndEmailAndSearchableByAuthenticationId(
-                                                userTransfer.getFirstName(), userTransfer.getLastName(), userTransfer.getEmail()
-                                                , userTransfer.isSearchable(), userTransfer.getAuthenticationId()
-                                        );
+
+                                        return userRepository.updateByAuthenticationId(userTransfer.getFirstName(), userTransfer.getLastName(),
+                                                userTransfer.getEmail(),  userTransfer.isSearchable(),
+                                                  userTransfer.getAuthenticationId());
+
 
                                     })
                                     .thenReturn("user firstname, lastname and email updated"));
     });
-    }
-
-    @Override
-    public Mono<String> updateProfilePhoto(String authenticationId, Mono<String> profilePhotoUrlMono) {
-        LOG.info("update profile photo url");
-        return profilePhotoUrlMono.flatMap(profilePhotoUrl ->
-                {
-                    LOG.info("url: {}", profilePhotoUrl);
-                    return userRepository.updateProfilePhoto(profilePhotoUrl, authenticationId).then(Mono.just("photo updated"));
-                }
-        );
     }
 
    /* @Override
@@ -271,7 +291,17 @@ public class UserSignupService implements UserService {
                     map.put("firstName", myUser.getFirstName());
                     map.put("lastName", myUser.getLastName());
                     map.put("email", myUser.getEmail());
-                    map.put("profilePhoto", myUser.getProfilePhoto());
+                    if (myUser.getProfilePhoto() != null && !myUser.getProfilePhoto().isEmpty()) {
+                        final String thumbnailUrl = ProfilePhotoUrl.getProfileUrl(myUser.getProfilePhoto());
+                        LOG.info("set profilePhoto url : '{}'", thumbnailUrl);
+                        map.put("profilePhoto", thumbnailUrl);
+                    }
+                    else {
+                        LOG.info("put empty string for profilePhoto as myUser.profilePhoto is null or empty: '{}'",
+                                myUser.getProfilePhoto());
+                        map.put("profilePhoto", "");
+                    }
+
                     map.put("authenticationId", myUser.getAuthenticationId());
                     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
                     if (myUser.getBirthDate() != null) {
@@ -338,7 +368,7 @@ public class UserSignupService implements UserService {
                     LOG.info("found myUser: {}", myUser);
                     User user = new User(myUser.getId(), myUser.getFirstName(),
                             myUser.getLastName(), myUser.getEmail(), myUser.getAuthenticationId(), myUser.getActive(),
-                            myUser.getUserAuthAccountCreated(), myUser.getSearchable());
+                            myUser.getUserAuthAccountCreated(), myUser.getSearchable(), myUser.getProfilePhoto());
 
                     LOG.info("user to return: {}", user);
                     return user;
@@ -352,7 +382,7 @@ public class UserSignupService implements UserService {
 
         return userRepository.findByIdIn(uuids).map(myUser -> new User(myUser.getId(), myUser.getFirstName(), myUser.getLastName(),
                 myUser.getEmail(), myUser.getAuthenticationId(), myUser.getActive(),
-                myUser.getUserAuthAccountCreated(), myUser.getSearchable())).collectList();
+                myUser.getUserAuthAccountCreated(), myUser.getSearchable(), myUser.getProfilePhoto())).collectList();
     }
 
 

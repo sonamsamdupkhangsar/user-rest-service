@@ -6,12 +6,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 @Service
@@ -36,6 +40,20 @@ public class UserHandler {
                 });
     }
 
+    public Mono<ServerResponse> updateProfilePhoto(ServerRequest serverRequest) {
+
+        return serverRequest.principal().flatMap(principal ->
+                userService.updateProfilePhoto(principal.getName(), serverRequest.bodyToMono(UserTransfer.class))
+                        .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                        .onErrorResume(throwable -> {
+                            LOG.info("profile photo update failed: ", throwable);
+                            return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                                    .bodyValue(throwable.getMessage());
+                        })
+        );
+    }
+
+
     public Mono<ServerResponse> update(ServerRequest serverRequest) {
 
         return serverRequest.principal().flatMap(principal ->
@@ -45,20 +63,6 @@ public class UserHandler {
                     LOG.info("user update failed: ", throwable);
                        return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
                                 .bodyValue(throwable.getMessage());
-                })
-        );
-    }
-    //updateProfilePhoto
-    public Mono<ServerResponse> updateProfilePhoto(ServerRequest serverRequest) {
-        LOG.info("update profile photo");
-
-        return serverRequest.principal().flatMap(principal ->
-                userService.updateProfilePhoto(principal.getName(), serverRequest.bodyToMono(String.class))
-                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable -> {
-                    LOG.info("update profile photo failed", throwable);
-                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(throwable.getMessage());
                 })
         );
     }
@@ -185,6 +189,34 @@ public class UserHandler {
                             .bodyValue(throwable.getMessage());
                 });
     }
+/*
+
+    public Mono<ServerResponse> uploadProfilePhoto(ServerRequest serverRequest) {
+        LOG.info("upload profile photo");
+
+        serverRequest.multipartData()
+                .map(parts -> parts.get("image"))
+                .cast(FilePart.class)
+                .flatMap(filePart -> {
+                    Path tempFile = null;
+                    try {
+                        tempFile = Files.createTempFile("image-", filePart.filename());
+                        return filePart.transferTo(tempFile).then(Mono.just(tempFile.toString()));
+                    } catch (IOException e) {
+                        LOG.error("failed to create temp file for uploading profile photo", e);
+                    }
+                    return null;
+                })
+                .
+        return userService.uploadProfilePhoto()
+                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
+                .onErrorResume(throwable -> {
+                    LOG.error("profile photo upload failed", throwable);
+                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(throwable.getMessage());
+                });
+    }
+*/
 
     @SafeVarargs
     public static Map<String, String> getMap(Pair<String, String>... pairs){

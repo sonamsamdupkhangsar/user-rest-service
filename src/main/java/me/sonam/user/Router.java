@@ -22,13 +22,14 @@ public class Router {
         return RouterFunctions
                 .route(POST("/users").and(accept(MediaType.APPLICATION_JSON)), handler::signupUser)
                 .andRoute(PUT("/users").and(accept(MediaType.APPLICATION_JSON)), handler::update)
+                .andRoute(PUT("/users/photo").and(accept(MediaType.APPLICATION_JSON)), handler::updateProfilePhoto)
                 .andRoute(GET("/users/names/{firstName}/{lastName}").and(accept(MediaType.APPLICATION_JSON)), handler::findMatchingFirstNameAndLastName)
                 .andRoute(GET("/users/ids/{ids}").and(accept(MediaType.APPLICATION_JSON)), handler::getBatchOfUserById)
                 .andRoute(GET("/users/{id}").and(accept(MediaType.APPLICATION_JSON)), handler::getUserById)
                 .andRoute(GET("/users/authentication-id/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)), handler::getUserByAuthId)
                 .andRoute(GET("/users/profile/authentication-id/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)), handler::getUserByAuthIdProfileSearch)
-                .andRoute(PUT("/users/profile-photo").and(accept(MediaType.APPLICATION_JSON)), handler::updateProfilePhoto)
                 .andRoute(PUT("/users/{authenticationId}/active").and(accept(MediaType.APPLICATION_JSON)), handler::activateUser)
                 .andRoute(DELETE("/users").and(accept(MediaType.APPLICATION_JSON)), handler::deleteMyAccount);
+
     }
 }

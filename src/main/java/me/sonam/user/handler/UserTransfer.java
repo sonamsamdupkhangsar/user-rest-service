@@ -10,7 +10,7 @@ public class UserTransfer {
     private String authenticationId;
     private String password;
     private boolean searchable;
-
+    private String profilePhoto;
     public UserTransfer() {
 
     }
@@ -69,6 +69,14 @@ public class UserTransfer {
         this.searchable = searchable;
     }
 
+    public String getProfilePhoto() {
+        return profilePhoto;
+    }
+
+    public void setProfilePhoto(String profilePhoto) {
+        this.profilePhoto = profilePhoto;
+    }
+
     @Override
     public String toString() {
         return "UserTransfer{" +
@@ -78,6 +86,7 @@ public class UserTransfer {
                 ", authenticationId='" + authenticationId + '\'' +
                 ", password='" + password + '\'' +
                 ", searchable='" + searchable + '\'' +
+                ", profilePhoto='" + profilePhoto + '\'' +
                 '}';
     }
 }

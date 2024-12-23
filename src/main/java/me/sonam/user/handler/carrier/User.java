@@ -12,11 +12,13 @@ public class User {
     private Boolean active;
     private Boolean userAuthAccountCreated;
     private Boolean searchable;
+    private String profilePhoto;
 
     public User() {
     }
 
-    public User(UUID id, String firstName, String lastName, String email, String authenticationId, Boolean active, Boolean userAuthAccountCreated, Boolean searchable) {
+    public User(UUID id, String firstName, String lastName, String email, String authenticationId, Boolean active,
+                Boolean userAuthAccountCreated, Boolean searchable, String profilePhoto) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -25,6 +27,7 @@ public class User {
         this.active = active;
         this.userAuthAccountCreated = userAuthAccountCreated;
         this.searchable = searchable;
+        this.profilePhoto = profilePhoto;
     }
 
     @Override
@@ -104,6 +107,14 @@ public class User {
         this.userAuthAccountCreated = userAuthAccountCreated;
     }
 
+    public String getProfilePhoto() {
+        return profilePhoto;
+    }
+
+    public void setProfilePhoto(String profilePhoto) {
+        this.profilePhoto = profilePhoto;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -115,6 +126,7 @@ public class User {
                 ", active=" + active +
                 ", userAuthAccountCreated=" + userAuthAccountCreated +
                 ", searchable=" + searchable +
+                ", profilePhoto='" + profilePhoto + '\'' +
                 '}';
     }
 }
