@@ -5,6 +5,7 @@ import jakarta.annotation.PostConstruct;
 import me.sonam.user.handler.carrier.User;
 import me.sonam.user.repo.UserRepository;
 import me.sonam.user.repo.entity.MyUser;
+import me.sonam.user.util.ProfilePhotoUrl;
 import me.sonam.user.webclient.AccountWebClient;
 import me.sonam.user.webclient.AuthenticationWebClient;
 import me.sonam.user.webclient.OrganizationWebClient;
@@ -290,7 +291,17 @@ public class UserSignupService implements UserService {
                     map.put("firstName", myUser.getFirstName());
                     map.put("lastName", myUser.getLastName());
                     map.put("email", myUser.getEmail());
-                    map.put("profilePhoto", myUser.getProfilePhoto());
+                    if (myUser.getProfilePhoto() != null && !myUser.getProfilePhoto().isEmpty()) {
+                        final String thumbnailUrl = ProfilePhotoUrl.getProfileUrl(myUser.getProfilePhoto());
+                        LOG.info("set profilePhoto url : '{}'", thumbnailUrl);
+                        map.put("profilePhoto", thumbnailUrl);
+                    }
+                    else {
+                        LOG.info("put empty string for profilePhoto as myUser.profilePhoto is null or empty: '{}'",
+                                myUser.getProfilePhoto());
+                        map.put("profilePhoto", "");
+                    }
+
                     map.put("authenticationId", myUser.getAuthenticationId());
                     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
                     if (myUser.getBirthDate() != null) {
