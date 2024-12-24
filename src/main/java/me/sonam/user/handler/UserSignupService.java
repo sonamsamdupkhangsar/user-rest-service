@@ -154,16 +154,19 @@ public class UserSignupService implements UserService {
      */
     @Override
     public Mono<String> updateProfilePhoto(String authenticationId, Mono<UserTransfer> userMono) {
-        LOG.info("update user fields for authenticationId: {}", authenticationId);
+        LOG.info("update profilePhoto for authenticationId: {}", authenticationId);
 
         return userMono.flatMap(userTransfer -> {
-            LOG.info("userTransfer: {}", userTransfer);
+            LOG.info("profilePhoto in userTransfer object: {}", userTransfer);
             return userRepository.findByAuthenticationId(userTransfer.getAuthenticationId())
                  .switchIfEmpty(Mono.error(new SignupException("email: email already used")))
 
                     .flatMap(myUser -> {
                                 LOG.info("update profile photo for authenticationId: {}", userTransfer.getAuthenticationId());
-
+                                if (userTransfer.getProfilePhoto() == null || userTransfer.getProfilePhoto().isEmpty()) {
+                                    LOG.error("profilePhoto value is empty");
+                                    return Mono.error(new UserException("profilePhoto value is empty"));
+                                }
                                 return userRepository.updateProfilePhotoByAuthenticationId(
                                         userTransfer.getProfilePhoto(), userTransfer.getAuthenticationId());
 
