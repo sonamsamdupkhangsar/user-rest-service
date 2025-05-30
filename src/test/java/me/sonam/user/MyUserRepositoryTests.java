@@ -87,7 +87,7 @@ public class MyUserRepositoryTests {
                          "dommy@cat.email")
                .log().subscribe();
 
-        userRepository.findByAuthenticationId("dommy@cat.email")
+        userRepository.findByAuthenticationIdIgnoreCase("dommy@cat.email")
                 .subscribe(myUser1 -> LOG.info("found user: {}, test condiditon: {}", myUser1, myUser1.getEmail().equals("dog@cat.email")));
       /*  mono.as(StepVerifier::create)
                 .thenConsumeWhile(myUser1 -> {

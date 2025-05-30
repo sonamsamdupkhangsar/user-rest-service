@@ -14,24 +14,25 @@ import java.util.UUID;
 public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
     Flux<MyUser> findByIdIn(List<UUID> ids);
     Mono<MyUser> findByEmail(String email);
-    Mono<Boolean> existsByEmailAndIdNot(String email, UUID id);
-    Mono<Boolean> existsByEmail(String email);
-    Mono<Boolean> existsByAuthenticationId(String authenticationId);
-    Mono<Boolean> existsByAuthenticationIdAndActiveTrue(String authenticationId);
-    Mono<Integer> deleteByAuthenticationIdAndEmailAndActiveFalse(String authenticationId, String email);
-    Mono<Integer> deleteByEmailAndActiveFalse(String email);
-    Mono<Boolean> existsByEmailAndActiveTrue(String email);
-    Mono<Integer> deleteByAuthenticationIdAndActiveFalse(String authenticationId);
-    Mono<Boolean> existsByAuthenticationIdOrEmail(String authenticationId, String email);
-    Mono<Void> deleteByAuthenticationId(String authenticationId);
+    Mono<Boolean> existsByEmailIgnoreCaseAndIdNot(String email, UUID id);
+    //Mono<Boolean> existsByEmail(String email);
+    Mono<Boolean> existsByAuthenticationIdIgnoreCase(String authenticationId);
+    Mono<Boolean> existsByAuthenticationIdIgnoreCaseAndActiveTrue(String authenticationId);
+    //Mono<Integer> deleteByAuthenticationIdAndEmailAndActiveFalse(String authenticationId, String email);
+    //Mono<Integer> deleteByEmailAndActiveFalse(String email);
+    Mono<Boolean> existsByEmailIgnoreCaseAndActiveTrue(String email);
+    Mono<Integer> deleteByAuthenticationIdIgnoreCaseAndActiveFalse(String authenticationId);
+    //Mono<Boolean> existsByAuthenticationIdOrEmail(String authenticationId, String email);
+    Mono<Void> deleteByAuthenticationIdIgnoreCase(String authenticationId);
     Flux<MyUser> findByFirstNameContainingIgnoreCaseAndLastNameContainingIgnoreCase(String firstName, String lastName);
-    Mono<MyUser> findByAuthenticationId(String authenticationId);
-    @Query("update My_User mu set mu.first_Name= :firstName, mu.last_Name= :lastName where mu.authentication_Id= :authenticationId")
+    Mono<MyUser> findByAuthenticationIdIgnoreCase(String authenticationId);
+    @Query("update My_User mu set mu.first_Name= :firstName, mu.last_Name= :lastName where lower(mu.authentication_Id) = lower(:authenticationId")
     Mono<Integer> updateFirstNameAndLastNameByAuthenticationId(@Param("firstName")String firstName,
                                                               @Param("lastName") String lastName,
                                                               @Param("authenticationId") String authenticationId);
 
-    @Query("update My_User set first_Name= :firstName, last_Name= :lastName, email= :email, searchable = :searchable where authentication_Id= :authenticationId")
+    @Query("update My_User set first_Name= :firstName, last_Name= :lastName, email= lower(:email), " +
+            "searchable = :searchable where lower(authentication_Id) = lower(:authenticationId)")
     Mono<Integer> updateFirstNameAndLastNameAndEmailAndSearchableByAuthenticationId(
             @Param("firstName")String firstName,
             @Param("lastName") String lastName,
@@ -39,8 +40,8 @@ public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
             @Param("searchable")boolean searchable,
             @Param("authenticationId") String authenticationId);
 
-    @Query("update My_User set first_Name= :firstName, last_Name= :lastName, email= :email, searchable = :searchable " +
-            " where authentication_Id= :authenticationId")
+    @Query("update My_User set first_Name= :firstName, last_Name= :lastName, email= lower(:email), searchable = :searchable " +
+            " where lower(authentication_Id) = lower(:authenticationId)")
     Mono<Integer> updateByAuthenticationId(
             @Param("firstName")String firstName,
             @Param("lastName") String lastName,
@@ -53,19 +54,19 @@ public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
 
 
     @Query("update My_User mu set mu.profile_photo_file_key= :profilePhotoFileKey, mu.thumbnail_file_key= :thumbnailFileKey " +
-            "where mu.authentication_id= :authenticationId")
+            "where lower(mu.authentication_id) = lower(:authenticationId)")
     Mono<Integer> updateProfilePhoto( @Param("profilePhotoFileKey") String profilePhotoFileKey,
                                       @Param("thumbnailFileKey") String thumbnailFileKey
                                 , @Param("authenticationId")
                                     String authenticationId);
 
-    @Query("update My_user set active=true where authentication_Id= :authenticationId")
+    @Query("update My_user set active=true where lower(authentication_Id) = lower(:authenticationId)")
     Mono<Integer> updateUserActiveTrue(@Param("authenticationId") String authenticationId);
-    Mono<Boolean> existsByAuthenticationIdAndUserAuthAccountCreatedTrue(String authenticationId);
-    Mono<Integer> deleteByAuthenticationIdAndUserAuthAccountCreatedFalse(String authenticationId);
-    Mono<Integer> deleteByEmailAndUserAuthAccountCreatedFalse(String email);
-    Mono<Boolean> existsByEmailAndUserAuthAccountCreatedTrue(String email);
+    Mono<Boolean> existsByAuthenticationIdIgnoreCaseAndUserAuthAccountCreatedTrue(String authenticationId);
+    Mono<Integer> deleteByAuthenticationIdIgnoreCaseAndUserAuthAccountCreatedFalse(String authenticationId);
+    Mono<Integer> deleteByEmailIgnoreCaseAndUserAuthAccountCreatedFalse(String email);
+    Mono<Boolean> existsByEmailIgnoreCaseAndUserAuthAccountCreatedTrue(String email);
 
-    @Query("update My_user set user_auth_account_created=true where authentication_Id= :authenticationId")
+    @Query("update My_user set user_auth_account_created=true where lower(authentication_Id) = lower(:authenticationId)")
     Mono<Integer> updatedUserAuthAccountCreatedTrue(String authenticationId);
 }

@@ -11,22 +11,32 @@ public class UserTransfer {
     private String password;
     private boolean searchable;
     private String profilePhoto;
+    private boolean active;
+
     public UserTransfer() {
 
     }
-    public UserTransfer(String firstName, String lastName, String email, String authenticationId, String password) {
+    public UserTransfer(String firstName, String lastName, String email, String authenticationId, String password, boolean active) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.email = email;
-        this.authenticationId = authenticationId;
+        if (email != null) {
+            this.email = email.toLowerCase();
+        }
+
+        if (authenticationId != null) {
+            this.authenticationId = authenticationId.toLowerCase();
+        }
         this.password = password;
+        this.active = active;
     }
     public String getAuthenticationId() {
         return authenticationId;
     }
 
     public void setAuthenticationId(String authenticationId) {
-        this.authenticationId = authenticationId;
+        if (authenticationId != null) {
+            this.authenticationId = authenticationId.toLowerCase();
+        }
     }
 
     public String getPassword() {
@@ -58,7 +68,9 @@ public class UserTransfer {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        if (email != null) {
+            this.email = email.toLowerCase();
+        }
     }
 
     public boolean isSearchable() {
@@ -76,6 +88,9 @@ public class UserTransfer {
     public void setProfilePhoto(String profilePhoto) {
         this.profilePhoto = profilePhoto;
     }
+    public boolean isActive() {
+        return this.active;
+    }
 
     @Override
     public String toString() {
@@ -87,6 +102,7 @@ public class UserTransfer {
                 ", password='" + password + '\'' +
                 ", searchable='" + searchable + '\'' +
                 ", profilePhoto='" + profilePhoto + '\'' +
+                ", active='" + active + '\'' +
                 '}';
     }
 }

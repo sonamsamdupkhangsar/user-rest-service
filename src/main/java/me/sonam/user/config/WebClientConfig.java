@@ -36,12 +36,16 @@ public class WebClientConfig {
     @Autowired
     private UserRepository userRepository;
 
+    @Value("${tokenExpireSeconds:1}")
+    private int tokenExpireSeconds;
+
     @LoadBalanced
     @Bean
     public WebClient.Builder webClientBuilder() {
         LOG.info("returning load balanced webclient part");
         return WebClient.builder().filter(reactiveRequestContextHolder().headerFilter());
     }
+
     @LoadBalanced
     @Bean("noFilter")
     public WebClient.Builder webClientBuilderNoFilter() {
@@ -51,7 +55,7 @@ public class WebClientConfig {
 
     @Bean
     public ReactiveRequestContextHolder reactiveRequestContextHolder() {
-        return new ReactiveRequestContextHolder(webClientBuilderNoFilter());
+        return new ReactiveRequestContextHolder(webClientBuilderNoFilter(), tokenExpireSeconds);
     }
 
     @Bean

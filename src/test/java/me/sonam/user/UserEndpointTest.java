@@ -106,7 +106,7 @@ public class UserEndpointTest {
         LOG.info("result: {}", result.getResponseBody());
 
 
-        userRepository.findByAuthenticationId("dave").as(StepVerifier::create)
+        userRepository.findByAuthenticationIdIgnoreCase("dave").as(StepVerifier::create)
                 .expectNextMatches(myUser -> {
                     LOG.info("do expectNextMatches");
                             LOG.info("profilePhoto: '{}'", myUser.getProfilePhoto());
@@ -159,7 +159,7 @@ public class UserEndpointTest {
         LOG.info("result: {}", result.getResponseBody());
 
 
-        userRepository.findByAuthenticationId("dave").as(StepVerifier::create)
+        userRepository.findByAuthenticationIdIgnoreCase("dave").as(StepVerifier::create)
                 .expectNextMatches(myUser -> {
                     LOG.info("do expectNextMatches");
                     LOG.info("profilePhoto: '{}'", myUser.getProfilePhoto());

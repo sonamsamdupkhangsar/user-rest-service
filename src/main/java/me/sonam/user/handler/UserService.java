@@ -4,6 +4,7 @@ import me.sonam.user.handler.carrier.User;
 import me.sonam.user.repo.entity.MyUser;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import java.util.UUID;
  * User service for signing up a user
  */
 public interface UserService {
+    //Mono<String> signupUserByAdmin(Mono<UserTransfer> userMono);
     Mono<String> signupUser(Mono<UserTransfer> userMono);
     Mono<String> updateProfilePhoto(String authenticationId, Mono<UserTransfer> userMono);
     Mono<String> updateUser(String authenticationId, Mono<UserTransfer> userMono);

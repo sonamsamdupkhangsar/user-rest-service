@@ -40,7 +40,7 @@ public class UserSignupService implements UserService {
     @Autowired
     private UserRepository userRepository;
 
- //   private WebClient.Builder webClientBuilder;
+    //   private WebClient.Builder webClientBuilder;
 
     @Value("${account-rest-service.context}")
 
@@ -49,8 +49,8 @@ public class UserSignupService implements UserService {
     @Value("${authentication-rest-service.context}")
     private String authenticationEp;
 
-   // @Autowired
-   // private ReactiveRequestContextHolder reactiveRequestContextHolder;
+    // @Autowired
+    // private ReactiveRequestContextHolder reactiveRequestContextHolder;
     private final AccountWebClient accountWebClient;
     private final AuthenticationWebClient authenticationWebClient;
     private final OrganizationWebClient organizationWebClient;
@@ -75,6 +75,55 @@ public class UserSignupService implements UserService {
     }
 
     /**
+     * This method is called by a admin to add a user.  The admin can activate the user if they want.
+     * If the user is to activated on signup then we need to set user to active in account and authentication-rest-service.
+     * To activate the user password must be set on signup.
+     *
+     * @param userMono
+     * @return
+     */
+   // @Override
+    public Mono<String> signupUserByAdminNOTUSED(Mono<UserTransfer> userMono) {
+        LOG.info("admin is adding a user");
+
+        return userMono.flatMap(userTransfer -> validateOnSignup(userTransfer))
+                .flatMap(userTransfer ->
+                    userRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue(userTransfer.getAuthenticationId())
+                        .filter(aBoolean -> !aBoolean)
+                        .switchIfEmpty(Mono.error(new SignupException("User is already active with that username (authenticationId)")))
+                        .flatMap(aBoolean -> userRepository.existsByAuthenticationIdIgnoreCaseAndUserAuthAccountCreatedTrue(userTransfer.getAuthenticationId()))
+                        .filter(aBoolean -> {
+                            LOG.info("aBoolean for findByAuthenticationIdAndUserAuthAccountCreatedTrue is {}", aBoolean);
+
+                            return !aBoolean;
+                        }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that username, check to activate it by email")))
+                        .flatMap(aBoolean -> userRepository.existsByEmailIgnoreCaseAndActiveTrue(userTransfer.getEmail()))
+                        .filter(aBoolean -> !aBoolean)
+                        .switchIfEmpty(Mono.error(new SignupException("User account is active for that email")))
+                        .flatMap(aBoolean -> userRepository.existsByEmailIgnoreCaseAndUserAuthAccountCreatedTrue(userTransfer.getEmail()))
+                        .filter(aBoolean -> {
+                            LOG.info("aBoolean is {}", aBoolean);
+                            return !aBoolean;
+                        }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that email, check to activate it by email")))
+                        .flatMap(aBoolean -> accountWebClient.deleteAccountByEmail(userTransfer.getEmail()))
+                        .flatMap(s -> authenticationWebClient.deleteByAuthenticationId(userTransfer.getAuthenticationId()))
+                        .flatMap(string -> userRepository.deleteByAuthenticationIdIgnoreCaseAndUserAuthAccountCreatedFalse(userTransfer.getAuthenticationId()))
+                        //just delete rows with email and account created is in false - meaning not fully created
+                        .flatMap(rows -> userRepository.deleteByEmailIgnoreCaseAndUserAuthAccountCreatedFalse(userTransfer.getEmail()))
+                        .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
+                                userTransfer.getEmail(), userTransfer.getAuthenticationId())))
+                        .flatMap(myUser -> userRepository.save(myUser))
+                        .flatMap(myUser ->
+                                authenticationWebClient.create(userTransfer.getAuthenticationId(), userTransfer.getPassword(), myUser.getId(), userTransfer.isActive())
+                                        .then(accountWebClient.createAccount(userTransfer.getAuthenticationId(), myUser.getId(),
+                                                userTransfer.getEmail(), userTransfer.isActive(),
+                                                userTransfer.getPassword() != null && !userTransfer.getPassword().isEmpty())))
+                        .thenReturn("user signup succcessful")
+        );
+    }
+
+
+    /**
      * First, check if user already exists with authenticaitonId and is active
      * Second,if user is not active with authenticationId then check user, authentication and account was created successfully in a prior call
      * and throw exception if user/authentication/account was already created before
@@ -82,6 +131,7 @@ public class UserSignupService implements UserService {
      * Then create the user object and save it.
      * Make a rest call to Authentication to save a Authentication data
      * Then make another rest call to Account to save a Account data. On success response set the user UserAuthAccountCreated to true
+     *
      * @param userMono
      * @return
      */
@@ -89,61 +139,65 @@ public class UserSignupService implements UserService {
     public Mono<String> signupUser(Mono<UserTransfer> userMono) {
         LOG.info("signup user");
 
-        return userMono.flatMap(userTransfer -> {
-            LOG.info("checking if userTransfer fields are empty: {}", userTransfer);
-           if (userTransfer.getFirstName().trim().isEmpty()) {
-               LOG.error("first name is emtpy");
-               return Mono.error(new UserException("first name cannot be empty"));
-           }
-           if (userTransfer.getLastName().trim().isEmpty()) {
-               LOG.error("last name is emtpy");
-               return Mono.error(new UserException("last name cannot be empty"));
-           }
-           if (userTransfer.getEmail().trim().isEmpty()) {
-               LOG.error("email is emtpy");
-               return Mono.error(new UserException("email cannot be empty"));
-           }
-           if (userTransfer.getAuthenticationId().trim().isEmpty()) {
-               LOG.error("authenticationId is emtpy");
-               return Mono.error(new UserException("username cannot be empty"));
-           }
-           if (userTransfer.getPassword().trim().isEmpty()) {
-               LOG.error("password is emtpy");
-               return Mono.error(new UserException("password needs to be entered"));
-           }
-           return Mono.just(userTransfer);
-        }).//thenReturn("User sign up success, checkemail");  //
+        return userMono.flatMap(userTransfer -> validateOnSignup(userTransfer)).//thenReturn("User sign up success, checkemail");  //
                 flatMap(userTransfer ->
-                        userRepository.existsByAuthenticationIdAndActiveTrue(userTransfer.getAuthenticationId())
-                                .filter(aBoolean -> !aBoolean)
+
+                userRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue(userTransfer.getAuthenticationId())
+                        .filter(aBoolean -> !aBoolean)
                         .switchIfEmpty(Mono.error(new SignupException("User is already active with that username (authenticationId)")))
-                        .flatMap(aBoolean -> userRepository.existsByAuthenticationIdAndUserAuthAccountCreatedTrue(userTransfer.getAuthenticationId()))
+                        .flatMap(aBoolean -> userRepository.existsByAuthenticationIdIgnoreCaseAndUserAuthAccountCreatedTrue(userTransfer.getAuthenticationId()))
                         .filter(aBoolean -> {
                             LOG.info("aBoolean for findByAuthenticationIdAndUserAuthAccountCreatedTrue is {}", aBoolean);
 
                             return !aBoolean;
                         }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that username, check to activate it by email")))
-                                .flatMap(aBoolean -> userRepository.existsByEmailAndActiveTrue(userTransfer.getEmail()))
-                                .filter(aBoolean -> !aBoolean)
-                                .switchIfEmpty(Mono.error(new SignupException("User account is active for that email")))
-                                .flatMap(aBoolean -> userRepository.existsByEmailAndUserAuthAccountCreatedTrue(userTransfer.getEmail()))
-                                .filter(aBoolean -> {
-                                    LOG.info("emailExistsAndUserAuthAccountCreated is {}", aBoolean);
-                                    return !aBoolean;
-                                }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that email, check to activate it by email")))
-                                .flatMap(aBoolean -> accountWebClient.deleteAccountByEmail(userTransfer.getEmail()))
-                                .flatMap(s -> authenticationWebClient.deleteByAuthenticationId(userTransfer.getAuthenticationId()))
-                                .flatMap(string -> userRepository.deleteByAuthenticationIdAndUserAuthAccountCreatedFalse(userTransfer.getAuthenticationId()))
-                                //just delete rows with email and account created is in false - meaning not fully created
-                                .flatMap(rows -> userRepository.deleteByEmailAndUserAuthAccountCreatedFalse(userTransfer.getEmail()))
-                                .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
-                            userTransfer.getEmail(), userTransfer.getAuthenticationId())))
+                        .flatMap(aBoolean -> userRepository.existsByEmailIgnoreCaseAndActiveTrue(userTransfer.getEmail()))
+                        .filter(aBoolean -> !aBoolean)
+                        .switchIfEmpty(Mono.error(new SignupException("User account is active for that email")))
+                        .flatMap(aBoolean -> userRepository.existsByEmailIgnoreCaseAndUserAuthAccountCreatedTrue(userTransfer.getEmail()))
+                        .filter(aBoolean -> {
+                            LOG.info("aBoolean {}", aBoolean);
+                            return !aBoolean;
+                        }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that email, check to activate it by email")))
+                        .flatMap(aBoolean -> accountWebClient.deleteAccountByEmail(userTransfer.getEmail()))
+                        .flatMap(s -> authenticationWebClient.deleteByAuthenticationId(userTransfer.getAuthenticationId()))
+                        .flatMap(string -> userRepository.deleteByAuthenticationIdIgnoreCaseAndUserAuthAccountCreatedFalse(userTransfer.getAuthenticationId()))
+                        //just delete rows with email and account created is in false - meaning not fully created
+                        .flatMap(rows -> userRepository.deleteByEmailIgnoreCaseAndUserAuthAccountCreatedFalse(userTransfer.getEmail()))
+                        .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
+                                userTransfer.getEmail(), userTransfer.getAuthenticationId())))
                         .flatMap(myUser -> userRepository.save(myUser))
                         .flatMap(myUser ->
-                            authenticationWebClient.create(userTransfer.getAuthenticationId(), userTransfer.getPassword(), myUser.getId())
-                        .then(accountWebClient.createAccount(userTransfer.getAuthenticationId(), myUser.getId(), userTransfer.getEmail())))
-                        .thenReturn("user signup succcessful")
-        );
+                                authenticationWebClient.create(userTransfer.getAuthenticationId(), userTransfer.getPassword(), myUser.getId(), myUser.getActive())
+                                        .then(accountWebClient.createAccount(userTransfer.getAuthenticationId(), myUser.getId(),
+                                                userTransfer.getEmail(), myUser.getActive(),
+                                                userTransfer.getPassword() != null && !userTransfer.getPassword().isEmpty()))));
+    }
+
+    private Mono<UserTransfer> validateOnSignup(UserTransfer userTransfer) {
+        if (userTransfer.getFirstName().trim().isEmpty()) {
+            LOG.error("first name is emtpy");
+            return Mono.error(new UserException("first name cannot be empty"));
+        }
+        if (userTransfer.getLastName().trim().isEmpty()) {
+            LOG.error("last name is emtpy");
+            return Mono.error(new UserException("last name cannot be empty"));
+        }
+        if (userTransfer.getEmail().trim().isEmpty()) {
+            LOG.error("email is emtpy");
+            return Mono.error(new UserException("email cannot be empty"));
+        }
+        if (userTransfer.getAuthenticationId().trim().isEmpty()) {
+            LOG.error("authenticationId is emtpy");
+            return Mono.error(new UserException("username cannot be empty"));
+        }
+
+        /*if (userTransfer.getPassword().trim().isEmpty()) {
+            LOG.error("password is empty");
+            return Mono.error(new UserException("password needs to be entered"));
+        }*/
+
+        return Mono.just(userTransfer);
     }
 
     /**
@@ -158,7 +212,7 @@ public class UserSignupService implements UserService {
 
         return userMono.flatMap(userTransfer -> {
             LOG.info("profilePhoto in userTransfer object: {}", userTransfer);
-            return userRepository.findByAuthenticationId(userTransfer.getAuthenticationId())
+            return userRepository.findByAuthenticationIdIgnoreCase(userTransfer.getAuthenticationId())
                  .switchIfEmpty(Mono.error(new SignupException("email: email already used")))
 
                     .flatMap(myUser -> {
@@ -189,9 +243,9 @@ public class UserSignupService implements UserService {
 
        return userMono.flatMap(userTransfer -> {
             LOG.info("userTransfer: {}", userTransfer);
-                     return userRepository.findByAuthenticationId(userTransfer.getAuthenticationId())
+                     return userRepository.findByAuthenticationIdIgnoreCase(userTransfer.getAuthenticationId())
                              .flatMap(myUser ->
-                                userRepository.existsByEmailAndIdNot(userTransfer.getEmail(), myUser.getId())
+                                userRepository.existsByEmailIgnoreCaseAndIdNot(userTransfer.getEmail(), myUser.getId())
                                     .filter(aBoolean -> {
                                         LOG.info("boolean: {}", aBoolean);
                                         if (aBoolean == true) {
@@ -239,10 +293,10 @@ public class UserSignupService implements UserService {
     public Mono<String> deleteUser(String authenticationId) {
         LOG.info("delete user if it's active status is false");
 
-        return userRepository.findByAuthenticationId(authenticationId)
+        return userRepository.findByAuthenticationIdIgnoreCase(authenticationId)
                 .filter(myUser -> !myUser.getActive())
                 .switchIfEmpty(Mono.error(new UserException("user is active, cannot delete")))
-                .flatMap(myUser ->   userRepository.deleteByAuthenticationIdAndActiveFalse(authenticationId))
+                .flatMap(myUser ->   userRepository.deleteByAuthenticationIdIgnoreCaseAndActiveFalse(authenticationId))
                 .thenReturn("deleted: " + authenticationId);
     }
 
@@ -284,7 +338,7 @@ public class UserSignupService implements UserService {
     public Mono<Map<String, Object>> getUserByAuthenticationId(String authenticationId) {
         LOG.info("get user information for authenticationId: {}", authenticationId);
 
-        return userRepository.findByAuthenticationId(authenticationId)
+        return userRepository.findByAuthenticationIdIgnoreCase(authenticationId)
                 .switchIfEmpty(Mono.error(new SignupException("user not found with authenticationId: "+
                         authenticationId)))
                 .switchIfEmpty(Mono.error(new UserException("user searchable is turned off")))
@@ -318,7 +372,7 @@ public class UserSignupService implements UserService {
     public Mono<Map<String, Object>> getUserByAuthenticationIdForProfileSearch(String authenticationId) {
         LOG.info("profile search user information for authenticationId: {}", authenticationId);
 
-        return userRepository.findByAuthenticationId(authenticationId)
+        return userRepository.findByAuthenticationIdIgnoreCase(authenticationId)
                 .switchIfEmpty(Mono.error(new SignupException("user not found with authenticationId: "+
                         authenticationId)))
                 .filter(myUser -> myUser.getSearchable() != null && myUser.getSearchable())

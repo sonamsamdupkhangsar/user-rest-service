@@ -27,13 +27,14 @@ public class AuthenticationWebClient {
         this.userRepository = userRepository;
     }
 
-    public Mono<String> create(String authenticationId, String password, UUID userId) {
+    public Mono<String> create(String authenticationId, String password, UUID userId, boolean active) {
         LOG.info("call authentication endpoint to create Authentication record {}", authenticationEndpoint);
 
         Map<String, String> payloadMap = new HashMap<>();
         payloadMap.put("authenticationId", authenticationId);
         payloadMap.put("password",password);
         payloadMap.put("userId", userId.toString());
+        payloadMap.put("active", String.valueOf(active));
 
         WebClient.ResponseSpec responseSpec = webClientBuilder.build().post().uri(authenticationEndpoint).bodyValue(payloadMap).retrieve();
 
@@ -44,7 +45,7 @@ public class AuthenticationWebClient {
             LOG.error("authentication rest call failed: {}", throwable.getMessage());
 
             LOG.info("rollback userRepository by deleting authenticationId");
-            return userRepository.deleteByAuthenticationId(authenticationId).then(
+            return userRepository.deleteByAuthenticationIdIgnoreCase(authenticationId).then(
                     Mono.error(new SignupException("Authentication api call failed with error: " + throwable.getMessage())));
         });
     }
@@ -54,13 +55,23 @@ public class AuthenticationWebClient {
         LOG.info("delete authentication by authenticationId endpoint: {}", deleteByAuthenticationIdEndpoint);
         WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(deleteByAuthenticationIdEndpoint)
                 .retrieve();
-        return responseSpec.bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {});
+        return responseSpec.bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {}).doOnNext(map -> {
+            LOG.debug("got response back: {}", map);
+        }).onErrorResume(throwable -> {
+            LOG.error("error occurred in calling deleteByAuthenticationId endpoint {}", deleteByAuthenticationIdEndpoint, throwable);
+            return Mono.error(throwable);
+        });
     }
 
     public Mono<String> deleteMyAccount() {
         LOG.info("delete my authentication account endpoint: {}", authenticationEndpoint);
         WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(authenticationEndpoint)
                 .retrieve();
-        return responseSpec.bodyToMono(String.class);
+        return responseSpec.bodyToMono(String.class).doOnNext(s -> {
+            LOG.debug("got response for deleteMyAccount call to endpoint{} {}", authenticationEndpoint, s);
+        }).onErrorResume(throwable -> {
+            LOG.error("error occurred in calling deleteMyAccount endpoint {}", authenticationEndpoint, throwable);
+            return Mono.error(throwable);
+        });
     }
 }
