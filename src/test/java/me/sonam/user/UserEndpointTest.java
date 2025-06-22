@@ -85,7 +85,7 @@ public class UserEndpointTest {
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
         MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email",
-                authenticationId);
+                authenticationId, false);
 
         userRepository.save(myUser2).subscribe();
 
@@ -130,7 +130,7 @@ public class UserEndpointTest {
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
         MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email",
-                authenticationId);
+                authenticationId, false);
 
         userRepository.save(myUser2).subscribe();
 
@@ -235,7 +235,7 @@ public class UserEndpointTest {
         Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", authenticationId);
+        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", authenticationId, false);
         userRepository.save(myUser2).subscribe();
 
         // should get an error because the searchable is not true
@@ -277,15 +277,15 @@ public class UserEndpointTest {
     @Test
     public void findMatchingFirstNameAndLastName() {
         LOG.info("test find by firstName and lastName matching");
-        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
+        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email", false);
 
         userRepository.save(myUser).subscribe();
 
-        myUser = new MyUser("Dommy", "thecatman", "dommythecatman@cat.email", "dommythecatman@cat.email");
+        myUser = new MyUser("Dommy", "thecatman", "dommythecatman@cat.email", "dommythecatman@cat.email", false);
 
         userRepository.save(myUser).subscribe();
 
-        myUser = new MyUser("Dommy", "mac", "dommymacn@cat.email", "dommymacn@cat.email");
+        myUser = new MyUser("Dommy", "mac", "dommymacn@cat.email", "dommymacn@cat.email", false);
 
         userRepository.save(myUser).subscribe();
 
@@ -314,13 +314,13 @@ public class UserEndpointTest {
         Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        MyUser myUser1 = new MyUser("Sonam", "thecat", "dommy@cat.email", "sonam");
+        MyUser myUser1 = new MyUser("Sonam", "thecat", "dommy@cat.email", "sonam", false);
         userRepository.save(myUser1).subscribe();
 
-        MyUser myUser2 = new MyUser("Tenzing", "Passang", "tenzing@cat.email", "tenzing");
+        MyUser myUser2 = new MyUser("Tenzing", "Passang", "tenzing@cat.email", "tenzing", false);
         userRepository.save(myUser2).subscribe();
 
-        MyUser myUser3 = new MyUser("John", "Wix", "john@cat.email", "john");
+        MyUser myUser3 = new MyUser("John", "Wix", "john@cat.email", "john", false);
         userRepository.save(myUser3).subscribe();
 
         LOG.info("get users by their user.id");
@@ -391,7 +391,7 @@ public class UserEndpointTest {
         Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", authenticationId);
+        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", authenticationId, false);
 
         userRepository.save(myUser2).subscribe();
 

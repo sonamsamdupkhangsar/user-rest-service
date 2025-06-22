@@ -36,13 +36,13 @@ public class MyUser implements Persistable<UUID> {
     public MyUser() {
     }
 
-    public MyUser(String firstName, String lastName, String email, String authenticationId) {
+    public MyUser(String firstName, String lastName, String email, String authenticationId, boolean active) {
         this.id = UUID.randomUUID();
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.authenticationId = authenticationId;
-        this.active = false;
+        this.active = active;
         this.userAuthAccountCreated = false;
         this.newAccount = true;
     }

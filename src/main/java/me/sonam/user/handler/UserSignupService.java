@@ -111,7 +111,7 @@ public class UserSignupService implements UserService {
                         //just delete rows with email and account created is in false - meaning not fully created
                         .flatMap(rows -> userRepository.deleteByEmailIgnoreCaseAndUserAuthAccountCreatedFalse(userTransfer.getEmail()))
                         .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
-                                userTransfer.getEmail(), userTransfer.getAuthenticationId())))
+                                userTransfer.getEmail(), userTransfer.getAuthenticationId(), userTransfer.isActive())))
                         .flatMap(myUser -> userRepository.save(myUser))
                         .flatMap(myUser ->
                                 authenticationWebClient.create(userTransfer.getAuthenticationId(), userTransfer.getPassword(), myUser.getId(), userTransfer.isActive())
@@ -165,7 +165,7 @@ public class UserSignupService implements UserService {
                         //just delete rows with email and account created is in false - meaning not fully created
                         .flatMap(rows -> userRepository.deleteByEmailIgnoreCaseAndUserAuthAccountCreatedFalse(userTransfer.getEmail()))
                         .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
-                                userTransfer.getEmail(), userTransfer.getAuthenticationId())))
+                                userTransfer.getEmail(), userTransfer.getAuthenticationId(), userTransfer.isActive())))
                         .flatMap(myUser -> userRepository.save(myUser))
                         .flatMap(myUser ->
                                 authenticationWebClient.create(userTransfer.getAuthenticationId(), userTransfer.getPassword(), myUser.getId(), myUser.getActive())
@@ -175,6 +175,8 @@ public class UserSignupService implements UserService {
     }
 
     private Mono<UserTransfer> validateOnSignup(UserTransfer userTransfer) {
+        LOG.debug("userTransfer: {}", userTransfer);
+
         if (userTransfer.getFirstName().trim().isEmpty()) {
             LOG.error("first name is emtpy");
             return Mono.error(new UserException("first name cannot be empty"));

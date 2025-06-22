@@ -414,7 +414,7 @@ public class UserEndpointMockWebServerTest {
         Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        MyUser myUser = new MyUser("firstname", "lastname", email, "johnny");
+        MyUser myUser = new MyUser("firstname", "lastname", email, "johnny", false);
 
         Mono<MyUser> userMono = userRepository.save(myUser);
         userMono.subscribe(user1 -> LOG.info("save user first: {}", user1.getEmail()));
@@ -496,7 +496,7 @@ public class UserEndpointMockWebServerTest {
         Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId);
+        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId, false);
         myUser.setUserAuthAccountCreated(true);
 
         Mono<MyUser> userMono = userRepository.save(myUser);
@@ -531,7 +531,7 @@ public class UserEndpointMockWebServerTest {
         Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId);
+        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId, false);
         myUser.setUserAuthAccountCreated(true);
 
         Mono<MyUser> userMono = userRepository.save(myUser);
@@ -567,7 +567,7 @@ public class UserEndpointMockWebServerTest {
         Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId);
+        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId, false);
         myUser.setActive(true);
 
         Mono<MyUser> userMono = userRepository.save(myUser);
@@ -602,7 +602,7 @@ public class UserEndpointMockWebServerTest {
         Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId);
+        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId, false);
         myUser.setActive(true);
 
         Mono<MyUser> userMono = userRepository.save(myUser);
@@ -644,7 +644,7 @@ public class UserEndpointMockWebServerTest {
         Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId);
+        MyUser myUser = new MyUser("firstname", "lastname", email, authenticationId, false);
 
         Mono<MyUser> userMono = userRepository.save(myUser);
         userMono.subscribe(user1 -> LOG.info("save user first"));
@@ -730,7 +730,7 @@ public class UserEndpointMockWebServerTest {
 
     @Test
     public void signupUserUserAuthAccountCreated() throws InterruptedException {
-        MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", "existingUser");
+        MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", "existingUser", false);
         myUser.setUserAuthAccountCreated(true);
         Jwt jwt = jwt("existingUser");
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
@@ -752,7 +752,7 @@ public class UserEndpointMockWebServerTest {
 
     @Test
     public void signupUserWhenActiveIsTrue() throws InterruptedException {
-        MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", "existingUser");
+        MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", "existingUser", false);
         myUser.setActive(true);
         Mono<MyUser> userMono = userRepository.save(myUser);
         userMono.subscribe(user1 -> LOG.info("save user first"));
@@ -841,7 +841,7 @@ public class UserEndpointMockWebServerTest {
         Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", authenticationId);
+        MyUser myUser = new MyUser("firstname", "lastname", "yakApiKey", authenticationId, false);
 
         Mono<MyUser> userMono = userRepository.save(myUser);
         userMono.subscribe(user1 -> LOG.info("save user first"));
@@ -874,7 +874,7 @@ public class UserEndpointMockWebServerTest {
         UUID id = UUID.randomUUID();
         final String authenticationId = "deleteUserWhenUserFalse";
 
-        MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId);
+        MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId, false);
         assertThat(myUser.getId()).isNotNull();
 
         Jwt jwt = jwt(authenticationId, myUser.getId());
@@ -944,7 +944,7 @@ public class UserEndpointMockWebServerTest {
         Jwt jwt = jwt(authenticationId);
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
 
-        MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId);
+        MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId, false);
 
         Mono<MyUser> userMono = userRepository.save(myUser);
         userMono.subscribe(user1 -> LOG.info("save user first"));
@@ -980,7 +980,7 @@ public class UserEndpointMockWebServerTest {
         UUID id = UUID.randomUUID();
         //final String authenticationId = "deleteUserWhenUserFalse";
 
-        MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId);
+        MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId, false);
         myUser.setActive(true);
 
         Mono<MyUser> userMono = userRepository.save(myUser);

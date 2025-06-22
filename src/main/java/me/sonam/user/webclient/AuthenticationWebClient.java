@@ -36,6 +36,7 @@ public class AuthenticationWebClient {
         payloadMap.put("userId", userId.toString());
         payloadMap.put("active", String.valueOf(active));
 
+        LOG.debug("map.active {} vs active {}", payloadMap.get("active"), active);
         WebClient.ResponseSpec responseSpec = webClientBuilder.build().post().uri(authenticationEndpoint).bodyValue(payloadMap).retrieve();
 
         return responseSpec.bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {}).map(map -> {

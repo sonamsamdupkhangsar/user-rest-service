@@ -1,8 +1,7 @@
 logging:
   level:
     root: warn
-    me:
-      sonam: info
+    me.sonam: debug
 
 info:
   app:

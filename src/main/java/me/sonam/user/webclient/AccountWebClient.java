@@ -32,6 +32,8 @@ public class AccountWebClient {
                                       Boolean passwordSet) {
         LOG.info("create Account record with http call on endpoint: {}", accountEndpoint);
 
+        LOG.debug("active for createAccount is {}", active);
+
         WebClient.ResponseSpec spec = webClientBuilder.build().post().uri(accountEndpoint)
                 .bodyValue(Map.of("authenticationId", authenticationId, "email", email,
                         "userId", userId, "active", active
