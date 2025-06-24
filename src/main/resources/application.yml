@@ -1,8 +1,7 @@
 logging:
   level:
     root: warn
-    me:
-      sonam: info
+    me.sonam: debug
 
 info:
   app:
@@ -50,49 +49,23 @@ role-rest-service:
   context: ${role-rest-service.root}/roles
 
 auth-server:
-  root: http://authorization-server/issuer
+  root: http://authorization-server
+  context-path: /issuer
   oauth2token:
     path: /oauth2/token
     grantType: client_credentials
 
 permitpath:
-  - path: /users
-    httpMethods: POST
   - path: /users/api/health/*
     httpMethods: GET
 
 requestFilters:
-  - in: /users
-    out: /authentications
-    inHttpMethods: delete
-    accessToken:
-      option: forward
-  - in: /users
-    out: /accounts
-    inHttpMethods: delete
-    accessToken:
-      option: forward
-  - in: /users
-    out: /organizations
-    inHttpMethods: delete
-    accessToken:
-      option: forward
-  - in: /users
-    out: /roles
-    inHttpMethods: delete
-    accessToken:
-      option: forward
-  - in: /users
-    out: /authentications
-    inHttpMethods: post
+  - in:
+    out:
+    inHttpMethods:
     accessToken:
       option: request
       scopes: message.read
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
-  - in: /users
-    out: /accounts/email/.*, /accounts/signupUser/.*, /authentications/.* ,/accounts/.*/.*
-    inHttpMethods: delete, post
-    accessToken:
-      option: request
-      scopes: ${REQUEST_SCOPES}
-      base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
+
+tokenExpireSeconds: 180

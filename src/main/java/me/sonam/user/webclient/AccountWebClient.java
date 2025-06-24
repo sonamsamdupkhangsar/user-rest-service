@@ -9,8 +9,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.UUID;
 
@@ -21,7 +19,7 @@ public class AccountWebClient {
 
     private final String accountEndpoint;
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public AccountWebClient(WebClient.Builder webClientBuilder,
                             String accountEndpoint, UserRepository userRepository) {
@@ -30,25 +28,30 @@ public class AccountWebClient {
         this.userRepository = userRepository;
     }
 
-    public Mono<String> createAccount(String authenticationId, UUID userId, String email) {
-        StringBuilder stringBuilder = new StringBuilder(accountEndpoint).append("/").append(userId).append("/")
-                .append(authenticationId)
-                .append("/").append(email);
+    public Mono<String> createAccount(String authenticationId, UUID userId, String email, boolean active,
+                                      Boolean passwordSet) {
+        LOG.info("create Account record with http call on endpoint: {}", accountEndpoint);
 
-        LOG.info("create Account record with http call on endpoint: {}", stringBuilder);
-        WebClient.ResponseSpec spec = webClientBuilder.build().post().uri(stringBuilder.toString()).retrieve();
+        LOG.debug("active for createAccount is {}", active);
 
-        return spec.bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {}).doOnNext(map -> {
-            LOG.info("account has been created with response: {}", map.get("message"));
-        }).then(userRepository.updatedUserAuthAccountCreatedTrue(authenticationId))
-                .thenReturn("account created")
+        WebClient.ResponseSpec spec = webClientBuilder.build().post().uri(accountEndpoint)
+                .bodyValue(Map.of("authenticationId", authenticationId, "email", email,
+                        "userId", userId, "active", active
+                , "passwordSet", passwordSet)).retrieve();
+
+        return spec.bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {})
+                .doOnNext(map -> {
+                    LOG.info("account has been created with response: {}", map.get("message"));
+                })
+                .map(map -> map.get("message"))
+                .flatMap(s -> userRepository.updatedUserAuthAccountCreatedTrue(authenticationId).thenReturn(s))
                 .onErrorResume(throwable -> {
-                    LOG.debug("exception occured when calling create account endpoint", throwable);
+                    LOG.debug("exception occurred when calling create account endpoint", throwable);
                     LOG.error("create account rest call failed: {}", throwable.getMessage());
                     if (throwable instanceof WebClientResponseException webClientResponseException) {
                     LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
 
-                    return userRepository.deleteByAuthenticationId(authenticationId)
+                    return userRepository.deleteByAuthenticationIdIgnoreCase(authenticationId)
                             .then(
                                     Mono.error(new SignupException("Account api call failed with error: " +
                                             webClientResponseException.getResponseBodyAsString())));
@@ -62,11 +65,12 @@ public class AccountWebClient {
     public Mono<? extends String> deleteAccountByEmail(String email) {
         LOG.info("call delete account check");
 
-        String encodedEmail = URLEncoder.encode(email, Charset.defaultCharset());
-        final StringBuilder stringBuilder = new StringBuilder(accountEndpoint).append("/email/").append(encodedEmail);
-        LOG.info("accountEp: {}", stringBuilder.toString());
+        final String endpoint = accountEndpoint + "/email";
 
-        WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(stringBuilder.toString()).retrieve();
+        LOG.info("accountEp: {}", endpoint);
+
+        WebClient.ResponseSpec responseSpec = webClientBuilder.build().put().uri(endpoint)
+                .bodyValue(Map.of("email", email)).retrieve();
 
         return responseSpec.bodyToMono(String.class).map(string -> {//Map.class).map(map -> {
             LOG.info("got back response from account deletion service call: {}", string);//map.get("message"));

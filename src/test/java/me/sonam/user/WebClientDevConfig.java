@@ -34,7 +34,8 @@ public class WebClientDevConfig {
     @Value("${role-rest-service.context}")
     private String deleteMyRoleEndpoint;
 
-
+    @Value("${tokenExpireSeconds:1}")
+    private int tokenExpireSeconds;
     @Autowired
     private UserRepository userRepository;
 
@@ -50,7 +51,7 @@ public class WebClientDevConfig {
 
     @Bean
     public ReactiveRequestContextHolder reactiveRequestContextHolder(WebClient.Builder webClientBuilder) {
-        return new ReactiveRequestContextHolder(webClientBuilder);
+        return new ReactiveRequestContextHolder(webClientBuilder, tokenExpireSeconds);
     }
 
     @Bean

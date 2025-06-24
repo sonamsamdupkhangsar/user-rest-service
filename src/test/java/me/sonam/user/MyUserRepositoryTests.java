@@ -30,7 +30,7 @@ public class MyUserRepositoryTests {
 
     @Test
     public void saveAuthenticate() {
-        MyUser myUser = new MyUser("Dommy", "cat", "dommy@cat.email", "dommy@cat.email");
+        MyUser myUser = new MyUser("Dommy", "cat", "dommy@cat.email", "dommy@cat.email", false);
 
         Mono<MyUser> userMono = userRepository.save(myUser);
 
@@ -59,11 +59,11 @@ public class MyUserRepositoryTests {
     @Test
     public void updateUser() {
         LOG.info("create a user");
-        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
+        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email", false);
 
         userRepository.save(myUser).subscribe();
 
-        MyUser myUser2 = new MyUser("apple", "applelastname", "apple@cat.email", "apple@cat.email");
+        MyUser myUser2 = new MyUser("apple", "applelastname", "apple@cat.email", "apple@cat.email", false);
 
         userRepository.save(myUser2).subscribe();
 
@@ -87,7 +87,7 @@ public class MyUserRepositoryTests {
                          "dommy@cat.email")
                .log().subscribe();
 
-        userRepository.findByAuthenticationId("dommy@cat.email")
+        userRepository.findByAuthenticationIdIgnoreCase("dommy@cat.email")
                 .subscribe(myUser1 -> LOG.info("found user: {}, test condiditon: {}", myUser1, myUser1.getEmail().equals("dog@cat.email")));
       /*  mono.as(StepVerifier::create)
                 .thenConsumeWhile(myUser1 -> {
@@ -127,15 +127,15 @@ public class MyUserRepositoryTests {
     @Test
     public void findByFirstNameAndLastNameMatching() {
         LOG.info("test find by firstName and lastName matching");
-        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
+        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email", false);
 
         userRepository.save(myUser).subscribe();
 
-        myUser = new MyUser("Dommy", "thecatman", "dommythecatman@cat.email", "dommythecatman@cat.email");
+        myUser = new MyUser("Dommy", "thecatman", "dommythecatman@cat.email", "dommythecatman@cat.email", false);
 
         userRepository.save(myUser).subscribe();
 
-        myUser = new MyUser("Dommy", "mac", "dommymacn@cat.email", "dommymacn@cat.email");
+        myUser = new MyUser("Dommy", "mac", "dommymacn@cat.email", "dommymacn@cat.email", false);
 
         userRepository.save(myUser).subscribe();
 
@@ -154,7 +154,7 @@ public class MyUserRepositoryTests {
     public void findByUserId() {
         LOG.info("find by user id");
 
-        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email");
+        MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email", false);
         userRepository.save(myUser).subscribe();
 
         Mono<MyUser> myUserMono = userRepository.findById(myUser.getId());

@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:experimental
+# syntax=docker/dockerfile:1.0-experimental
 FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /workspace/app
 

@@ -6,10 +6,9 @@ This service exposes a user signup api.  Please check the [workflow](#signup-use
 ## Run locally using profile
 Use the following to run local profile which will pick up properties defined in the `application-local.yml` :
 
-To run another instance on another port use :
-
-Or you can do something like following too to specify the db server properties:
-
+```
+mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local"
+```
  
  
 ## Build Docker image
