@@ -66,8 +66,8 @@ resources: {}
   #   cpu: 100m
 #   memory: 128Mi
 
-nodeSelector:
-  node.kubernetes.io/instance-type: s-1vcpu-2gb
+#nodeSelector:
+#  node.kubernetes.io/instance-type: s-1vcpu-2gb
 
 affinity: {}
 
