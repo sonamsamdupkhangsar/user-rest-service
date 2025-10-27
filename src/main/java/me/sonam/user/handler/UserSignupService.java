@@ -233,7 +233,7 @@ public class UserSignupService implements UserService {
     }
 
     /**
-     * this will update the user firstname, lastname email.  It will not update the profilePhoto property as there
+     * this will update the user firstname, lastname and searcable fields only.  It will not update the email or profilePhoto. For profilePhoto property there
      * is another endpoint to handle this.
      * @param authenticationId
      * @param userMono
@@ -247,27 +247,11 @@ public class UserSignupService implements UserService {
             LOG.info("userTransfer: {}", userTransfer);
                      return userRepository.findByAuthenticationIdIgnoreCase(userTransfer.getAuthenticationId())
                              .flatMap(myUser ->
-                                userRepository.existsByEmailIgnoreCaseAndIdNot(userTransfer.getEmail(), myUser.getId())
-                                    .filter(aBoolean -> {
-                                        LOG.info("boolean: {}", aBoolean);
-                                        if (aBoolean == true) {
-                                            return false;
-                                        } else {
-                                            return true;
-                                        }
-                                    })
-                                    .switchIfEmpty(Mono.error(new SignupException("email: email already used")))
-                                    .flatMap(aBoolean -> {
-                                        LOG.info("update name and email for authId: {}", authenticationId);
-
-                                        return userRepository.updateByAuthenticationId(userTransfer.getFirstName(), userTransfer.getLastName(),
-                                                userTransfer.getEmail(),  userTransfer.isSearchable(),
-                                                  userTransfer.getAuthenticationId());
-
-
-                                    })
-                                    .thenReturn("user firstname, lastname and email updated"));
-    });
+                                     userRepository.updateFirstNameAndLastNameAndSearchableByAuthenticationId(userTransfer.getFirstName(), userTransfer.getLastName(),
+                                                 userTransfer.isSearchable(), userTransfer.getAuthenticationId())
+                             )
+                             .thenReturn("user firstname, lastname and email updated");
+        });
     }
 
    /* @Override
@@ -303,7 +287,7 @@ public class UserSignupService implements UserService {
     }
 
     @Override
-    public Mono<String> deleteMyAccount() {
+    public Mono<String> deleteMyAccount(UUID organizationId) {
         LOG.info("delete my account");
 
         return ReactiveSecurityContextHolder.getContext().flatMap(securityContext -> {
@@ -330,8 +314,8 @@ public class UserSignupService implements UserService {
                         return accountWebClient.deleteMyAccount();
                     })
                     .then(authenticationWebClient.deleteMyAccount())
-                    .then(organizationWebClient.deleteMyAccount())
-                    .then(roleWebClient.deleteMyAccount())
+                    .then(organizationWebClient.deleteMyAccount(organizationId))
+                    .then(roleWebClient.deleteMyAccount(organizationId))
                     .thenReturn("delete my account success for user id: " + userId);
         });
     }
@@ -371,13 +355,27 @@ public class UserSignupService implements UserService {
     }
 
     @Override
-    public Mono<Map<String, Object>> getUserByAuthenticationIdForProfileSearch(String authenticationId) {
+    public Mono<Map<String, Object>> getUserByAuthenticationIdForProfileSearch(String authenticationId, boolean ignoreSearchable) {
         LOG.info("profile search user information for authenticationId: {}", authenticationId);
 
         return userRepository.findByAuthenticationIdIgnoreCase(authenticationId)
                 .switchIfEmpty(Mono.error(new SignupException("user not found with authenticationId: "+
                         authenticationId)))
-                .filter(myUser -> myUser.getSearchable() != null && myUser.getSearchable())
+                .filter(myUser -> {
+                    LOG.debug("ignoreSearchable {}", ignoreSearchable);
+                    if (!ignoreSearchable) { //honor user's request to searchable setting
+                        if (myUser.getSearchable() != null && myUser.getSearchable()) {
+                            return myUser.getSearchable();
+                        }
+                        else {
+                            return false;
+                        }
+                    }
+                    else {//if query is to find user regardless of searchable field
+                        return true;
+                    }
+                })
+              //  .filter(myUser -> myUser.getSearchable() != null && myUser.getSearchable())
                 .switchIfEmpty(Mono.error(new UserException("user searchable is turned off")))
                 .map(myUser -> {
                     Map<String, Object> map = new HashMap<>();

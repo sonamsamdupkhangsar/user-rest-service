@@ -40,6 +40,14 @@ public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
             @Param("searchable")boolean searchable,
             @Param("authenticationId") String authenticationId);
 
+    @Query("update My_User set first_Name= :firstName, last_Name= :lastName, " +
+            " searchable = :searchable where lower(authentication_Id) = lower(:authenticationId)")
+    Mono<Integer> updateFirstNameAndLastNameAndSearchableByAuthenticationId(
+            @Param("firstName")String firstName,
+            @Param("lastName") String lastName,
+            @Param("searchable")boolean searchable,
+            @Param("authenticationId") String authenticationId);
+
     @Query("update My_User set first_Name= :firstName, last_Name= :lastName, email= lower(:email), searchable = :searchable " +
             " where lower(authentication_Id) = lower(:authenticationId)")
     Mono<Integer> updateByAuthenticationId(

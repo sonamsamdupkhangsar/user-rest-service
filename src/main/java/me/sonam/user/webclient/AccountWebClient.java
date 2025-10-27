@@ -28,7 +28,8 @@ public class AccountWebClient {
         this.userRepository = userRepository;
     }
 
-    public Mono<String> createAccount(String authenticationId, UUID userId, String email, boolean active,
+    public Mono<String>
+    createAccount(String authenticationId, UUID userId, String email, boolean active,
                                       Boolean passwordSet) {
         LOG.info("create Account record with http call on endpoint: {}", accountEndpoint);
 
