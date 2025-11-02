@@ -74,54 +74,6 @@ public class UserSignupService implements UserService {
         serviceList.forEach(s -> LOG.info("Found service: {}", s));
     }
 
-    /**
-     * This method is called by a admin to add a user.  The admin can activate the user if they want.
-     * If the user is to activated on signup then we need to set user to active in account and authentication-rest-service.
-     * To activate the user password must be set on signup.
-     *
-     * @param userMono
-     * @return
-     */
-   // @Override
-    public Mono<String> signupUserByAdminNOTUSED(Mono<UserTransfer> userMono) {
-        LOG.info("admin is adding a user");
-
-        return userMono.flatMap(userTransfer -> validateOnSignup(userTransfer))
-                .flatMap(userTransfer ->
-                    userRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue(userTransfer.getAuthenticationId())
-                        .filter(aBoolean -> !aBoolean)
-                        .switchIfEmpty(Mono.error(new SignupException("User is already active with that username (authenticationId)")))
-                        .flatMap(aBoolean -> userRepository.existsByAuthenticationIdIgnoreCaseAndUserAuthAccountCreatedTrue(userTransfer.getAuthenticationId()))
-                        .filter(aBoolean -> {
-                            LOG.info("aBoolean for findByAuthenticationIdAndUserAuthAccountCreatedTrue is {}", aBoolean);
-
-                            return !aBoolean;
-                        }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that username, check to activate it by email")))
-                        .flatMap(aBoolean -> userRepository.existsByEmailIgnoreCaseAndActiveTrue(userTransfer.getEmail()))
-                        .filter(aBoolean -> !aBoolean)
-                        .switchIfEmpty(Mono.error(new SignupException("User account is active for that email")))
-                        .flatMap(aBoolean -> userRepository.existsByEmailIgnoreCaseAndUserAuthAccountCreatedTrue(userTransfer.getEmail()))
-                        .filter(aBoolean -> {
-                            LOG.info("aBoolean is {}", aBoolean);
-                            return !aBoolean;
-                        }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that email, check to activate it by email")))
-                        .flatMap(aBoolean -> accountWebClient.deleteAccountByEmail(userTransfer.getEmail()))
-                        .flatMap(s -> authenticationWebClient.deleteByAuthenticationId(userTransfer.getAuthenticationId()))
-                        .flatMap(string -> userRepository.deleteByAuthenticationIdIgnoreCaseAndUserAuthAccountCreatedFalse(userTransfer.getAuthenticationId()))
-                        //just delete rows with email and account created is in false - meaning not fully created
-                        .flatMap(rows -> userRepository.deleteByEmailIgnoreCaseAndUserAuthAccountCreatedFalse(userTransfer.getEmail()))
-                        .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
-                                userTransfer.getEmail(), userTransfer.getAuthenticationId(), userTransfer.isActive())))
-                        .flatMap(myUser -> userRepository.save(myUser))
-                        .flatMap(myUser ->
-                                authenticationWebClient.create(userTransfer.getAuthenticationId(), userTransfer.getPassword(), myUser.getId(), userTransfer.isActive())
-                                        .then(accountWebClient.createAccount(userTransfer.getAuthenticationId(), myUser.getId(),
-                                                userTransfer.getEmail(), userTransfer.isActive(),
-                                                userTransfer.getPassword() != null && !userTransfer.getPassword().isEmpty())))
-                        .thenReturn("user signup succcessful")
-        );
-    }
-
 
     /**
      * First, check if user already exists with authenticaitonId and is active
@@ -169,7 +121,8 @@ public class UserSignupService implements UserService {
                         .flatMap(myUser -> userRepository.save(myUser))
                         .flatMap(myUser ->
                                 authenticationWebClient.create(userTransfer.getAuthenticationId(), userTransfer.getPassword(), myUser.getId(), myUser.getActive())
-                                        .then(accountWebClient.createAccount(userTransfer.getAuthenticationId(), myUser.getId(),
+                                        .then(accountWebClient.createAccount(myUser.getFirstName() + " " + myUser.getLastName(),
+                                                userTransfer.getAuthenticationId(), myUser.getId(),
                                                 userTransfer.getEmail(), myUser.getActive(),
                                                 userTransfer.getPassword() != null && !userTransfer.getPassword().isEmpty()))));
     }

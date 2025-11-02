@@ -29,7 +29,7 @@ public class AccountWebClient {
     }
 
     public Mono<String>
-    createAccount(String authenticationId, UUID userId, String email, boolean active,
+    createAccount(String fullName, String authenticationId, UUID userId, String email, boolean active,
                                       Boolean passwordSet) {
         LOG.info("create Account record with http call on endpoint: {}", accountEndpoint);
 
@@ -38,7 +38,7 @@ public class AccountWebClient {
         WebClient.ResponseSpec spec = webClientBuilder.build().post().uri(accountEndpoint)
                 .bodyValue(Map.of("authenticationId", authenticationId, "email", email,
                         "userId", userId, "active", active
-                , "passwordSet", passwordSet)).retrieve();
+                , "passwordSet", passwordSet, "fullName", fullName)).retrieve();
 
         return spec.bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {})
                 .doOnNext(map -> {
