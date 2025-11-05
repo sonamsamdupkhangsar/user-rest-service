@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 public class RoleWebClient {
     private static final Logger LOG = LoggerFactory.getLogger(RoleWebClient.class);
 
@@ -18,9 +20,11 @@ public class RoleWebClient {
         this.deleteMyRole = deleteMyRole;
     }
 
-    public Mono<String> deleteMyAccount() {
-        LOG.info("delete my role endpoint: {}", deleteMyRole);
-        WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(deleteMyRole)
+    public Mono<String> deleteMyAccount(UUID organizationId) {
+        final String endpoint = deleteMyRole + "/organizations/"+organizationId;
+        LOG.info("delete my role endpoint: {}", endpoint);
+
+        WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(endpoint)
                 .retrieve();
         return responseSpec.bodyToMono(String.class);
     }

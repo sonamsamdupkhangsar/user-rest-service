@@ -101,7 +101,16 @@ public class UserHandler {
     public Mono<ServerResponse> getUserByAuthIdProfileSearch(ServerRequest serverRequest) {
         LOG.info("get user by authId for profileSearch");
 
-        return userService.getUserByAuthenticationIdForProfileSearch(serverRequest.pathVariable(AUTHENTICATION_ID))
+        Optional<String> ignoreSearchableOptional = serverRequest.queryParam("ignoreSearchable");
+        boolean ignoreSearchable = false;
+
+        if (ignoreSearchableOptional.isPresent() && ignoreSearchableOptional.get().equals("true")) {
+            LOG.debug("user requests to search users regardless of searchable setting");
+            ignoreSearchable = true;
+        }
+
+        LOG.info("ignoreSearchable {}", ignoreSearchable);
+        return userService.getUserByAuthenticationIdForProfileSearch(serverRequest.pathVariable(AUTHENTICATION_ID), ignoreSearchable)
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.error("get user by authid failed, {}", throwable.getMessage());
@@ -179,9 +188,11 @@ public class UserHandler {
     }
 
     public Mono<ServerResponse> deleteMyAccount(ServerRequest serverRequest) {
-        LOG.info("delete my account");
+        String uuidString = serverRequest.pathVariable("organizationId");
+        LOG.info("delete my account information for user with organizationId: {}", uuidString);
+        UUID organizationId = UUID.fromString(uuidString);
 
-        return userService.deleteMyAccount()
+        return userService.deleteMyAccount(organizationId)
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.error("delete user failed", throwable);

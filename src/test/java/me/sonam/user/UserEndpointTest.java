@@ -110,12 +110,7 @@ public class UserEndpointTest {
                 .expectNextMatches(myUser -> {
                     LOG.info("do expectNextMatches");
                             LOG.info("profilePhoto: '{}'", myUser.getProfilePhoto());
-
-
-                    return myUser.getEmail().equals("josey.cat@@cat.emmail");
-
-
-
+                    return myUser.getEmail().equals("dommy@cat.email");
                 })
                 .expectComplete().verify();
 
@@ -275,6 +270,43 @@ public class UserEndpointTest {
     }
 
     @Test
+    public void getUserByAuthIdSearchableIgnore() {
+        LOG.info("make rest call to save user and create authentication record");
+
+        final String authenticationId = "dommy@cat.email";
+        Jwt jwt = jwt(authenticationId);
+        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
+
+        MyUser myUser2 = new MyUser("Dommy", "thecat", "dommy@cat.email", authenticationId, false);
+        userRepository.save(myUser2).subscribe();
+
+        // should get an error because the searchable is not true
+        webTestClient.get().uri("/users/profile/authentication-id/" + authenticationId)
+                .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest()
+                .returnResult(MyUser.class).getResponseBody();
+
+        myUser2.setSearchable(false);
+        myUser2.setNewAccount(false);
+        userRepository.save(myUser2).subscribe();
+
+        LOG.info("get user by auth id");
+
+        Flux<MyUser> myUserFlux = webTestClient.get().uri("/users/profile/authentication-id/" + authenticationId+"?ignoreSearchable=true")
+                .headers(addJwt(jwt)).exchange().expectStatus().isOk()
+                .returnResult(MyUser.class).getResponseBody();
+
+
+        StepVerifier.create(myUserFlux)
+                .assertNext(myUser -> {
+                    LOG.info("asserting found user by authId: {}", myUser);
+                    assertThat(myUser.getLastName()).isEqualTo("thecat");
+                    assertThat(myUser.getEmail()).isEqualTo("dommy@cat.email");
+                })
+                .verifyComplete();
+    }
+
+
+        @Test
     public void findMatchingFirstNameAndLastName() {
         LOG.info("test find by firstName and lastName matching");
         MyUser myUser = new MyUser("Dommy", "thecat", "dommy@cat.email", "dommy@cat.email", false);
