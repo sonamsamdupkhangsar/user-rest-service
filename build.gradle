@@ -14,7 +14,7 @@ plugins {
 group = 'me.sonam'
 version = '1.0-SNAPSHOT'
 description = 'user-rest-service'
-java.sourceCompatibility = JavaVersion.VERSION_21
+java.sourceCompatibility = JavaVersion.VERSION_25
 
 repositories {
     mavenLocal()
@@ -44,9 +44,11 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     implementation'io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE'
     implementation 'org.postgresql:postgresql:42.7.7'
-    implementation'me.sonam:token-filter:1.0.6-SNAPSHOT'
+    implementation'me.sonam:token-filter:1.0.7-SNAPSHOT'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.6'
     implementation'io.projectreactor:reactor-test'
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+    implementation("org.springframework.security:spring-security-oauth2-jose")
     testImplementation 'io.r2dbc:r2dbc-h2:1.0.0.RELEASE'
     testImplementation 'com.h2database:h2:2.2.220'
     testImplementation 'junit:junit:4.13.2'
