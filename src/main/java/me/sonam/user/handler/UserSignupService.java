@@ -193,15 +193,15 @@ public class UserSignupService implements UserService {
      * @return
      */
     @Override
-    public Mono<String> updateUser(String authenticationId, Mono<UserTransfer> userMono) {
+    public Mono<String> updateUser(String authenticationId, Mono<UserUpdate> userMono) {
         LOG.info("update user fields for authenticationId: {}", authenticationId);
 
-       return userMono.flatMap(userTransfer -> {
-            LOG.info("userTransfer: {}", userTransfer);
-                     return userRepository.findByAuthenticationIdIgnoreCase(userTransfer.getAuthenticationId())
+       return userMono.flatMap(userUpdate -> {
+            LOG.info("userTransfer: {}", userUpdate);
+                     return userRepository.findByAuthenticationIdIgnoreCase(userUpdate.getAuthenticationId())
                              .flatMap(myUser ->
-                                     userRepository.updateFirstNameAndLastNameAndSearchableByAuthenticationId(userTransfer.getFirstName(), userTransfer.getLastName(),
-                                                 userTransfer.isSearchable(), userTransfer.getAuthenticationId())
+                                     userRepository.updateFirstNameAndLastNameAndSearchableByAuthenticationId(userUpdate.getFirstName(), userUpdate.getLastName(),
+                                             userUpdate.isSearchable(), userUpdate.getAuthenticationId())
                              )
                              .thenReturn("user firstname, lastname and email updated");
         });

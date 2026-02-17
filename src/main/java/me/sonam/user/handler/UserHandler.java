@@ -57,7 +57,7 @@ public class UserHandler {
     public Mono<ServerResponse> update(ServerRequest serverRequest) {
 
         return serverRequest.principal().flatMap(principal ->
-                userService.updateUser(principal.getName(), serverRequest.bodyToMono(UserTransfer.class))
+                userService.updateUser(principal.getName(), serverRequest.bodyToMono(UserUpdate.class))
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.info("user update failed: ", throwable);
