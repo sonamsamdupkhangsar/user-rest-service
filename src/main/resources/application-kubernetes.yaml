@@ -18,5 +18,5 @@ AUTHENTICATION_REST_SERVICE: http://authentication-rest-service
 ORGANIZATION_REST_SERVICE: http://organization-rest-service
 ROLE_REST_SERVICE: http://role-rest-service
 
-ISSUER_URI: https://authorization.sonam.cloud/issuer
+ISSUER_URI: https://authorization.sonam.cloud
 NEW_RELIC_ENABLED: false
