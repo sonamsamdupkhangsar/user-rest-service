@@ -187,12 +187,12 @@ public class UserHandler {
         );
     }
 
-    public Mono<ServerResponse> deleteMyAccount(ServerRequest serverRequest) {
+    public Mono<ServerResponse> deleteUserData(ServerRequest serverRequest) {
         String uuidString = serverRequest.pathVariable("organizationId");
         LOG.info("delete my account information for user with organizationId: {}", uuidString);
         UUID organizationId = UUID.fromString(uuidString);
 
-        return userService.deleteMyAccount(organizationId)
+        return userService.deleteUserData(organizationId)
                 .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                 .onErrorResume(throwable -> {
                     LOG.error("delete user failed", throwable);

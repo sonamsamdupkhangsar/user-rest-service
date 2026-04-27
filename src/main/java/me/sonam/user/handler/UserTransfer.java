@@ -12,6 +12,7 @@ public class UserTransfer {
     private boolean searchable;
     private String profilePhoto;
     private boolean active;
+    private String activationHost;
 
     public UserTransfer() {
 
@@ -95,6 +96,14 @@ public class UserTransfer {
         this.active = active;
     }
 
+    public String getActivationHost() {
+        return activationHost;
+    }
+
+    public void setActivationHost(String activationHost) {
+        this.activationHost = activationHost;
+    }
+
     @Override
     public String toString() {
         return "UserTransfer{" +
@@ -106,6 +115,7 @@ public class UserTransfer {
                 ", searchable='" + searchable + '\'' +
                 ", profilePhoto='" + profilePhoto + '\'' +
                 ", active='" + active + '\'' +
+                ", activationHost='" + activationHost + '\'' +
                 '}';
     }
 }

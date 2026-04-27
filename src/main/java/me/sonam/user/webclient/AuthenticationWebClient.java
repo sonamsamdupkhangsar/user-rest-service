@@ -64,14 +64,15 @@ public class AuthenticationWebClient {
         });
     }
 
-    public Mono<String> deleteMyAccount() {
-        LOG.info("delete my authentication account endpoint: {}", authenticationEndpoint);
-        WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(authenticationEndpoint)
+    public Mono<String> deleteUserData(UUID userId) {
+        final String endpoint = authenticationEndpoint + "/users/" + userId;
+        LOG.info("delete my authentication account endpoint: {}", endpoint);
+        WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(endpoint)
                 .retrieve();
         return responseSpec.bodyToMono(String.class).doOnNext(s -> {
-            LOG.debug("got response for deleteMyAccount call to endpoint{} {}", authenticationEndpoint, s);
+            LOG.debug("got response for deleteUserData call to endpoint{} {}", endpoint, s);
         }).onErrorResume(throwable -> {
-            LOG.error("error occurred in calling deleteMyAccount endpoint {}", authenticationEndpoint, throwable);
+            LOG.error("error occurred in calling deleteUserData endpoint {}", endpoint, throwable);
             return Mono.error(throwable);
         });
     }

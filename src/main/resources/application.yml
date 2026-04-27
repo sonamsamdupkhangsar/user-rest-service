@@ -14,6 +14,9 @@ management:
     health:
       show-details: always
 
+openissuer:
+  trusted-issuer-host-suffixes: ${TRUSTED_ISSUER_HOST_SUFFIXES:openissuer.test,openissuer.com}
+
 server:
   port: 8080
 
