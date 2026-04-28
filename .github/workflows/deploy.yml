@@ -6,7 +6,7 @@ on:
 jobs:
 
   build:
-    name: Build, push, and deploy
+    name: Build and push Docker image
     runs-on: ubuntu-latest
     steps:
       - name: Export project name
@@ -37,28 +37,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{github.repository}}:latest
+          tags: ghcr.io/${{github.repository}}:multitenancy
           secrets: |
             USERNAME=${{ github.actor }}
             PERSONAL_ACCESS_TOKEN=${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-      - name: Save DigitalOcean kubeconfig with short-lived credentials
-        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.K8CLUSTER_NAME }}
-
-      - name: Deploy to k8 cluster
-        run: |          
-          export PROJECT_NAME=$(echo ${{ github.repository }} | cut -d / -f2)
-          helm repo add sonam https://sonamsamdupkhangsar.github.io/sonam-helm-chart/
-          helm upgrade --install --timeout 5m0s \
-            --set "image.repository=ghcr.io/${{github.repository}}" \
-            --set "image.tag=latest" \
-            --set "project=$PROJECT_NAME" \
-             $PROJECT_NAME \
-            sonam/mychart -f values-backend.yaml --version 0.1.26 --namespace=backend
-
-
