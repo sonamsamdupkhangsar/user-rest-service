@@ -1,8 +1,5 @@
 on:
   push:
-    branches:
-      - main
-      - feature/*
 jobs:
 
   build:
@@ -12,17 +9,14 @@ jobs:
       - name: Export project name
         run: export PROJECT_NAME=$(echo ${{ github.repository }} | cut -d / -f2); echo $PROJECT_NAME
 
-      - name: Checkout main
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Temurin JDK 21
+      - name: Setup Temurin JDK 25
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '25'
           distribution: 'temurin'
-
-      - name: Publish Pacts
-        run: USERNAME=${{github.actor}} PERSONAL_ACCESS_TOKEN=${{secrets.PERSONAL_ACCESS_TOKEN}} pactbrokerurl=${{ secrets.PACTBROKER_URL }} pactbrokerusername=${{ secrets.PACTBROKER_USERNAME }}  pactbrokerpassword=${{ secrets.PACTBROKER_PASSWORD }} ./gradlew clean build pactPublish
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3

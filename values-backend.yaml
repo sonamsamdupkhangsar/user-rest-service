@@ -5,6 +5,8 @@
 replicaCount: 1
 
 image:
+  repository: ghcr.io/sonamsamdupkhangsar/user-rest-service
+  tag: multitenancy
   pullPolicy: Always
 
 imagePullSecrets:
@@ -14,12 +16,25 @@ fullnameOverride: "user-rest-service"
 
 serviceAccount:
   # Specifies whether a service account should be created
-  create: false
+  create: true
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
+
+rbac:
+  create: true
+  rules:
+    - apiGroups:
+        - ""
+      resources:
+        - services
+        - endpoints
+      verbs:
+        - get
+        - list
+        - watch
 
 podSecurityContext: {}
 # fsGroup: 2000
@@ -43,16 +58,6 @@ istio:
 
 ingress:
   enabled: false
-  ingressClass: nginx
-  hosts:
-    - host: user-rest-service.sonam.cloud
-      paths:
-        - path: /public
-          pathType: Prefix
-  tls:
-    - secretName: sonam.cloud
-      hosts:
-        - "*.sonam.cloud"
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -73,13 +78,25 @@ affinity: {}
 
 postgres:
   port: "5432"
-  service: user-minimal-cluster
-  secretfile: sonam.user-minimal-cluster.credentials.postgresql.acid.zalan.do
+  service: user-db-rw
+  secretfile: user-db-app
   dbname: user
 
 envs:
+  - name: DB_SSLMODE
+    value: REQUIRE
+  - name: SPRING_PROFILES_ACTIVE
+    value: kubernetes
+  - name: SPRING_CLOUD_KUBERNETES_DISCOVERY_NAMESPACES_0
+    value: main
+  - name: ISSUER_URI
+    value: https://platform.openissuer.com/issuer
+  - name: JWT_SET_URI
+    value: https://platform.openissuer.com/issuer/oauth2/jwks
   - name: OAUTH_AUDIENCES
     value: oauth-client,nextjs-client
+  - name: NEW_RELIC_ENABLED
+    value: false
 
 health:
   liveness:
@@ -102,7 +119,3 @@ secretFiles:
         name: BASE64_CLIENT_ID_SECRET
       - key: scopes
         name: REQUEST_SCOPES
-  - file: newrelic-secret
-    keys:
-      - key: newrelic.license_key
-        name: NEW_RELIC_LICENSE_KEY

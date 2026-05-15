@@ -4,6 +4,7 @@ import me.sonam.user.handler.UserHandler;
 import me.sonam.user.handler.UserTransfer;
 import me.sonam.user.repo.UserRepository;
 import me.sonam.user.repo.entity.MyUser;
+import me.sonam.security.util.TokenRequestFilter;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -78,6 +79,9 @@ public class UserEndpointMockWebServerTest {
     @Autowired
     ApplicationContext context;
 
+    @Autowired
+    private TokenRequestFilter tokenRequestFilter;
+
     private final String ACTIVATE_ACCOUNT = "Account created successfully.  Check email for activating account";
     private final String RESET_PASSWORD = "Account created successfully.  Ask the user to check their email to reset their password";
 
@@ -89,6 +93,8 @@ public class UserEndpointMockWebServerTest {
                 .apply(springSecurity())
                 .configureClient()
                 .build();
+        tokenRequestFilter.getRequestFilters().forEach(requestFilter ->
+                requestFilter.getAccessToken().setAccessToken("test-service-token"));
     }
 
     final String clientCredentialResponse = "{" +

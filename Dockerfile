@@ -7,7 +7,7 @@ COPY . /workspace/app
 RUN --mount=type=secret,id=USERNAME --mount=type=secret,id=PERSONAL_ACCESS_TOKEN --mount=type=cache,target=/root/.gradle\
     export USERNAME=$(cat /run/secrets/USERNAME)\
     export PERSONAL_ACCESS_TOKEN=$(cat /run/secrets/PERSONAL_ACCESS_TOKEN) &&\
-     ./gradlew clean build
+     ./gradlew clean build --refresh-dependencies
 RUN  mkdir -p build/dependency && (cd build/dependency; jar -xf ../libs/user-rest-service-1.0-SNAPSHOT.jar)
 
 FROM eclipse-temurin:25-jdk
