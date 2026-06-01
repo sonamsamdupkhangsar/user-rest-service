@@ -91,7 +91,7 @@ public class UserSignupService implements UserService {
     public Mono<String> signupUser(Mono<UserTransfer> userMono) {
         LOG.info("signup user");
 
-        return userMono.flatMap(userTransfer -> validateOnSignup(userTransfer)).//thenReturn("User sign up success, checkemail");  //
+        return userMono.flatMap(this::validateOnSignup).//thenReturn("User sign up success, checkemail");  //
                 flatMap(userTransfer ->
 
                 userRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue(userTransfer.getAuthenticationId())
