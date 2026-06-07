@@ -9,6 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,15 +31,23 @@ public class AccountWebClient {
 
     public Mono<String>
     createAccount(String fullName, String authenticationId, UUID userId, String email, boolean active,
-                                      Boolean passwordSet) {
+                                      Boolean passwordSet, String activationHost) {
         LOG.info("create Account record with http call on endpoint: {}", accountEndpoint);
 
         LOG.debug("active for createAccount is {}", active);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("authenticationId", authenticationId);
+        body.put("email", email);
+        body.put("userId", userId);
+        body.put("active", active);
+        body.put("passwordSet", passwordSet);
+        body.put("fullName", fullName);
+        if (activationHost != null && !activationHost.isBlank()) {
+            body.put("activationHost", activationHost);
+        }
 
         WebClient.ResponseSpec spec = webClientBuilder.build().post().uri(accountEndpoint)
-                .bodyValue(Map.of("authenticationId", authenticationId, "email", email,
-                        "userId", userId, "active", active
-                , "passwordSet", passwordSet, "fullName", fullName)).retrieve();
+                .bodyValue(body).retrieve();
 
         return spec.bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {})
                 .doOnNext(map -> {
@@ -83,9 +92,10 @@ public class AccountWebClient {
 
     }
 
-    public Mono<String> deleteMyAccount() {
-        LOG.info("delete my account endpoint: {}", accountEndpoint);
-        WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(accountEndpoint)
+    public Mono<String> deleteUserData(UUID userId) {
+        final String endpoint = accountEndpoint + "/users/" + userId;
+        LOG.info("delete my account endpoint: {}", endpoint);
+        WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(endpoint)
                 .retrieve();
         return responseSpec.bodyToMono(String.class);
     }

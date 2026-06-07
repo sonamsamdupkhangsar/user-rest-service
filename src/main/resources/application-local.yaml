@@ -23,11 +23,11 @@ AUTHENTICATION_REST_SERVICE: http://authentication-rest-service
 ORGANIZATION_REST_SERVICE: http://organization-rest-service
 ROLE_REST_SERVICE: http://role-rest-service
 
-ISSUER_ADDRESS: http://api-gateway:9001
+ISSUER_ADDRESS: http://platform.openissuer.test:9001
 
-ISSUER_URI: ${ISSUER_ADDRESS}/issuer
-OAUTH_AUDIENCES: oauth-client
-JWT_SET_URI: ${ISSUER_ADDRESS}/issuer/.well-known/jwks.json
+ISSUER_URI: ${ISSUER_ADDRESS}
+OAUTH_AUDIENCES: oauth-client, b4dfe3fb-1692-44b8-92ab-366ccc84b539-authzmanager
+JWT_SET_URI: ${ISSUER_ADDRESS}/oauth2/jwks
 
 REQUEST_SCOPES: message.read message.write
 BASE64_CLIENT_ID_SECRET: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
@@ -37,5 +37,8 @@ spring:
   cloud:
     kubernetes:
       enabled: false
+
+auth-server:
+  root: http://authorization-server
 
 NEW_RELIC_ENABLED: false

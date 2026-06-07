@@ -14,6 +14,9 @@ management:
     health:
       show-details: always
 
+openissuer:
+  trusted-issuer-host-suffixes: ${TRUSTED_ISSUER_HOST_SUFFIXES:openissuer.test,openissuer.com}
+
 server:
   port: 8080
 
@@ -30,7 +33,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${ISSUER_URI}
+          jwk-set-uri: ${JWT_SET_URI}
 
 authentication-rest-service:
   root: ${AUTHENTICATION_REST_SERVICE}
@@ -50,7 +53,7 @@ role-rest-service:
 
 auth-server:
   root: http://authorization-server
-  context-path: /issuer
+  context-path:
   oauth2token:
     path: /oauth2/token
     grantType: client_credentials

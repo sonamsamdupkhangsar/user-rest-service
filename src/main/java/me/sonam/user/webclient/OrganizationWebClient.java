@@ -20,8 +20,8 @@ public class OrganizationWebClient {
         this.deleteMyOrganization = deleteMyOrganization;
     }
 
-    public Mono<String> deleteMyAccount(UUID organizationId) {
-        final String endpoint = deleteMyOrganization + "/my/"+organizationId;
+    public Mono<String> deleteUserData(UUID organizationId, UUID userId) {
+        final String endpoint = deleteMyOrganization + "/" + organizationId + "/users/" + userId + "/data";
         LOG.info("delete my organization account endpoint: {}", endpoint);
         WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(endpoint)
                 .retrieve();

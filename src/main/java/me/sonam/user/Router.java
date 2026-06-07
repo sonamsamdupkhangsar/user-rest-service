@@ -29,7 +29,7 @@ public class Router {
                 .andRoute(GET("/users/authentication-id/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)), handler::getUserByAuthId)
                 .andRoute(GET("/users/profile/authentication-id/{authenticationId}").and(accept(MediaType.APPLICATION_JSON)), handler::getUserByAuthIdProfileSearch)
                 .andRoute(PUT("/users/{authenticationId}/active").and(accept(MediaType.APPLICATION_JSON)), handler::activateUser)
-                .andRoute(DELETE("/users/{organizationId}").and(accept(MediaType.APPLICATION_JSON)), handler::deleteMyAccount);
+                .andRoute(DELETE("/users/{organizationId}").and(accept(MediaType.APPLICATION_JSON)), handler::deleteUserData);
 
     }
 }

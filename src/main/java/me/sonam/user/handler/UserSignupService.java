@@ -91,7 +91,7 @@ public class UserSignupService implements UserService {
     public Mono<String> signupUser(Mono<UserTransfer> userMono) {
         LOG.info("signup user");
 
-        return userMono.flatMap(userTransfer -> validateOnSignup(userTransfer)).//thenReturn("User sign up success, checkemail");  //
+        return userMono.flatMap(this::validateOnSignup).//thenReturn("User sign up success, checkemail");  //
                 flatMap(userTransfer ->
 
                 userRepository.existsByAuthenticationIdIgnoreCaseAndActiveTrue(userTransfer.getAuthenticationId())
@@ -124,7 +124,8 @@ public class UserSignupService implements UserService {
                                         .then(accountWebClient.createAccount(myUser.getFirstName() + " " + myUser.getLastName(),
                                                 userTransfer.getAuthenticationId(), myUser.getId(),
                                                 userTransfer.getEmail(), myUser.getActive(),
-                                                userTransfer.getPassword() != null && !userTransfer.getPassword().isEmpty()))));
+                                                userTransfer.getPassword() != null && !userTransfer.getPassword().isEmpty(),
+                                                userTransfer.getActivationHost()))));
     }
 
     private Mono<UserTransfer> validateOnSignup(UserTransfer userTransfer) {
@@ -240,7 +241,7 @@ public class UserSignupService implements UserService {
     }
 
     @Override
-    public Mono<String> deleteMyAccount(UUID organizationId) {
+    public Mono<String> deleteUserData(UUID organizationId) {
         LOG.info("delete my account");
 
         return ReactiveSecurityContextHolder.getContext().flatMap(securityContext -> {
@@ -264,11 +265,11 @@ public class UserSignupService implements UserService {
 
                     .flatMap(unused -> {
                         //LOG.info("delete account {}", unused);
-                        return accountWebClient.deleteMyAccount();
+                        return accountWebClient.deleteUserData(userId);
                     })
-                    .then(authenticationWebClient.deleteMyAccount())
-                    .then(organizationWebClient.deleteMyAccount(organizationId))
-                    .then(roleWebClient.deleteMyAccount(organizationId))
+                    .then(authenticationWebClient.deleteUserData(userId))
+                    .then(organizationWebClient.deleteUserData(organizationId, userId))
+                    .then(roleWebClient.deleteUserData(organizationId, userId))
                     .thenReturn("delete my account success for user id: " + userId);
         });
     }

@@ -20,8 +20,8 @@ public class RoleWebClient {
         this.deleteMyRole = deleteMyRole;
     }
 
-    public Mono<String> deleteMyAccount(UUID organizationId) {
-        final String endpoint = deleteMyRole + "/organizations/"+organizationId;
+    public Mono<String> deleteUserData(UUID organizationId, UUID userId) {
+        final String endpoint = deleteMyRole + "/organizations/" + organizationId + "/users/" + userId;
         LOG.info("delete my role endpoint: {}", endpoint);
 
         WebClient.ResponseSpec responseSpec = webClientBuilder.build().delete().uri(endpoint)

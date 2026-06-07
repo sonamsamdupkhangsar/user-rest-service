@@ -26,5 +26,5 @@ public interface UserService {
     Mono<Map<String, Object>> getUserForOidcUserInfo(UUID userId);
     Mono<User> getUserById(UUID id);
     Mono<List<User>> getBatchOfUserById(List<UUID> uuids);
-    Mono<String> deleteMyAccount(UUID organizationId);
+    Mono<String> deleteUserData(UUID organizationId);
 }
