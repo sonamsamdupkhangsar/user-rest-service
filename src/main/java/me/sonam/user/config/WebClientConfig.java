@@ -10,6 +10,7 @@ import me.sonam.user.webclient.RoleWebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
@@ -39,49 +40,65 @@ public class WebClientConfig {
     @Value("${tokenExpireSeconds:1}")
     private int tokenExpireSeconds;
 
+    // Used for normal downstream service calls through Spring load balancing.
     @LoadBalanced
-    @Bean
-    public WebClient.Builder webClientBuilder() {
-        LOG.info("returning load balanced webclient part");
-        return WebClient.builder().filter(reactiveRequestContextHolder().headerFilter());
+    @Bean("serviceWebClientBuilder")
+    public WebClient.Builder serviceWebClientBuilder(ReactiveRequestContextHolder reactiveRequestContextHolder) {
+        LOG.info("returning load balanced service webclient builder");
+        return WebClient.builder().filter(reactiveRequestContextHolder.headerFilter());
     }
 
+    // Used only by ReactiveRequestContextHolder when requesting access tokens from authorization server.
     @LoadBalanced
-    @Bean("noFilter")
-    public WebClient.Builder webClientBuilderNoFilter() {
-        LOG.info("returning for noFilter load balanced webclient part");
+    @Bean("tokenWebClientBuilder")
+    @Profile("!local-https")
+    public WebClient.Builder loadBalancedTokenWebClientBuilder() {
+        LOG.info("returning load balanced token webclient builder");
+        return WebClient.builder();
+    }
+
+    @Bean("tokenWebClientBuilder")
+    @Profile("local-https")
+    public WebClient.Builder localHttpsTokenWebClientBuilder() {
+        LOG.info("returning non-load-balanced token webclient builder for local-https profile");
         return WebClient.builder();
     }
 
     @Bean
-    public ReactiveRequestContextHolder reactiveRequestContextHolder() {
-        return new ReactiveRequestContextHolder(webClientBuilderNoFilter(), tokenExpireSeconds);
+    public ReactiveRequestContextHolder reactiveRequestContextHolder(
+            @Qualifier("tokenWebClientBuilder") WebClient.Builder tokenWebClientBuilder) {
+        return new ReactiveRequestContextHolder(tokenWebClientBuilder, tokenExpireSeconds);
     }
 
     @Bean
-    public UserSignupService userSignupService() {
-        return new UserSignupService(accountWebClient(),
-                authenticationWebClient(), organizationWebClient(),
-                roleWebClient());
+    public UserSignupService userSignupService(AccountWebClient accountWebClient,
+                                               AuthenticationWebClient authenticationWebClient,
+                                               OrganizationWebClient organizationWebClient,
+                                               RoleWebClient roleWebClient) {
+        return new UserSignupService(accountWebClient, authenticationWebClient, organizationWebClient, roleWebClient);
     }
 
     @Bean
-    public AccountWebClient accountWebClient() {
-        return new AccountWebClient(webClientBuilder(), deleteMyAccountEndpoint, userRepository);
+    public AccountWebClient accountWebClient(
+            @Qualifier("serviceWebClientBuilder") WebClient.Builder serviceWebClientBuilder) {
+        return new AccountWebClient(serviceWebClientBuilder, deleteMyAccountEndpoint, userRepository);
     }
 
     @Bean
-    public AuthenticationWebClient authenticationWebClient() {
-        return new AuthenticationWebClient(webClientBuilder(), deleteMyAuthenticationEndpoint, userRepository);
+    public AuthenticationWebClient authenticationWebClient(
+            @Qualifier("serviceWebClientBuilder") WebClient.Builder serviceWebClientBuilder) {
+        return new AuthenticationWebClient(serviceWebClientBuilder, deleteMyAuthenticationEndpoint, userRepository);
     }
 
     @Bean
-    public OrganizationWebClient organizationWebClient() {
-        return new OrganizationWebClient(webClientBuilder(), deleteMyOrganizationEndpoint);
+    public OrganizationWebClient organizationWebClient(
+            @Qualifier("serviceWebClientBuilder") WebClient.Builder serviceWebClientBuilder) {
+        return new OrganizationWebClient(serviceWebClientBuilder, deleteMyOrganizationEndpoint);
     }
 
     @Bean
-    public RoleWebClient roleWebClient() {
-        return new RoleWebClient(webClientBuilder(), deleteMyRoleEndpoint);
+    public RoleWebClient roleWebClient(
+            @Qualifier("serviceWebClientBuilder") WebClient.Builder serviceWebClientBuilder) {
+        return new RoleWebClient(serviceWebClientBuilder, deleteMyRoleEndpoint);
     }
 }

@@ -2,10 +2,10 @@ package me.sonam.user;
 
 import au.com.dius.pact.consumer.MockServer;
 import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
-import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
+import au.com.dius.pact.consumer.dsl.PactBuilder;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
-import au.com.dius.pact.core.model.RequestResponsePact;
+import au.com.dius.pact.core.model.V4Pact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +27,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * This will create a pact using {@link JwtAuthConsumerIntegTest#createPact(PactDslWithProvider)}
+ * This will create a pact using {@link JwtAuthConsumerIntegTest#createPact(PactBuilder)}
  * The pact is then published using `mvn pact:publish command
  */
 
@@ -40,7 +40,7 @@ public class JwtAuthConsumerIntegTest {
     private PactDslJsonBody pactDslJsonBody;
 
     @Pact(provider="jwt-rest-service", consumer="user-rest-service")
-    public RequestResponsePact createPact(PactDslWithProvider builder) throws Exception {
+    public V4Pact createPact(PactBuilder builder) throws Exception {
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
 
@@ -50,7 +50,7 @@ public class JwtAuthConsumerIntegTest {
                 .uuid("id")
                 .stringType("issuer", "sonam.cloud");
 
-        return builder
+        return builder.usingLegacyDsl()
                 .uponReceiving("validate jwt header")
                 .path("/validate")
                 .matchHeader("Authorization", "Bearer .*",  "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzb25hbSIsImlzcyI6InNvbmFtLmNsb3VkIiwiYXVkIjoic29uYW0uY2xvdWQiLCJqdGkiOiJmMTY2NjM1OS05YTViLTQ3NzMtOWUyNy00OGU0OTFlNDYzNGIifQ.KGFBUjghvcmNGDH0eM17S9pWkoLwbvDaDBGAx2AyB41yZ_8-WewTriR08JdjLskw1dsRYpMh9idxQ4BS6xmOCQ")
@@ -59,7 +59,7 @@ public class JwtAuthConsumerIntegTest {
                 .matchHeader("Content-Type", "application/json")
                 .status(200)
                 .body(pactDslJsonBody)
-                .toPact();
+                .toPact(V4Pact.class);
     }
 
     /**
