@@ -1,0 +1,6 @@
+ISSUER_ADDRESS: https://platform.openissuer.test:9001
+ISSUER_URI: ${ISSUER_ADDRESS}
+JWT_SET_URI: ${ISSUER_ADDRESS}/oauth2/jwks
+
+auth-server:
+  root: https://platform.openissuer.test:9001

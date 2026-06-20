@@ -2,10 +2,10 @@ package me.sonam.user;
 
 import au.com.dius.pact.consumer.MockServer;
 import au.com.dius.pact.consumer.dsl.PactDslJsonBody;
-import au.com.dius.pact.consumer.dsl.PactDslWithProvider;
+import au.com.dius.pact.consumer.dsl.PactBuilder;
 import au.com.dius.pact.consumer.junit5.PactConsumerTestExt;
 import au.com.dius.pact.consumer.junit5.PactTestFor;
-import au.com.dius.pact.core.model.RequestResponsePact;
+import au.com.dius.pact.core.model.V4Pact;
 import au.com.dius.pact.core.model.annotations.Pact;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,7 +37,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * This will create a pact using {@link AuthConsumerIntegTest#createPact(PactDslWithProvider)}
+ * This will create a pact using {@link AuthConsumerIntegTest#createPact(PactBuilder)}
  * The pact is then published using `mvn pact:publish command
  */
 
@@ -50,11 +50,11 @@ public class AuthConsumerIntegTest {
     private PactDslJsonBody pactDslJsonBody;
 
     @Pact(provider="authenticate-rest-service", consumer="user-rest-service")
-    public RequestResponsePact createPact(PactDslWithProvider builder) throws Exception {
+    public V4Pact createPact(PactBuilder builder) throws Exception {
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type", "application/json");
 
-        return builder
+        return builder.usingLegacyDsl()
                 .uponReceiving("create authentication")
                 .path("/create")
                 .method("POST")
@@ -65,7 +65,7 @@ public class AuthConsumerIntegTest {
                 .willRespondWith()
                 .matchHeader("Content-Type", "application/json")
                 .status(201)
-                .toPact();
+                .toPact(V4Pact.class);
     }
 
     /**
