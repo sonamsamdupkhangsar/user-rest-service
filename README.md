@@ -4,10 +4,10 @@ This service exposes a user signup api.  Please check the [workflow](#signup-use
 
 
 ## Run locally using profile
-Use the following to run local profile which will pick up properties defined in the `application-local.yml` :
+Use the following to run the Eureka profile, which picks up properties defined in `application-eureka.yaml`:
 
 ```
-mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local"
+mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=eureka"
 ```
  
  
@@ -131,7 +131,6 @@ flowchart TD
   isUserActive -->|No| canDeleteUser[user can be deleted]
   canDeleteUser --> userDb[(userdb postgresql)]
 ```
-
 
 
 
