@@ -7,9 +7,15 @@ This service exposes a user signup api.  Please check the [workflow](#signup-use
 Use the following to run the Eureka profile, which picks up properties defined in `application-eureka.yaml`:
 
 ```
-mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=eureka"
+SPRING_PROFILES_ACTIVE=eureka ./gradlew bootRun
 ```
- 
+
+For local HTTPS, keep Eureka discovery enabled and use a direct token WebClient for the local HTTPS authorization server:
+
+```
+SPRING_PROFILES_ACTIVE=eureka,local-https ./gradlew bootRun
+```
+
  
 ## Build Docker image
 
@@ -131,6 +137,5 @@ flowchart TD
   isUserActive -->|No| canDeleteUser[user can be deleted]
   canDeleteUser --> userDb[(userdb postgresql)]
 ```
-
 
 
