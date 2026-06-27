@@ -1,3 +1,5 @@
+
+
 # this profile is activated by kubernetes dependencies
 spring:
   cloud:
