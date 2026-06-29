@@ -43,7 +43,7 @@ public class UserHandler {
     public Mono<ServerResponse> updateProfilePhoto(ServerRequest serverRequest) {
 
         return serverRequest.principal().flatMap(principal ->
-                userService.updateProfilePhoto(principal.getName(), serverRequest.bodyToMono(UserTransfer.class))
+                userService.updateProfilePhoto(principal.getName(), serverRequest.bodyToMono(ProfilePhotoUpdate.class))
                         .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
                         .onErrorResume(throwable -> {
                             LOG.info("profile photo update failed: ", throwable);

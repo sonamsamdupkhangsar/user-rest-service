@@ -159,26 +159,26 @@ public class UserSignupService implements UserService {
     /**
      * this will only update the user profilePhoto property.
      * @param authenticationId
-     * @param userMono
+     * @param profilePhotoUpdateMono
      * @return
      */
     @Override
-    public Mono<String> updateProfilePhoto(String authenticationId, Mono<UserTransfer> userMono) {
+    public Mono<String> updateProfilePhoto(String authenticationId, Mono<ProfilePhotoUpdate> profilePhotoUpdateMono) {
         LOG.info("update profilePhoto for authenticationId: {}", authenticationId);
 
-        return userMono.flatMap(userTransfer -> {
-            LOG.info("profilePhoto in userTransfer object: {}", userTransfer);
-            return userRepository.findByAuthenticationIdIgnoreCase(userTransfer.getAuthenticationId())
+        return profilePhotoUpdateMono.flatMap(profilePhotoUpdate -> {
+            LOG.info("profilePhoto in update object: {}", profilePhotoUpdate.getProfilePhoto());
+            return userRepository.findByAuthenticationIdIgnoreCase(authenticationId)
                  .switchIfEmpty(Mono.error(new SignupException("email: email already used")))
 
                     .flatMap(myUser -> {
-                                LOG.info("update profile photo for authenticationId: {}", userTransfer.getAuthenticationId());
-                                if (userTransfer.getProfilePhoto() == null || userTransfer.getProfilePhoto().isEmpty()) {
+                                LOG.info("update profile photo for authenticationId: {}", authenticationId);
+                                if (profilePhotoUpdate.getProfilePhoto() == null || profilePhotoUpdate.getProfilePhoto().isEmpty()) {
                                     LOG.error("profilePhoto value is empty");
                                     return Mono.error(new UserException("profilePhoto value is empty"));
                                 }
                                 return userRepository.updateProfilePhotoByAuthenticationId(
-                                        userTransfer.getProfilePhoto(), userTransfer.getAuthenticationId());
+                                        profilePhotoUpdate.getProfilePhoto(), authenticationId);
 
 
                             })

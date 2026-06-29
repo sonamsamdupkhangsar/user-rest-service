@@ -131,25 +131,13 @@ public class UserEndpointTest {
 
         userRepository.save(myUser2).subscribe();
 
-        UserTransfer userTransfer = new UserTransfer();
-
-        userTransfer.setFirstName("Josey");
-        userTransfer.setLastName("Cat");
-        userTransfer.setEmail("josey@cat.email");
-
         JsonObject jsonObject = getJsonObject();
-        ObjectMapper objectMapper = new ObjectMapper();
-        TypeReference<HashMap<String, String>> tr = new TypeReference<HashMap<String, String>>() {};
 
         LOG.info("jsonObject.toString: {}", jsonObject.toString());
-        final Map<String, String> map = objectMapper.readValue(jsonObject.toString(), tr);
-
-        userTransfer.setProfilePhoto(jsonObject.toString());
-        userTransfer.setAuthenticationId(authenticationId);
 
         LOG.info("update user fields with jwt in auth bearer token");
         EntityExchangeResult<String> result = webTestClient.put().uri("/users/photo")
-                .bodyValue(userTransfer)
+                .bodyValue(Map.of("profilePhoto", jsonObject.toString()))
                 .headers(addJwt(jwt))
                 .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
 

@@ -16,7 +16,7 @@ import java.util.UUID;
 public interface UserService {
     //Mono<String> signupUserByAdmin(Mono<UserTransfer> userMono);
     Mono<String> signupUser(Mono<UserTransfer> userMono);
-    Mono<String> updateProfilePhoto(String authenticationId, Mono<UserTransfer> userMono);
+    Mono<String> updateProfilePhoto(String authenticationId, Mono<ProfilePhotoUpdate> profilePhotoUpdateMono);
     Mono<String> updateUser(String authenticationId, Mono<UserUpdate> userMono);
     Flux<MyUser> findMatchingName(String firstName, String lastName);
     Mono<String> activateUser(String authenticationId);
