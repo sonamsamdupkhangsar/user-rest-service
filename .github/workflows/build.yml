@@ -31,7 +31,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{github.repository}}:multitenancy
+          tags: ghcr.io/${{github.repository}}:latest
           secrets: |
             USERNAME=${{ github.actor }}
             PERSONAL_ACCESS_TOKEN=${{ secrets.PERSONAL_ACCESS_TOKEN }}
