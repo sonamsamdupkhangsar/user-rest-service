@@ -135,13 +135,9 @@ public class MyUser implements Persistable<UUID> {
     public String toString() {
         return "User{" +
                 "id=" + id +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", email='" + email + '\'' +
-                ", birthDate=" + birthDate +
                 ", genderId=" + genderId +
                 ", newAccount=" + newAccount +
-                ", profilePhoto=" + profilePhoto +
+                ", profilePhotoSupplied=" + (profilePhoto != null && !profilePhoto.isBlank()) +
                 '}';
     }
 

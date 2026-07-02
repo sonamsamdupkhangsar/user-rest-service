@@ -40,7 +40,7 @@ public class AuthenticationWebClient {
         WebClient.ResponseSpec responseSpec = webClientBuilder.build().post().uri(authenticationEndpoint).bodyValue(payloadMap).retrieve();
 
         return responseSpec.bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {}).map(map -> {
-            LOG.info("got back authenticationId from service call: {}", map.get("message"));
+            LOG.info("authentication service created user credentials");
             return map.get("message");
         }).onErrorResume(throwable -> {
             LOG.error("authentication rest call failed: {}", throwable.getMessage());

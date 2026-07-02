@@ -89,14 +89,10 @@ public class UserUpdate {
 
     @Override
     public String toString() {
-        return "UserTransfer{" +
-                "firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", email='" + email + '\'' +
-                ", authenticationId='" + authenticationId + '\'' +
-                ", password='" + password + '\'' +
-                ", searchable='" + searchable + '\'' +
-                ", profilePhoto='" + profilePhoto + '\'' +
+        return "UserUpdate{" +
+                "searchable=" + searchable +
+                ", passwordSupplied=" + (password != null && !password.isBlank()) +
+                ", profilePhotoSupplied=" + (profilePhoto != null && !profilePhoto.isBlank()) +
                 '}';
     }
 }

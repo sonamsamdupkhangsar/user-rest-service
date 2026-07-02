@@ -164,15 +164,15 @@ public class UserSignupService implements UserService {
      */
     @Override
     public Mono<String> updateProfilePhoto(String authenticationId, Mono<ProfilePhotoUpdate> profilePhotoUpdateMono) {
-        LOG.info("update profilePhoto for authenticationId: {}", authenticationId);
+        LOG.info("update profile photo requested");
 
         return profilePhotoUpdateMono.flatMap(profilePhotoUpdate -> {
-            LOG.info("profilePhoto in update object: {}", profilePhotoUpdate.getProfilePhoto());
+            LOG.debug("profile photo metadata supplied: {}", profilePhotoUpdate.getProfilePhoto() != null);
             return userRepository.findByAuthenticationIdIgnoreCase(authenticationId)
                  .switchIfEmpty(Mono.error(new SignupException("email: email already used")))
 
                     .flatMap(myUser -> {
-                                LOG.info("update profile photo for authenticationId: {}", authenticationId);
+                                LOG.info("updating profile photo metadata");
                                 if (profilePhotoUpdate.getProfilePhoto() == null || profilePhotoUpdate.getProfilePhoto().isEmpty()) {
                                     LOG.error("profilePhoto value is empty");
                                     return Mono.error(new UserException("profilePhoto value is empty"));
@@ -195,7 +195,7 @@ public class UserSignupService implements UserService {
      */
     @Override
     public Mono<String> updateUser(String authenticationId, Mono<UserUpdate> userMono) {
-        LOG.info("update user fields for authenticationId: {}", authenticationId);
+        LOG.info("update user fields requested");
 
        return userMono.flatMap(userUpdate -> {
             LOG.info("userTransfer: {}", userUpdate);
@@ -210,14 +210,14 @@ public class UserSignupService implements UserService {
 
    /* @Override
     public Mono<MyUser> getUserByAuthenticationId(String authenticationId) {
-        LOG.info("find user with id: {}", authenticationId);
+        LOG.info("find user by authentication identifier");
 
         return userRepository.findByAuthenticationId(authenticationId);
     }*/
 
     @Override
     public Flux<MyUser> findMatchingName(String firstName, String lastName) {
-        LOG.info("find user with firstName and lastName: '{}' '{}'", firstName, lastName);
+        LOG.info("find matching user name requested");
         return userRepository.findByFirstNameContainingIgnoreCaseAndLastNameContainingIgnoreCase(firstName, lastName);
     }
 
@@ -276,7 +276,7 @@ public class UserSignupService implements UserService {
 
     @Override
     public Mono<Map<String, Object>> getUserByAuthenticationId(String authenticationId) {
-        LOG.info("get user information for authenticationId: {}", authenticationId);
+        LOG.info("get user information by authentication identifier");
 
         return userRepository.findByAuthenticationIdIgnoreCase(authenticationId)
                 .switchIfEmpty(Mono.error(new SignupException("user not found with authenticationId: "+
@@ -290,12 +290,11 @@ public class UserSignupService implements UserService {
                     map.put("email", myUser.getEmail());
                     if (myUser.getProfilePhoto() != null && !myUser.getProfilePhoto().isEmpty()) {
                         final String thumbnailUrl = ProfilePhotoUrl.getProfileUrl(myUser.getProfilePhoto());
-                        LOG.info("set profilePhoto url : '{}'", thumbnailUrl);
+                        LOG.debug("set profile photo thumbnail URL");
                         map.put("profilePhoto", thumbnailUrl);
                     }
                     else {
-                        LOG.info("put empty string for profilePhoto as myUser.profilePhoto is null or empty: '{}'",
-                                myUser.getProfilePhoto());
+                        LOG.debug("profile photo metadata is absent");
                         map.put("profilePhoto", "");
                     }
 
@@ -310,7 +309,7 @@ public class UserSignupService implements UserService {
 
     @Override
     public Mono<Map<String, Object>> getUserByAuthenticationIdForProfileSearch(String authenticationId, boolean ignoreSearchable) {
-        LOG.info("profile search user information for authenticationId: {}", authenticationId);
+        LOG.info("profile search by authentication identifier");
 
         return userRepository.findByAuthenticationIdIgnoreCase(authenticationId)
                 .switchIfEmpty(Mono.error(new SignupException("user not found with authenticationId: "+

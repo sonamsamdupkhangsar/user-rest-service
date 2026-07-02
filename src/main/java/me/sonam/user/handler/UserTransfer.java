@@ -107,15 +107,10 @@ public class UserTransfer {
     @Override
     public String toString() {
         return "UserTransfer{" +
-                "firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", email='" + email + '\'' +
-                ", authenticationId='" + authenticationId + '\'' +
-                ", password='" + password + '\'' +
-                ", searchable='" + searchable + '\'' +
-                ", profilePhoto='" + profilePhoto + '\'' +
-                ", active='" + active + '\'' +
-                ", activationHost='" + activationHost + '\'' +
+                "searchable=" + searchable +
+                ", active=" + active +
+                ", passwordSupplied=" + (password != null && !password.isBlank()) +
+                ", profilePhotoSupplied=" + (profilePhoto != null && !profilePhoto.isBlank()) +
                 '}';
     }
 }
