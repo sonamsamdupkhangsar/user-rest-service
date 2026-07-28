@@ -7,6 +7,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.http.codec.multipart.FormFieldPart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -51,6 +52,22 @@ public class UserHandler {
                                     .bodyValue(throwable.getMessage());
                         })
         );
+    }
+
+    public Mono<ServerResponse> uploadProfilePhoto(ServerRequest serverRequest) {
+        return serverRequest.multipartData()
+                .flatMap(parts -> {
+                    if (!(parts.getFirst("file") instanceof FilePart file)
+                            || !(parts.getFirst(AUTHENTICATION_ID) instanceof FormFieldPart authenticationId)) {
+                        return ServerResponse.badRequest().bodyValue("file and authenticationId are required");
+                    }
+                    return userService.uploadProfilePhoto(authenticationId.value(), file)
+                            .flatMap(metadata -> ServerResponse.ok()
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .bodyValue(metadata));
+                })
+                .onErrorResume(IllegalArgumentException.class,
+                        exception -> ServerResponse.badRequest().bodyValue(exception.getMessage()));
     }
 
 
@@ -200,35 +217,6 @@ public class UserHandler {
                             .bodyValue(throwable.getMessage());
                 });
     }
-/*
-
-    public Mono<ServerResponse> uploadProfilePhoto(ServerRequest serverRequest) {
-        LOG.info("upload profile photo");
-
-        serverRequest.multipartData()
-                .map(parts -> parts.get("image"))
-                .cast(FilePart.class)
-                .flatMap(filePart -> {
-                    Path tempFile = null;
-                    try {
-                        tempFile = Files.createTempFile("image-", filePart.filename());
-                        return filePart.transferTo(tempFile).then(Mono.just(tempFile.toString()));
-                    } catch (IOException e) {
-                        LOG.error("failed to create temp file for uploading profile photo", e);
-                    }
-                    return null;
-                })
-                .
-        return userService.uploadProfilePhoto()
-                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable -> {
-                    LOG.error("profile photo upload failed", throwable);
-                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(throwable.getMessage());
-                });
-    }
-*/
-
     @SafeVarargs
     public static Map<String, String> getMap(Pair<String, String>... pairs){
         Map<String, String> map = new HashMap<>();

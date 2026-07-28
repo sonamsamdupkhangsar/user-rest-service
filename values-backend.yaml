@@ -127,3 +127,17 @@ secretFiles:
         name: BASE64_CLIENT_ID_SECRET
       - key: scopes
         name: REQUEST_SCOPES
+  - file: do-s3
+    keys:
+      - key: accessKeyId
+        name: ACCESS_KEY_ID
+      - key: bucket
+        name: BUCKET
+      - key: endpoint
+        name: ENDPOINT
+      - key: region
+        name: REGION
+      - key: secretAccessKey
+        name: SECRET_ACCESS_KEY
+      - key: subdomain
+        name: SUBDOMAIN
