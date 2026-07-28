@@ -112,3 +112,18 @@ requestFilters:
       base64EncodedClientIdSecret: b2F1dGgtY2xpZW50Om9hdXRoLXNlY3JldA==
 
 tokenExpireSeconds: 3
+
+aws:
+  s3:
+    region: us-east-1
+    accessKeyId: test
+    secretAccessKey: test
+    bucket: test
+    endpoint: http://localhost:4566
+    subdomain: http://localhost:4566/test
+    rootPath: authzmanager/
+    photoPath: photos/
+    presignDurationInMinutes: 1
+    thumbnailSize:
+      width: 200
+      height: 200

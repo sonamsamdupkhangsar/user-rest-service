@@ -72,3 +72,21 @@ requestFilters:
       base64EncodedClientIdSecret: ${BASE64_CLIENT_ID_SECRET}
 
 tokenExpireSeconds: 180
+
+aws:
+  s3:
+    region: ${REGION}
+    accessKeyId: ${ACCESS_KEY_ID}
+    secretAccessKey: ${SECRET_ACCESS_KEY}
+    bucket: ${BUCKET:sonam}
+    endpoint: ${ENDPOINT}
+    subdomain: ${SUBDOMAIN}
+    rootPath: authzmanager/
+    photoPath: photos/
+    presignDurationInMinutes: 60
+    thumbnailSize:
+      width: 200
+      height: 200
+
+profilePhotoFolder: profile/
+profilePhotoMaxBytes: 5242880

@@ -15,7 +15,7 @@ import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 @EnableDiscoveryClient
-@SpringBootApplication(scanBasePackages = "me.sonam")
+@SpringBootApplication(scanBasePackages = {"me.sonam", "cloud.sonam"})
 public class Application {
     private static final Logger LOG = LoggerFactory.getLogger(Application.class);
 

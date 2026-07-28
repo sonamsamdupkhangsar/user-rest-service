@@ -21,6 +21,7 @@ public class Router {
         LOG.info("building router function");
         return RouterFunctions
                 .route(POST("/users").and(accept(MediaType.APPLICATION_JSON)), handler::signupUser)
+                .andRoute(POST("/users/profile/photo"), handler::uploadProfilePhoto)
                 .andRoute(PUT("/users").and(accept(MediaType.APPLICATION_JSON)), handler::update)
                 .andRoute(PUT("/users/photo").and(accept(MediaType.APPLICATION_JSON)), handler::updateProfilePhoto)
                 .andRoute(GET("/users/names/{firstName}/{lastName}").and(accept(MediaType.APPLICATION_JSON)), handler::findMatchingFirstNameAndLastName)

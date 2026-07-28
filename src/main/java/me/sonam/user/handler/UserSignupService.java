@@ -1,6 +1,11 @@
 package me.sonam.user.handler;
 
 
+import cloud.sonam.s3.config.S3ClientConfigurationProperties;
+import cloud.sonam.s3.file.S3Service;
+import cloud.sonam.s3.file.util.ImageUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import me.sonam.user.handler.carrier.User;
 import me.sonam.user.repo.UserRepository;
@@ -17,14 +22,25 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.multipart.FilePart;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 
+import java.awt.Dimension;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.time.LocalDateTime;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -39,6 +55,15 @@ public class UserSignupService implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private S3Service s3Service;
+    @Autowired
+    private S3ClientConfigurationProperties s3Properties;
+
+    @Value("${profilePhotoFolder:profile/}")
+    private String profilePhotoFolder;
+    @Value("${profilePhotoMaxBytes:5242880}")
+    private long profilePhotoMaxBytes;
 
     //   private WebClient.Builder webClientBuilder;
 
@@ -184,6 +209,83 @@ public class UserSignupService implements UserService {
                             })
                             .thenReturn("profilePhoto property updated");
         });
+    }
+
+    @Override
+    public Mono<Map<String, String>> uploadProfilePhoto(String authenticationId, FilePart file) {
+        MediaType mediaType = file.headers().getContentType();
+        if (mediaType == null || !Set.of(MediaType.IMAGE_JPEG, MediaType.IMAGE_PNG, MediaType.IMAGE_GIF)
+                .contains(mediaType)) {
+            return Mono.error(new IllegalArgumentException("Profile photo must be a JPEG, PNG, or GIF image"));
+        }
+        ImageUtil.getFileFormat(mediaType, file.filename());
+
+        return userRepository.findByAuthenticationIdIgnoreCase(authenticationId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("User was not found")))
+                .flatMap(user -> DataBufferUtils.join(file.content())
+                        .flatMap(buffer -> {
+                            int length = buffer.readableByteCount();
+                            if (length == 0 || length > profilePhotoMaxBytes) {
+                                DataBufferUtils.release(buffer);
+                                return Mono.error(new IllegalArgumentException(
+                                        "Profile photo must be between 1 byte and 5 MB"));
+                            }
+                            byte[] content = new byte[length];
+                            buffer.read(content);
+                            DataBufferUtils.release(buffer);
+                            validateImage(content);
+                            return replaceProfilePhoto(user, file.filename(), mediaType,
+                                    ByteBuffer.wrap(content));
+                        }));
+    }
+
+    private void validateImage(byte[] content) {
+        try {
+            BufferedImage image = javax.imageio.ImageIO.read(new ByteArrayInputStream(content));
+            if (image == null) {
+                throw new IllegalArgumentException("The selected file does not contain a supported image");
+            }
+        } catch (IOException exception) {
+            throw new IllegalArgumentException("The selected image could not be read", exception);
+        }
+    }
+
+    private Mono<Map<String, String>> replaceProfilePhoto(MyUser user, String filename,
+                                                           MediaType mediaType, ByteBuffer bytes) {
+        String folder = s3Properties.getRootPath() + s3Properties.getPhotoPath()
+                + profilePhotoFolder + user.getId();
+        String prefix = folder + "/";
+        LocalDateTime uploaded = LocalDateTime.now();
+        Dimension thumbnail = new Dimension(s3Properties.getThumbnailSize().getWidth(),
+                s3Properties.getThumbnailSize().getHeight());
+
+        return s3Service.deleteFolder(folder)
+                .then(s3Service.uploadFile(Flux.just(bytes), prefix, filename, mediaType,
+                        bytes.remaining(), ObjectCannedACL.PRIVATE, uploaded))
+                .flatMap(photoKey -> s3Service.createPresignedUrl(Mono.just(photoKey))
+                        .flatMap(photoUrl -> s3Service.createPhotoThumbnail(uploaded, photoUrl, prefix,
+                                        ObjectCannedACL.PUBLIC_READ, filename, mediaType, thumbnail)
+                                .map(thumbnailKey -> {
+                                    Map<String, String> metadata = new HashMap<>();
+                                    metadata.put("profilePhotoKey", photoKey);
+                                    metadata.put("profilePhotoUrl", s3Properties.getSubdomain() + "/" + photoKey);
+                                    metadata.put("profilePhotoAcl", ObjectCannedACL.PRIVATE.toString());
+                                    metadata.put("thumbnailKey", thumbnailKey);
+                                    metadata.put("thumbnailUrl", s3Properties.getSubdomain() + "/" + thumbnailKey);
+                                    metadata.put("thumbnailAcl", ObjectCannedACL.PUBLIC_READ.toString());
+                                    return metadata;
+                                })))
+                .flatMap(metadata -> userRepository.updateProfilePhotoByAuthenticationId(
+                                toJson(metadata), user.getAuthenticationId())
+                        .thenReturn(metadata));
+    }
+
+    private String toJson(Map<String, String> metadata) {
+        try {
+            return new ObjectMapper().writeValueAsString(metadata);
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException("Could not serialize profile photo metadata", exception);
+        }
     }
 
     /**

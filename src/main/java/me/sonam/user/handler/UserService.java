@@ -4,6 +4,8 @@ import me.sonam.user.handler.carrier.User;
 import me.sonam.user.repo.entity.MyUser;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import org.springframework.http.codec.multipart.FilePart;
+import java.util.Map;
 import reactor.util.function.Tuple2;
 
 import java.util.List;
@@ -17,6 +19,7 @@ public interface UserService {
     //Mono<String> signupUserByAdmin(Mono<UserTransfer> userMono);
     Mono<String> signupUser(Mono<UserTransfer> userMono);
     Mono<String> updateProfilePhoto(String authenticationId, Mono<ProfilePhotoUpdate> profilePhotoUpdateMono);
+    Mono<Map<String, String>> uploadProfilePhoto(String authenticationId, FilePart file);
     Mono<String> updateUser(String authenticationId, Mono<UserUpdate> userMono);
     Flux<MyUser> findMatchingName(String firstName, String lastName);
     Mono<String> activateUser(String authenticationId);
