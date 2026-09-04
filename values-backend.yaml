@@ -109,18 +109,28 @@ envs:
     value: false
 
 health:
+  startup:
+    path: /users/api/health/liveness
+    port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 30
+    timeoutSeconds: 5
   liveness:
     path: /users/api/health/liveness
     port: 8080
     initialDelaySeconds: 30
     periodSeconds: 5
     failureThreshold: 5
+    timeoutSeconds: 5
   readiness:
     path: /users/api/health/readiness
     port: 8080
     initialDelaySeconds: 30
     periodSeconds: 5
     failureThreshold: 5
+    timeoutSeconds: 5
+
 
 secretFiles:
   - file: service-service-client-credential-flow-secret
