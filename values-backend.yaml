@@ -99,6 +99,8 @@ envs:
     value: "http://role-rest-service.{{ .Release.Namespace }}.svc.cluster.local"
   - name: AUTH_SERVER_ROOT
     value: "http://authorization-server.{{ .Release.Namespace }}.svc.cluster.local"
+  - name: AUTH_SERVER_CONTEXT_PATH
+    value: "/issuer"
   - name: ISSUER_URI
     value: https://platform.openissuer.com/issuer
   - name: JWT_SET_URI
