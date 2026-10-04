@@ -327,7 +327,10 @@ public class UserSignupService implements UserService {
     public Mono<String> activateUser(String authenticationId) {
         LOG.info("activate user");
 
-        return userRepository.updateUserActiveTrue(authenticationId)
+        return userRepository.findByAuthenticationIdIgnoreCase(authenticationId)
+                .switchIfEmpty(Mono.error(new UserException(
+                        "user does not exist with authenticationId: " + authenticationId)))
+                .flatMap(user -> userRepository.updateUserActiveTrue(authenticationId))
                 .thenReturn("activated: "+authenticationId);
     }
 
