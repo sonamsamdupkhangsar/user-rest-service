@@ -29,9 +29,9 @@ public class AccountWebClient {
         this.userRepository = userRepository;
     }
 
-    public Mono<String>
-    createAccount(String fullName, String authenticationId, UUID userId, String email, boolean active,
-                                      Boolean passwordSet, String activationHost) {
+    public Mono<String> createAccount(String fullName, String authenticationId, UUID userId,
+                                      String email, boolean active, Boolean passwordSet,
+                                      String activationHost) {
         LOG.info("create Account record with http call on endpoint: {}", accountEndpoint);
 
         LOG.debug("active for createAccount is {}", active);
@@ -59,17 +59,16 @@ public class AccountWebClient {
                     LOG.debug("exception occurred when calling create account endpoint", throwable);
                     LOG.error("create account rest call failed: {}", throwable.getMessage());
                     if (throwable instanceof WebClientResponseException webClientResponseException) {
-                    LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
+                        LOG.error("error body contains: {}", webClientResponseException.getResponseBodyAsString());
 
-                    return userRepository.deleteByAuthenticationIdIgnoreCase(authenticationId)
-                            .then(
-                                    Mono.error(new SignupException("Account api call failed with error: " +
-                                            webClientResponseException.getResponseBodyAsString())));
-                }
-                else {
-                    return Mono.error(new SignupException("Account api call failed with error: " +throwable.getMessage()));
-                }
-        });
+                        return userRepository.deleteByAuthenticationIdIgnoreCase(authenticationId)
+                                .then(Mono.error(new SignupException(
+                                        "Account api call failed with error: "
+                                                + webClientResponseException.getResponseBodyAsString())));
+                    }
+                    return Mono.error(new SignupException(
+                            "Account api call failed with error: " + throwable.getMessage()));
+                });
     }
 
     public Mono<? extends String> deleteAccountByEmail(String email) {
@@ -82,13 +81,24 @@ public class AccountWebClient {
         WebClient.ResponseSpec responseSpec = webClientBuilder.build().put().uri(endpoint)
                 .bodyValue(Map.of("email", email)).retrieve();
 
-        return responseSpec.bodyToMono(String.class).map(string -> {//Map.class).map(map -> {
-            LOG.info("got back response from account deletion service call: {}", string);//map.get("message"));
-            return true; //map.get("message");
-        }).onErrorResume(throwable -> {
-            LOG.error("account deletion rest call failed: {}", throwable.getMessage());
-            return Mono.just(true);
-        }).then(Mono.just("done calling account delete check"));
+        return responseSpec.bodyToMono(String.class)
+                .map(response -> {
+                    LOG.info("got back response from account deletion service call: {}", response);
+                    return true;
+                })
+                .onErrorResume(throwable -> {
+                    LOG.error("account deletion rest call failed: {}", throwable.getMessage());
+                    if (throwable instanceof WebClientResponseException responseException
+                            && responseException.getResponseBodyAsString().contains("account is active")) {
+                        // Do not continue signup when an active account already exists. Continuing here
+                        // deletes/recreates authentication and can destroy a previously activated login.
+                        return Mono.error(new SignupException(
+                                "Account reconciliation required: "
+                                        + responseException.getResponseBodyAsString()));
+                    }
+                    return Mono.just(true);
+                })
+                .then(Mono.just("done calling account delete check"));
 
     }
 
