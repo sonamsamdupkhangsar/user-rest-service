@@ -52,6 +52,7 @@ authentication-rest-service:
 account-rest-service:
   root: http://localhost:{port}
   context: ${account-rest-service.root}/accounts
+  reconcile: ${account-rest-service.context}/reconcile/{email}/{authenticationId}
 
 organization-rest-service:
   root: http://localhost:{port}

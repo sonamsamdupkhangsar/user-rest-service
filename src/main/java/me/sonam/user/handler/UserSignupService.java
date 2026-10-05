@@ -137,20 +137,46 @@ public class UserSignupService implements UserService {
                             return !aBoolean;
                         }).switchIfEmpty(Mono.error(new SignupException("User account has already been created for that email, check to activate it by email")))
                         .flatMap(aBoolean -> accountWebClient.deleteAccountByEmail(userTransfer.getEmail()))
-                        .flatMap(s -> authenticationWebClient.deleteByAuthenticationId(userTransfer.getAuthenticationId()))
-                        .flatMap(string -> userRepository.deleteByAuthenticationIdIgnoreCaseAndUserAuthAccountCreatedFalse(userTransfer.getAuthenticationId()))
-                        //just delete rows with email and account created is in false - meaning not fully created
-                        .flatMap(rows -> userRepository.deleteByEmailIgnoreCaseAndUserAuthAccountCreatedFalse(userTransfer.getEmail()))
-                        .flatMap(integer -> Mono.just(new MyUser(userTransfer.getFirstName(), userTransfer.getLastName(),
-                                userTransfer.getEmail(), userTransfer.getAuthenticationId(), userTransfer.isActive())))
-                        .flatMap(myUser -> userRepository.save(myUser))
-                        .flatMap(myUser ->
-                                authenticationWebClient.create(userTransfer.getAuthenticationId(), userTransfer.getPassword(), myUser.getId(), myUser.getActive())
-                                        .then(accountWebClient.createAccount(myUser.getFirstName() + " " + myUser.getLastName(),
-                                                userTransfer.getAuthenticationId(), myUser.getId(),
-                                                userTransfer.getEmail(), myUser.getActive(),
-                                                userTransfer.getPassword() != null && !userTransfer.getPassword().isEmpty(),
-                                                userTransfer.getActivationHost()))));
+                        .flatMap(result -> {
+                            if ("active-account-exists".equals(result)) {
+                                return accountWebClient.reconcileUserId(userTransfer.getEmail(),
+                                                userTransfer.getAuthenticationId())
+                                        .flatMap(userId -> userRepository.findByAuthenticationIdIgnoreCase(
+                                                        userTransfer.getAuthenticationId())
+                                                .flatMap(user -> {
+                                                    if (!userId.equals(user.getId())) {
+                                                        return Mono.error(new SignupException(
+                                                                "User and account userId values do not match"));
+                                                    }
+                                                    return userRepository.updatedUserAuthAccountCreatedTrue(
+                                                                    userTransfer.getAuthenticationId())
+                                                            .then(userRepository.updateUserActiveTrue(
+                                                                    userTransfer.getAuthenticationId()))
+                                                            .thenReturn("User record reconciled with existing account");
+                                                })
+                                                .switchIfEmpty(Mono.defer(() -> userRepository.save(new MyUser(
+                                                                userId, userTransfer.getFirstName(), userTransfer.getLastName(),
+                                                                userTransfer.getEmail(), userTransfer.getAuthenticationId(), true))
+                                                        .thenReturn("User record reconciled with existing account"))));
+                            }
+                            return authenticationWebClient.deleteByAuthenticationId(userTransfer.getAuthenticationId())
+                                    .then(completeSignupAfterCleanup(userTransfer));
+                        }));
+    }
+
+    private Mono<String> completeSignupAfterCleanup(UserTransfer userTransfer) {
+        return userRepository.deleteByAuthenticationIdIgnoreCaseAndUserAuthAccountCreatedFalse(userTransfer.getAuthenticationId())
+                .then(userRepository.deleteByEmailIgnoreCaseAndUserAuthAccountCreatedFalse(userTransfer.getEmail()))
+                .then(Mono.defer(() -> userRepository.save(new MyUser(userTransfer.getFirstName(),
+                        userTransfer.getLastName(), userTransfer.getEmail(),
+                        userTransfer.getAuthenticationId(), userTransfer.isActive()))))
+                .flatMap(myUser -> authenticationWebClient.create(userTransfer.getAuthenticationId(),
+                        userTransfer.getPassword(), myUser.getId(), myUser.getActive())
+                        .then(accountWebClient.createAccount(myUser.getFirstName() + " " + myUser.getLastName(),
+                                userTransfer.getAuthenticationId(), myUser.getId(), userTransfer.getEmail(),
+                                myUser.getActive(),
+                                userTransfer.getPassword() != null && !userTransfer.getPassword().isEmpty(),
+                                userTransfer.getActivationHost())));
     }
 
     private Mono<UserTransfer> validateOnSignup(UserTransfer userTransfer) {

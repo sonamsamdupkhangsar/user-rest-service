@@ -19,14 +19,27 @@ public class AccountWebClient {
     private final WebClient.Builder webClientBuilder;
 
     private final String accountEndpoint;
+    private final String reconcileAccountEndpoint;
 
     private final UserRepository userRepository;
 
     public AccountWebClient(WebClient.Builder webClientBuilder,
-                            String accountEndpoint, UserRepository userRepository) {
+                            String accountEndpoint, String reconcileAccountEndpoint,
+                            UserRepository userRepository) {
         this.webClientBuilder = webClientBuilder;
         this.accountEndpoint = accountEndpoint;
+        this.reconcileAccountEndpoint = reconcileAccountEndpoint;
         this.userRepository = userRepository;
+    }
+
+    public Mono<UUID> reconcileUserId(String email, String authenticationId) {
+        String endpoint = reconcileAccountEndpoint.replace("{email}", email)
+                .replace("{authenticationId}", authenticationId);
+        return webClientBuilder.build().get().uri(endpoint).retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {})
+                .map(map -> UUID.fromString(map.get("userId")))
+                .onErrorResume(throwable -> Mono.error(new SignupException(
+                        "Account reconciliation failed: " + throwable.getMessage())));
     }
 
     public Mono<String> createAccount(String fullName, String authenticationId, UUID userId,
@@ -71,7 +84,7 @@ public class AccountWebClient {
                 });
     }
 
-    public Mono<? extends String> deleteAccountByEmail(String email) {
+    public Mono<String> deleteAccountByEmail(String email) {
         LOG.info("call delete account check");
 
         final String endpoint = accountEndpoint + "/email";
@@ -84,22 +97,16 @@ public class AccountWebClient {
         return responseSpec.bodyToMono(String.class)
                 .map(response -> {
                     LOG.info("got back response from account deletion service call: {}", response);
-                    return true;
+                    return "account-deleted";
                 })
                 .onErrorResume(throwable -> {
                     LOG.error("account deletion rest call failed: {}", throwable.getMessage());
                     if (throwable instanceof WebClientResponseException responseException
                             && responseException.getResponseBodyAsString().contains("account is active")) {
-                        // Do not continue signup when an active account already exists. Continuing here
-                        // deletes/recreates authentication and can destroy a previously activated login.
-                        return Mono.error(new SignupException(
-                                "Account reconciliation required: "
-                                        + responseException.getResponseBodyAsString()));
+                        return Mono.just("active-account-exists");
                     }
-                    return Mono.just(true);
-                })
-                .then(Mono.just("done calling account delete check"));
-
+                    return Mono.just("account-delete-error");
+                });
     }
 
     public Mono<String> deleteUserData(UUID userId) {

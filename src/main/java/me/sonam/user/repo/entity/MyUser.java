@@ -47,6 +47,18 @@ public class MyUser implements Persistable<UUID> {
         this.newAccount = true;
     }
 
+    public MyUser(UUID id, String firstName, String lastName, String email,
+                  String authenticationId, boolean active) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.authenticationId = authenticationId;
+        this.active = active;
+        this.userAuthAccountCreated = true;
+        this.newAccount = true;
+    }
+
     public MyUser(UUID id, String firstName, String lastName, String email, String authenticationId, Boolean active,
                   Boolean userAuthAccountCreated, String profilePhoto,
                   Boolean searchable, LocalDate birthDate, UUID genderId, boolean newAccount) {

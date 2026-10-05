@@ -19,6 +19,9 @@ public class WebClientConfig {
     @Value("${account-rest-service.context}")
     private String deleteMyAccountEndpoint;
 
+    @Value("${account-rest-service.reconcile}")
+    private String reconcileAccountEndpoint;
+
     @Value("${authentication-rest-service.context}")
     private String deleteMyAuthenticationEndpoint;
 
@@ -51,7 +54,8 @@ public class WebClientConfig {
     @Bean
     public AccountWebClient accountWebClient(
             @Qualifier("serviceWebClientBuilder") WebClient.Builder serviceWebClientBuilder) {
-        return new AccountWebClient(serviceWebClientBuilder, deleteMyAccountEndpoint, userRepository);
+        return new AccountWebClient(serviceWebClientBuilder, deleteMyAccountEndpoint,
+                reconcileAccountEndpoint, userRepository);
     }
 
     @Bean
