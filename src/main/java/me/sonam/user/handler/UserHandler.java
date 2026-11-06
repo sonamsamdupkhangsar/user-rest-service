@@ -191,32 +191,13 @@ public class UserHandler {
                 });
     }
 
-    public Mono<ServerResponse> deleteUser(ServerRequest serverRequest) {
-        LOG.info("delete user");
-
-        return serverRequest.principal().flatMap(principal -> userService.deleteUser(principal.getName())
-                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable -> {
-                    LOG.error("delete user failed", throwable);
-                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(throwable.getMessage());
-                })
-        );
-    }
-
     public Mono<ServerResponse> deleteUserData(ServerRequest serverRequest) {
-        String uuidString = serverRequest.pathVariable("organizationId");
-        LOG.info("delete my account information for user with organizationId: {}", uuidString);
-        UUID organizationId = UUID.fromString(uuidString);
-
-        return userService.deleteUserData(organizationId)
-                .flatMap(s ->  ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).bodyValue(s))
-                .onErrorResume(throwable -> {
-                    LOG.error("delete user failed", throwable);
-                    return ServerResponse.badRequest().contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(throwable.getMessage());
-                });
+        return ServerResponse.status(org.springframework.http.HttpStatus.GONE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of("error",
+                        "This account-deletion endpoint is retired. Use Manage your account on the authorization server."));
     }
+
     @SafeVarargs
     public static Map<String, String> getMap(Pair<String, String>... pairs){
         Map<String, String> map = new HashMap<>();

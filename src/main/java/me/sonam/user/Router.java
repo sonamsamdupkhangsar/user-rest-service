@@ -1,6 +1,7 @@
 package me.sonam.user;
 
 import me.sonam.user.handler.UserHandler;
+import me.sonam.user.handler.AccountDeletionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +16,15 @@ import static org.springframework.web.reactive.function.server.RequestPredicates
 @Configuration
 public class Router {
     private static final Logger LOG = LoggerFactory.getLogger(Router.class);
+
+    @Bean
+    public RouterFunction<ServerResponse> accountDeletionRoutes(AccountDeletionHandler accountDeletionHandler) {
+        return RouterFunctions
+                .route(GET("/users/account/internal/{authenticationId}/deletion-check")
+                        .and(accept(MediaType.APPLICATION_JSON)), accountDeletionHandler::checkDelegated)
+                .andRoute(DELETE("/users/account/internal/{authenticationId}")
+                        .and(accept(MediaType.APPLICATION_JSON)), accountDeletionHandler::deleteDelegated);
+    }
 
     @Bean
     public RouterFunction<ServerResponse> route(UserHandler handler) {

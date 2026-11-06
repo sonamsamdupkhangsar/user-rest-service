@@ -21,7 +21,6 @@ public interface UserRepository extends ReactiveCrudRepository<MyUser, UUID> {
     //Mono<Integer> deleteByAuthenticationIdAndEmailAndActiveFalse(String authenticationId, String email);
     //Mono<Integer> deleteByEmailAndActiveFalse(String email);
     Mono<Boolean> existsByEmailIgnoreCaseAndActiveTrue(String email);
-    Mono<Integer> deleteByAuthenticationIdIgnoreCaseAndActiveFalse(String authenticationId);
     //Mono<Boolean> existsByAuthenticationIdOrEmail(String authenticationId, String email);
     Mono<Void> deleteByAuthenticationIdIgnoreCase(String authenticationId);
     Flux<MyUser> findByFirstNameContainingIgnoreCaseAndLastNameContainingIgnoreCase(String firstName, String lastName);

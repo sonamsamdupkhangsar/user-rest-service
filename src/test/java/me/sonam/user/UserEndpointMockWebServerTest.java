@@ -878,147 +878,24 @@ public class UserEndpointMockWebServerTest {
     }
 
     @Test
-    public void deleteMyInfo() throws InterruptedException {
-        UUID id = UUID.randomUUID();
-        final String authenticationId = "deleteUserWhenUserFalse";
-
-        MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId, false);
-        assertThat(myUser.getId()).isNotNull();
-
-        Jwt jwt = jwt(authenticationId, myUser.getId());
+    public void retiredDeletionEndpointReturnsGoneWithoutCallingDownstreamServices() {
+        Jwt jwt = jwt("regular-user", UUID.randomUUID());
         when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
-
-        Mono<MyUser> userMono = userRepository.save(myUser);
-        userMono.subscribe(user1 -> LOG.info("save user first"));
-
-        userMono.as(StepVerifier::create).assertNext(myUser1 -> {
-            LOG.info("assert active is false");
-            assertThat(myUser1.getActive()).isFalse();
-        });
-
-        userRepository.findByAuthenticationIdIgnoreCase(authenticationId).as(StepVerifier::create).
-                assertNext(myUser1 -> {
-                    LOG.info("assert active is false");
-                    assertThat(myUser1.getActive()).isFalse();
-                })
-                .verifyComplete();
-
-        final String msg1 = "{\"message\": \"deleted account\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(msg1));
-
-        final String msg2 = "{\"message\": \"deleted authentication\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(msg2));
-
-        final String msg3 = "{\"message\": \"deleted organization\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(msg3));
-
-        final String msg4 = "{\"message\": \"deleted role\"}";
-        mockWebServer.enqueue(new MockResponse().setHeader("Content-Type", "application/json").setResponseCode(200).setBody(msg4));
-        final String jwtString= "eyJraWQiOiJlOGQ3MjIzMC1iMDgwLTRhZjEtODFkOC0zMzE3NmNhMTM5ODIiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI3NzI1ZjZmZC1kMzk2LTQwYWYtOTg4Ni1jYTg4YzZlOGZjZDgiLCJhdWQiOiI3NzI1ZjZmZC1kMzk2LTQwYWYtOTg4Ni1jYTg4YzZlOGZjZDgiLCJuYmYiOjE3MTQ3NTY2ODIsImlzcyI6Imh0dHA6Ly9teS1zZXJ2ZXI6OTAwMSIsImV4cCI6MTcxNDc1Njk4MiwiaWF0IjoxNzE0NzU2NjgyLCJqdGkiOiI0NDBlZDY0My00MzdkLTRjOTMtYTZkMi1jNzYxNjFlNDRlZjUifQ.fjqgoczZbbmcnvYpVN4yakpbplp7EkDyxslvar5nXBFa6mgIFcZa29fwIKfcie3oUMQ8MDWxayak5PZ_QIuHwTvKSWHs0WL91ljf-GT1sPi1b4gDKf0rJOwi0ClcoTCRIx9-WGR6t2BBR1Rk6RGF2MW7xKw8M-RMac2A2mPEPJqoh4Pky1KgxhZpEXixegpAdQIvBgc0KBZeQme-ZzTYugB8EPUmGpMlfd-zX_vcR1ijxi8e-LRRJMqmGkc9GXfrH7MOKNQ_nu6pc6Gish2v_iuUEcpPHXrfqzGb9IHCLvfuLSaTDcYKYjQaEUAp-1uDW8-5posjiUV2eBiU48ajYg";
-
-        LOG.info("activate user authId: {}", id);
-        UUID organizationId = UUID.randomUUID();
-        EntityExchangeResult<String> result = webTestClient.mutateWith(mockJwt().jwt(jwt)).delete().uri("/users/"+organizationId)
-                .headers(httpHeaders -> httpHeaders.setBearerAuth(jwtString))
-                .exchange().expectStatus().isOk().expectBody(String.class).returnResult();
-
-        LOG.info("response: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("delete my account success for user id: "+myUser.getId());
-
-        userRepository.existsByAuthenticationIdIgnoreCase(authenticationId).subscribe(aBoolean -> LOG.info("exists should be false: {}", aBoolean));
-
-        RecordedRequest request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("DELETE");
-        assertThat(request.getPath()).startsWith("/accounts");
-
-        request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("DELETE");
-        assertThat(request.getPath()).startsWith("/authentications");
-
-        request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("DELETE");
-        assertThat(request.getPath()).startsWith("/organizations");
-
-        request = mockWebServer.takeRequest();
-        assertThat(request.getMethod()).isEqualTo("DELETE");
-        assertThat(request.getPath()).startsWith("/roles");
-
-
+        int requestsBefore = mockWebServer.getRequestCount();
+        webTestClient.mutateWith(mockJwt().jwt(jwt))
+                .delete()
+                .uri("/users/" + UUID.randomUUID())
+                .headers(addJwt(jwt))
+                .exchange()
+                .expectStatus().isEqualTo(410)
+                .expectBody()
+                .jsonPath("$.error").value(message -> assertThat(message.toString()).contains("retired"));
+        assertThat(mockWebServer.getRequestCount()).isEqualTo(requestsBefore);
     }
 
-    //@Test
-    public void deleteUserWhenUserFalse() {
-        UUID id = UUID.randomUUID();
-        final String authenticationId = "deleteUserWhenUserFalse";
-        Jwt jwt = jwt(authenticationId);
-        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
-
-        MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId, false);
-
-        Mono<MyUser> userMono = userRepository.save(myUser);
-        userMono.subscribe(user1 -> LOG.info("save user first"));
-
-        userMono.as(StepVerifier::create).assertNext(myUser1 -> {
-            LOG.info("assert active is false");
-            assertThat(myUser1.getActive()).isFalse();
-        });
-
-        userRepository.findByAuthenticationIdIgnoreCase(authenticationId).as(StepVerifier::create).
-                assertNext(myUser1 -> {
-                    LOG.info("assert active is false");
-                    assertThat(myUser1.getActive()).isFalse();
-                })
-                .verifyComplete();
-
-        LOG.info("activate user authId: {}", id);
-        EntityExchangeResult<String> result = webTestClient.delete().uri("/users")
-                .headers(addJwt(jwt)).exchange().expectStatus().isOk().expectBody(String.class).returnResult();
-
-        LOG.info("response: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("deleted: "+authenticationId);
-
-        userRepository.existsByAuthenticationIdIgnoreCase(authenticationId).subscribe(aBoolean -> LOG.info("exists should be false: {}", aBoolean));
-    }
-
-    //@Test
-    public void deleteUserWhenUserActive() throws InterruptedException {
-        final String authenticationId = "deleteUserWhenUserFalse";
-        Jwt jwt = jwt(authenticationId);
-        when(this.jwtDecoder.decode(anyString())).thenReturn(Mono.just(jwt));
-
-        UUID id = UUID.randomUUID();
-        //final String authenticationId = "deleteUserWhenUserFalse";
-
-        MyUser myUser = new MyUser("firstname", "lastname", "somemeail@email.com", authenticationId, false);
-        myUser.setActive(true);
-
-        Mono<MyUser> userMono = userRepository.save(myUser);
-        userMono.subscribe(user1 -> LOG.info("save user first"));
-
-        userMono.as(StepVerifier::create).assertNext(myUser1 -> {
-            LOG.info("assert active is True");
-            assertThat(myUser1.getActive()).isTrue();
-        });
-
-        userRepository.findByAuthenticationIdIgnoreCase(authenticationId).as(StepVerifier::create).
-                assertNext(myUser1 -> {
-                    LOG.info("assert active is True");
-                    assertThat(myUser1.getActive()).isTrue();
-                })
-                .verifyComplete();
-
-        LOG.info("activate user authId: {}", id);
-        EntityExchangeResult<String> result = webTestClient.delete().uri("/users")
-                .headers(addJwt(jwt)).exchange().expectStatus().isBadRequest().expectBody(String.class).returnResult();
-
-        LOG.info("response: {}", result.getResponseBody());
-        assertThat(result.getResponseBody()).isEqualTo("user is active, cannot delete");
-
-        userRepository.existsByAuthenticationIdIgnoreCase(authenticationId).subscribe(aBoolean -> LOG.info("exists should be true: {}", aBoolean));
-    }
     private Jwt jwt(String subjectName, UUID userId) {
         return new Jwt("token", null, null,
-                Map.of("alg", "none"), Map.of("sub", subjectName, "userId", userId.toString()));
+                Map.of("alg", "none"), Map.of("sub", subjectName, "userId", userId.toString(), "iss", "https://free.openissuer.com/issuer"));
     }
     private Jwt jwt(String subjectName) {
         return new Jwt("token", null, null,

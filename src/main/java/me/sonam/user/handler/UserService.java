@@ -23,11 +23,9 @@ public interface UserService {
     Mono<String> updateUser(String authenticationId, Mono<UserUpdate> userMono);
     Flux<MyUser> findMatchingName(String firstName, String lastName);
     Mono<String> activateUser(String authenticationId);
-    Mono<String> deleteUser(String authentiationId);
     Mono<Map<String, Object>> getUserByAuthenticationId(String authenticationId);
     Mono<Map<String, Object>> getUserByAuthenticationIdForProfileSearch(String authenticationId, boolean ignoreSearchable);
     Mono<Map<String, Object>> getUserForOidcUserInfo(UUID userId);
     Mono<User> getUserById(UUID id);
     Mono<List<User>> getBatchOfUserById(List<UUID> uuids);
-    Mono<String> deleteUserData(UUID organizationId);
 }

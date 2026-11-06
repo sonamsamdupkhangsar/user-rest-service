@@ -361,51 +361,6 @@ public class UserSignupService implements UserService {
     }
 
     @Override
-    public Mono<String> deleteUser(String authenticationId) {
-        LOG.info("delete user if it's active status is false");
-
-        return userRepository.findByAuthenticationIdIgnoreCase(authenticationId)
-                .filter(myUser -> !myUser.getActive())
-                .switchIfEmpty(Mono.error(new UserException("user is active, cannot delete")))
-                .flatMap(myUser ->   userRepository.deleteByAuthenticationIdIgnoreCaseAndActiveFalse(authenticationId))
-                .thenReturn("deleted: " + authenticationId);
-    }
-
-    @Override
-    public Mono<String> deleteUserData(UUID organizationId) {
-        LOG.info("delete my account");
-
-        return ReactiveSecurityContextHolder.getContext().flatMap(securityContext -> {
-            LOG.info("principal: {}", securityContext.getAuthentication().getPrincipal());
-            org.springframework.security.core.Authentication authentication = securityContext.getAuthentication();
-
-            LOG.info("authentication: {}", authentication);
-            LOG.info("authentication.principal: {}", authentication.getPrincipal());
-            Jwt jwt = (Jwt) authentication.getPrincipal();
-            String userIdString = jwt.getClaim("userId");
-            LOG.info("delete user data for userId: {}", userIdString);
-
-            UUID userId = UUID.fromString(userIdString);
-
-            return userRepository.findById(userId)
-                    .switchIfEmpty(Mono.error(new UserException("no user found with userId: " + userId)))
-                    .flatMap(myUser -> {
-                        LOG.info("delete user from repository {}", myUser.getId());
-                        return userRepository.deleteById(userId).thenReturn(Mono.just("user deleted by id"));
-                    })
-
-                    .flatMap(unused -> {
-                        //LOG.info("delete account {}", unused);
-                        return accountWebClient.deleteUserData(userId);
-                    })
-                    .then(authenticationWebClient.deleteUserData(userId))
-                    .then(organizationWebClient.deleteUserData(organizationId, userId))
-                    .then(roleWebClient.deleteUserData(organizationId, userId))
-                    .thenReturn("delete my account success for user id: " + userId);
-        });
-    }
-
-    @Override
     public Mono<Map<String, Object>> getUserByAuthenticationId(String authenticationId) {
         LOG.info("get user information by authentication identifier");
 
