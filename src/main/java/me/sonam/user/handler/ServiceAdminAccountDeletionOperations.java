@@ -73,7 +73,7 @@ public class ServiceAdminAccountDeletionOperations implements AdminAccountDeleti
     public Mono<AccountInventory> loadAccountDeletionInventory(UUID userId) {
         // Load the canonical user record; stop if the account does not exist.
         return findUser(userId)
-                // Combine role responsibilities, organization relationships, and legacy client-linked organizations.
+                // Combine role responsibilities, organization relationships, and client-linked organizations.
                 .flatMap(user -> Mono.zip(
                                 get(roleEndpoint + "/users/" + userId, AccountRoles.class),
                                 get(organizationEndpoint + "/users/" + userId, RelatedOrganizations.class),

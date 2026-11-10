@@ -30,10 +30,10 @@ S3 client; they do not delete live data.
   relationships. Unknown administrative roles/scopes block cleanup. Deletion rechecks
   OrgAdmin permission, other administrators/users, cross-organization role usage, and
   protection. Global OrgAdmin/SubdomainAdmin definitions are never deleted.
-- Authorization service inventories legacy client-user relationships and organization
+- Authorization service inventories client-user relationships and organization
   clients. It locates each client in the registered issuer databases, rejecting missing
-  or ambiguous locations. Cleanup rechecks protection, organization sharing, legacy users,
-  and other-user grants/consents, then deletes OAuth data and legacy associations.
+  or ambiguous locations. Cleanup rechecks protection, organization sharing, client-user associations,
+  and other-user grants/consents, then deletes OAuth data and client associations.
 - User service adds client-role relationships to the authorization inventory, so a client
   shared through role assignments also blocks cleanup. Orphan relationships fail closed.
 
@@ -97,7 +97,7 @@ context; this is not a standalone scheduled-job API.
 
 After checking every organization and revalidating the complete account snapshot:
 
-1. Remove each approved organization's clients, grants/consents, and legacy associations.
+1. Remove each approved organization's clients, grants/consents, and client associations.
 2. Remove its application-role definitions and role/admin assignments.
 3. Remove its organization records, including positions and associations.
 4. Remove the user's photo/thumbnail objects under their exact UUID-specific prefix.

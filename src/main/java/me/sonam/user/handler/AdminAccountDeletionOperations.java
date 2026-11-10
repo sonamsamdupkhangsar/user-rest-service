@@ -24,7 +24,7 @@ public interface AdminAccountDeletionOperations {
      * Inventories every organization the user belongs to, created, or administers,
      * including organizations outside the user's default organization. Include all
      * administrative assignments; unknown role/scope types are unresolved responsibilities.
-     * Client users must include both client-role assignments and legacy client-user rows.
+     * Client users must include both client-role assignments and client-user associations.
      * Protection verification must explicitly cover seeded/platform organizations and
      * infrastructure clients, not merely rely on an organization's member count.
      */
