@@ -41,11 +41,15 @@ public class InternalServiceAuthorization {
         clientId = parsed;
     }
 
-    public Mono<Void> requireService() {
+    public Mono<Void> requireInternalServiceIdentity() {
         return ReactiveSecurityContextHolder.getContext()
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED)))
+                .switchIfEmpty(Mono.defer(() -> {
+                    LOG.warn("Internal service access denied: security context is missing (HTTP 401)");
+                    return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+                }))
                 .flatMap(context -> {
                     if (context.getAuthentication() == null) {
+                        LOG.warn("Internal service access denied: authentication is missing (HTTP 401)");
                         return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED));
                     }
 
@@ -58,6 +62,7 @@ public class InternalServiceAuthorization {
                         return Mono.<Void>empty();
                     }
 
+                    LOG.warn("Internal service access denied: token does not match the configured service identity (HTTP 403)");
                     return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Internal service access required"));
                 });
     }

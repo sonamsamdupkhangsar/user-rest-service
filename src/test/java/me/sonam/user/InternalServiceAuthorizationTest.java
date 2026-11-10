@@ -21,7 +21,7 @@ class InternalServiceAuthorizationTest {
                 .subject("internal-client")
                 .issuer("https://platform.example/issuer")
                 .build();
-        internalServiceAuthorization.requireService()
+        internalServiceAuthorization.requireInternalServiceIdentity()
                 .contextWrite(ReactiveSecurityContextHolder.withAuthentication(new JwtAuthenticationToken(service)))
                 .block();
         var user = Jwt.withTokenValue("token")
@@ -30,7 +30,7 @@ class InternalServiceAuthorizationTest {
                 .issuer("https://platform.example/issuer")
                 .claim("userId", "user-id")
                 .build();
-        assertThatThrownBy(() -> internalServiceAuthorization.requireService()
+        assertThatThrownBy(() -> internalServiceAuthorization.requireInternalServiceIdentity()
                 .contextWrite(ReactiveSecurityContextHolder.withAuthentication(new JwtAuthenticationToken(user)))
                 .block())
                 .hasMessageContaining("Internal service access");
@@ -42,12 +42,12 @@ class InternalServiceAuthorizationTest {
                 .header("alg", "RS256")
                 .subject("other-client")
                 .build());
-        assertThatThrownBy(() -> internalServiceAuthorization.requireService()
+        assertThatThrownBy(() -> internalServiceAuthorization.requireInternalServiceIdentity()
                 .contextWrite(ReactiveSecurityContextHolder.withAuthentication(other))
                 .block())
                 .hasMessageContaining("Internal service access");
         assertThatThrownBy(() -> new InternalServiceAuthorization("", "https://platform.example/issuer")
-                .requireService()
+                .requireInternalServiceIdentity()
                 .contextWrite(ReactiveSecurityContextHolder.withAuthentication(other))
                 .block())
                 .hasMessageContaining("Internal service access");
@@ -60,7 +60,7 @@ class InternalServiceAuthorizationTest {
                 .subject("internal-client")
                 .issuer("https://free.example/issuer")
                 .build());
-        assertThatThrownBy(() -> internalServiceAuthorization.requireService()
+        assertThatThrownBy(() -> internalServiceAuthorization.requireInternalServiceIdentity()
                 .contextWrite(ReactiveSecurityContextHolder.withAuthentication(token))
                 .block())
                 .hasMessageContaining("Internal service access");

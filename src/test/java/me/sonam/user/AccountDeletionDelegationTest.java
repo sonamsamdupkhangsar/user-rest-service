@@ -22,7 +22,7 @@ class AccountDeletionDelegationTest {
 
     @Test
     void untrustedCallerCannotSelectAnAccountForReadOrDeletion() {
-        when(internalServiceAuthorization.requireService())
+        when(internalServiceAuthorization.requireInternalServiceIdentity())
                 .thenReturn(Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN)));
 
         webTestClient.get()
@@ -43,7 +43,7 @@ class AccountDeletionDelegationTest {
     @Test
     void eligibilityIsReadOnlyAndSuccessfulDelegationUsesTheGivenServerIdentity() {
         String name = "regular+test@example.com";
-        when(internalServiceAuthorization.requireService())
+        when(internalServiceAuthorization.requireInternalServiceIdentity())
                 .thenReturn(Mono.empty());
         when(regularAccountDeletionService.checkByAuthenticationId(name))
                 .thenReturn(Mono.empty());
@@ -74,7 +74,7 @@ class AccountDeletionDelegationTest {
 
     @Test
     void adminConflictDoesNotBecomeSuccessfulDeletion() {
-        when(internalServiceAuthorization.requireService())
+        when(internalServiceAuthorization.requireInternalServiceIdentity())
                 .thenReturn(Mono.empty());
         when(regularAccountDeletionService.deleteByAuthenticationId("admin-user"))
                 .thenReturn(Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "Admin roles remain")));
@@ -88,7 +88,7 @@ class AccountDeletionDelegationTest {
 
     @Test
     void failedEligibilityDoesNotReturnAnEligibleResponse() {
-        when(internalServiceAuthorization.requireService())
+        when(internalServiceAuthorization.requireInternalServiceIdentity())
                 .thenReturn(Mono.empty());
         when(regularAccountDeletionService.checkByAuthenticationId("regular-user"))
                 .thenReturn(Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE)));

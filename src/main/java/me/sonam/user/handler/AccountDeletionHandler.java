@@ -24,7 +24,7 @@ public class AccountDeletionHandler {
     public Mono<ServerResponse> checkDelegated(ServerRequest request) {
         String authenticationId = request.pathVariable("authenticationId");
 
-        return internalServiceAuthorization.requireService()
+        return internalServiceAuthorization.requireInternalServiceIdentity()
                 .then(Mono.defer(() -> regularAccountDeletionService.checkByAuthenticationId(authenticationId)))
                 .then(ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
@@ -34,7 +34,7 @@ public class AccountDeletionHandler {
     public Mono<ServerResponse> deleteDelegated(ServerRequest request) {
         String authenticationId = request.pathVariable("authenticationId");
 
-        return internalServiceAuthorization.requireService()
+        return internalServiceAuthorization.requireInternalServiceIdentity()
                 .then(Mono.defer(() -> regularAccountDeletionService.deleteByAuthenticationId(authenticationId)))
                 .then(ServerResponse.noContent().build());
     }
