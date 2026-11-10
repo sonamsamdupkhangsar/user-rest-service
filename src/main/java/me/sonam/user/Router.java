@@ -18,6 +18,17 @@ public class Router {
     private static final Logger LOG = LoggerFactory.getLogger(Router.class);
 
     @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "account-deletion.admin-enabled", havingValue = "true")
+    public RouterFunction<ServerResponse> adminAccountDeletionRoutes(
+            me.sonam.user.handler.AdminAccountDeletionHandler adminAccountDeletionHandler) {
+        return RouterFunctions
+                .route(GET("/users/account/internal/{authenticationId}/admin-deletion-check")
+                        .and(accept(MediaType.APPLICATION_JSON)), adminAccountDeletionHandler::checkDelegated)
+                .andRoute(POST("/users/account/internal/{authenticationId}/admin-deletion")
+                        .and(accept(MediaType.APPLICATION_JSON)), adminAccountDeletionHandler::deleteDelegated);
+    }
+
+    @Bean
     public RouterFunction<ServerResponse> accountDeletionRoutes(AccountDeletionHandler accountDeletionHandler) {
         return RouterFunctions
                 .route(GET("/users/account/internal/{authenticationId}/deletion-check")

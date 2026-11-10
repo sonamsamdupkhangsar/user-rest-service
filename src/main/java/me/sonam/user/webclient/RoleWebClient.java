@@ -41,23 +41,6 @@ public class RoleWebClient {
                         : response.createException().flatMap(Mono::error));
     }
 
-    public Mono<Boolean> hasOtherAdminScopes(String accessToken) {
-        return adminScopeCount(accessToken, "organizations")
-                .zipWith(adminScopeCount(accessToken, "subdomains"))
-                .map(counts -> counts.getT1() != 1 || counts.getT2() != 0);
-    }
-
-    private Mono<Integer> adminScopeCount(String accessToken, String scope) {
-        return webClientBuilder.build()
-                .get()
-                .uri(deleteMyRole + "/authzmanagerroles/users/" + scope + "/count")
-                .headers(headers -> headers.setBearerAuth(accessToken))
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Integer>>() {})
-                .flatMap(body -> body.get("message") == null ? Mono.error(new IllegalStateException("Unable to verify admin assignments"))
-                        : Mono.just(body.get("message")))
-                .switchIfEmpty(Mono.error(new IllegalStateException("Unable to verify admin assignments")));
-    }
 
     public Mono<String> deleteUserData(UUID organizationId, UUID userId) {
         return deleteUserData(organizationId, userId, true);

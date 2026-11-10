@@ -33,8 +33,8 @@ import java.util.UUID;
  * Never expose these methods with a browser-selected target account.
  *
  * <p>Registered by AdminAccountDeletionConfig only when explicitly enabled, using the
- * concrete internal-service adapter. It has no public endpoint or UI caller yet.
- * No existing regular-user or legacy endpoint calls this class.
+ * concrete internal-service adapter. The authorization server's signed-in admin deletion page
+ * delegates through guarded internal Router endpoints. Regular-user deletion remains separate.
  *
  * <p>Cross-service deletion is not atomic. Failure stops later work without rolling
  * back completed deletions. Rechecks reduce stale-plan risk but do not solve the known

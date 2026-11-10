@@ -8,8 +8,11 @@ it reads and mutates the organization, role, and authorization services through 
 internal endpoints, and deletes user-photo objects through the async S3 client.
 
 The coordinator and adapter are registered only with `account-deletion.admin-enabled=true`
-in user-rest-service. This defaults to false. There is still **no admin-deletion UI or
-user-service Router endpoint**. Existing regular-user deletion remains unchanged and
+in user-rest-service. This defaults to false. The signed-in authorization page at
+`/account/admin/delete` uses service-only user-service Router endpoints for eligibility and deletion.
+Admin console Delete My Data links point to that page, never directly to internal APIs.
+POST requires CSRF and `DELETE MY ACCOUNT AND ORGANIZATIONS`; the username comes from the session.
+Existing regular-user deletion remains unchanged and
 still blocks administrative assignments. The older bulk `DELETE /clients` API is not used.
 
 Nothing has been enabled or deployed in the live environment. Tests use in-memory
@@ -108,10 +111,10 @@ Photo cleanup uses paginated S3 listing, awaits every delete, validates the retu
 against the exact user prefix, and rejects unsuccessful storage responses. It does not
 use the older library folder helper, which does not await its individual deletes.
 
-The authorization caller must still perform passkey/user-grant/consent cleanup and logout
-after success. The future browser flow must use the authenticated identity, CSRF protection,
-an informed confirmation form, and `DELETE MY ACCOUNT AND ORGANIZATIONS`. It must display
-the read-only check's blockers. UI wiring and live rollout are separate follow-up work.
+The authorization page performs current-issuer passkey/user-grant/consent cleanup and logout
+after success. It derives identity from the session, enforces CSRF and informed confirmation,
+and displays read-only eligibility blockers. A failure stops later work and warns about partial
+cleanup. Live rollout and protection configuration remain explicit operator actions.
 
 Deletion is not distributed-transactional. Role and organization writes have local
 transactions. OAuth tenant data and central client associations have separate transactions.

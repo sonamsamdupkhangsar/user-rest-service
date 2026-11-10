@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** Registers the coordinator only when explicitly enabled; no admin UI or public route is added. */
+/** Registers the coordinator only when explicitly enabled; delegation routes require the internal service identity. */
 @Configuration
 @ConditionalOnProperty(name = "account-deletion.admin-enabled", havingValue = "true")
 public class AdminAccountDeletionConfig {

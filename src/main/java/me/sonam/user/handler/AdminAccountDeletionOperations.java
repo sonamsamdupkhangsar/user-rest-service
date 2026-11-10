@@ -16,7 +16,7 @@ import java.util.UUID;
  *
  * <p>{@link ServiceAdminAccountDeletionOperations} implements these operations through
  * guarded internal APIs. It is registered only when admin-account deletion is explicitly
- * enabled. The coordinator is not yet exposed through a Router or UI.
+ * enabled. Internal Router endpoints accept delegation from the authorization server's signed-in admin deletion page.
  */
 public interface AdminAccountDeletionOperations {
 
