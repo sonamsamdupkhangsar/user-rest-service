@@ -50,8 +50,8 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-kubernetes-client-all'
     implementation ("cloud.sonam:digitalocean-s3-lib:1.0.1-SNAPSHOT")
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    implementation'io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE'
-    implementation 'org.postgresql:postgresql:42.7.7'
+    implementation'org.postgresql:r2dbc-postgresql'
+    implementation 'org.postgresql:postgresql:42.7.14'
     implementation'me.sonam:token-filter:1.0.9-SNAPSHOT'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.6'
     implementation'io.projectreactor:reactor-test'
