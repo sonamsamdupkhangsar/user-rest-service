@@ -84,6 +84,11 @@ public class ServiceAdminAccountDeletionOperations implements AdminAccountDeleti
                             RelatedOrganizations organizations = states.getT2();
                             RelatedOrganizations clients = states.getT3();
 
+                            LOG.info("Account deletion lookup results for user {}: roleInventoryLoaded={}, organizationLookupCompleted={}, clientOrganizationLookupCompleted={}, roleUserMatches={}, organizationUserMatches={}, clientUserMatches={}",
+                                    userId, accountRoles.roleInventoryLoaded(), organizations.organizationLookupCompleted(),
+                                    clients.organizationLookupCompleted(), userId.equals(accountRoles.userId()),
+                                    userId.equals(organizations.userId()), userId.equals(clients.userId()));
+
                             // Require successful lookups for this same user before trusting any returned relationships.
                             requireVerifiedAccountRelationships(accountRoles.roleInventoryLoaded() && organizations.organizationLookupCompleted() && clients.organizationLookupCompleted()
                                     && userId.equals(accountRoles.userId()) && userId.equals(organizations.userId())
@@ -94,6 +99,9 @@ public class ServiceAdminAccountDeletionOperations implements AdminAccountDeleti
                             organizationIds.addAll(accountRoles.relatedOrganizationIds());
                             organizationIds.addAll(organizations.organizationIds());
                             organizationIds.addAll(clients.organizationIds());
+
+                            LOG.info("Account deletion lookup verified for user {}; inspecting {} organizations",
+                                    userId, organizationIds.size());
 
                             // Inspect each organization sequentially in a stable order, including its members,
                             // administrators, clients, and protection settings. Collect every result before proceeding.
@@ -301,10 +309,20 @@ public class ServiceAdminAccountDeletionOperations implements AdminAccountDeleti
                                 OrganizationRoles.class),
                         // Get its OAuth clients and relationships, using this user's identity to detect other users' authorizations.
                         getClients(user, organizationId))
+                .doOnSubscribe(subscription -> LOG.info(
+                        "Loading organization deletion inventory for user {} and organization {}",
+                        user.getId(), organizationId))
                 .flatMap(states -> {
                     OrganizationState organizationState = states.getT1();
                     OrganizationRoles organizationRoles = states.getT2();
                     ClientState clientState = states.getT3();
+
+                    LOG.info("Organization deletion inspection results for user {} and organization {}: relationshipChecksPassed={}, adminRoleAssignmentsValid={}, clientInventoryLoaded={}, organizationIdMatches={}, roleOrganizationIdMatches={}, clientOrganizationIdMatches={}, memberCount={}",
+                            user.getId(), organizationId, organizationState.relationshipChecksPassed(),
+                            organizationRoles.adminRoleAssignmentsValid(), clientState.clientInventoryLoaded(),
+                            organizationId.equals(organizationState.organizationId()),
+                            organizationId.equals(organizationRoles.organizationId()),
+                            organizationId.equals(clientState.organizationId()), organizationState.memberUserIds().size());
 
                     // Require successful checks and confirm every response describes the requested organization.
                     requireVerifiedAccountRelationships(
@@ -322,6 +340,10 @@ public class ServiceAdminAccountDeletionOperations implements AdminAccountDeleti
                             .collect(java.util.stream.Collectors.toSet());
 
                     // Reject duplicate client IDs or role assignments referencing a client missing from that inventory.
+                    LOG.info("Organization client inventory checks for organization {}: clientCount={}, uniqueClientCount={}, roleClientsPresent={}",
+                            organizationId, clientState.clients().size(), clientIds.size(),
+                            clientIds.containsAll(organizationRoles.clientIds()));
+
                     requireVerifiedAccountRelationships(
                             clientIds.size() == clientState.clients().size()
                             && clientIds.containsAll(organizationRoles.clientIds()));
@@ -332,6 +354,11 @@ public class ServiceAdminAccountDeletionOperations implements AdminAccountDeleti
                                             roleEndpoint + "/clients/" + clientInventory.clientId(),
                                             ClientRoles.class)
                                     .map(clientRoles -> {
+                                        LOG.info("Client role inspection results for organization {} and client {}: clientRoleAssignmentsLoaded={}, clientIdMatches={}",
+                                                organizationId, clientInventory.clientId(),
+                                                clientRoles.clientRoleAssignmentsLoaded(),
+                                                clientInventory.clientId().equals(clientRoles.clientId()));
+
                                         // Trust role relationships only after confirming the lookup succeeded for this client.
                                         requireVerifiedAccountRelationships(
                                                 clientRoles.clientRoleAssignmentsLoaded()
