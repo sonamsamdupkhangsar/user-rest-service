@@ -144,10 +144,15 @@ public class ServiceAdminAccountDeletionOperations implements AdminAccountDeleti
 
                     return findUser(userId);
                 })
+                // Remove assignments while the client still exists, so subsequent inventory checks
+                // never encounter role references to a client deleted by this cleanup.
                 .flatMap(user -> delete(
+                        roleEndpoint + "/users/{userId}/organizations/{organizationId}/clients/{clientId}/assignments",
+                        userId, organizationId, clientInventory.clientId())
+                        .then(Mono.defer(() -> delete(
                         authorizationEndpoint + "/users/{userId}/organizations/{organizationId}/clients/{clientId}"
                                 + "?authenticationId={name}&issuer={issuer}",
-                        userId, organizationId, clientInventory.clientId(), user.getAuthenticationId(), clientInventory.issuer()));
+                        userId, organizationId, clientInventory.clientId(), user.getAuthenticationId(), clientInventory.issuer()))));
     }
 
     @Override

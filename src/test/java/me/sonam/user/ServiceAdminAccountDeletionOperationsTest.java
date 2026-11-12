@@ -49,6 +49,8 @@ class ServiceAdminAccountDeletionOperationsTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ServiceAdminAccountDeletionOperations serviceAdminAccountDeletionOperations;
     private boolean clientsPresent = true;
+    private boolean clientDeleted;
+    private boolean clientAssignmentsRemoved;
     private boolean rolesPresent = true;
     private boolean orgPresent = true;
     private boolean otherMember;
@@ -119,7 +121,9 @@ class ServiceAdminAccountDeletionOperationsTest {
                 .filter(request -> request.method() == HttpMethod.DELETE)
                 .map(request -> request.url().getPath())
                 .toList())
-                .containsExactly(clientPath + "/clients/" + clientId, rolePath, orgPath);
+                .containsExactly(rolePath + "/clients/" + clientId + "/assignments",
+                        clientPath + "/clients/" + clientId, rolePath, orgPath);
+        assertThat(clientAssignmentsRemoved).isTrue();
         verify(s3AsyncClient).listObjectsV2(argThat((ListObjectsV2Request request) -> request.prefix().equals(photoPrefix)));
         verify(regularAccountDeletionService).deleteByAuthenticationId(authenticationId);
     }
@@ -234,6 +238,9 @@ class ServiceAdminAccountDeletionOperationsTest {
 
             if (path.equals(clientPath + "/clients/" + clientId)) {
                 clientsPresent = false;
+                clientDeleted = true;
+            } else if (path.equals(rolePath + "/clients/" + clientId + "/assignments")) {
+                clientAssignmentsRemoved = true;
             } else if (path.equals(rolePath)) {
                 rolesPresent = false;
             } else if (path.equals(orgPath)) {
@@ -264,7 +271,8 @@ class ServiceAdminAccountDeletionOperationsTest {
                     otherMember ? Set.of(userId, UUID.randomUUID()) : Set.of(userId));
         } else if (path.equals(rolePath)) {
             body = new OrganizationRoles(organizationId, true, rolesPresent ? Set.of(userId) : Set.of(),
-                    clientsPresent || orphanRoleClient ? Set.of(clientId) : Set.of(), false);
+                    (clientsPresent && !clientAssignmentsRemoved) || orphanRoleClient
+                            || (clientDeleted && !clientAssignmentsRemoved) ? Set.of(clientId) : Set.of(), false);
         } else if (path.equals(clientPath)) {
             body = new ClientState(organizationId, true, protectedPolicyVerified,
                     clientsPresent ? List.of(clientInventory()) : List.of());
